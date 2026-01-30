@@ -45,7 +45,7 @@
 //! # }
 //! ```
 
-use crate::types::ProcessorResponse;
+use crate::types::{Link, ProcessorResponse};
 use crate::{CloudClient, Result};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -64,7 +64,7 @@ pub struct AccountFixedSubscriptionDatabases {
 
     /// HATEOAS links
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub links: Option<Vec<HashMap<String, Value>>>,
+    pub links: Option<Vec<Link>>,
 
     /// Additional fields from the API
     #[serde(flatten)]
@@ -222,7 +222,7 @@ pub struct CloudTag {
 
     /// HATEOAS links
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub links: Option<Vec<HashMap<String, Value>>>,
+    pub links: Option<Vec<Link>>,
 
     /// Additional fields from the API
     #[serde(flatten)]
@@ -346,7 +346,7 @@ pub struct CloudTags {
 
     /// HATEOAS links
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub links: Option<Vec<HashMap<String, Value>>>,
+    pub links: Option<Vec<Link>>,
 
     /// Additional fields from the API
     #[serde(flatten)]
@@ -443,7 +443,7 @@ pub struct FixedDatabase {
 
     /// HATEOAS links
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub links: Option<Vec<HashMap<String, Value>>>,
+    pub links: Option<Vec<Link>>,
 
     /// Additional fields from the API
     #[serde(flatten)]
@@ -458,7 +458,7 @@ pub struct DatabaseSlowLogEntries {
 
     /// HATEOAS links
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub links: Option<Vec<HashMap<String, Value>>>,
+    pub links: Option<Vec<Link>>,
 
     /// Additional fields from the API
     #[serde(flatten)]
@@ -489,7 +489,7 @@ pub struct TaskStateUpdate {
 
     /// HATEOAS links
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub links: Option<Vec<HashMap<String, Value>>>,
+    pub links: Option<Vec<Link>>,
 
     /// Additional fields from the API
     #[serde(flatten)]

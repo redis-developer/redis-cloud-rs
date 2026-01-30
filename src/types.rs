@@ -4,7 +4,6 @@
 
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::collections::HashMap;
 
 // ============================================================================
 // Task Types (Most common - appears in 37 endpoints)
@@ -41,7 +40,7 @@ pub struct TaskStateUpdate {
 
     /// HATEOAS links for related resources
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub links: Option<Vec<HashMap<String, Value>>>,
+    pub links: Option<Vec<Link>>,
 }
 
 /// TaskStatus enum - Part of TaskStateUpdate schema
