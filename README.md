@@ -147,14 +147,19 @@ subs = client.subscriptions_sync()
 
 - `CloudClient(api_key, api_secret, base_url=None, timeout_secs=None)`
 - `CloudClient.from_env()` - Create from environment variables
+- `client.timeout` - Get configured timeout in seconds (property)
+
+#### Account
+- `account()` / `account_sync()` - Get current account information
 
 #### Subscriptions
 - `subscriptions()` / `subscriptions_sync()` - List all subscriptions
 - `subscription(id)` / `subscription_sync(id)` - Get subscription by ID
 
 #### Databases
-- `databases(subscription_id)` / `databases_sync(subscription_id)` - List databases
-- `database(subscription_id, database_id)` / `database_sync(subscription_id, database_id)` - Get database
+- `databases(subscription_id, offset=None, limit=None)` / `databases_sync(...)` - List databases (paginated)
+- `database(subscription_id, database_id)` / `database_sync(...)` - Get database
+- `all_databases(subscription_id)` / `all_databases_sync(...)` - Get all databases (auto-pagination)
 
 #### Raw API
 - `get(path)` / `get_sync(path)` - Raw GET request

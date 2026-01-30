@@ -4,7 +4,7 @@ use crate::error::IntoPyResult;
 use crate::runtime::{block_on, future_into_py};
 use pyo3::prelude::*;
 use pyo3::types::{PyDict, PyList};
-use redis_cloud::{CloudClient, DatabaseHandler, SubscriptionHandler};
+use redis_cloud::{AccountHandler, CloudClient, DatabaseHandler, SubscriptionHandler};
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -286,6 +286,76 @@ impl PyCloudClient {
         })?;
         Ok(json_to_py(py, result))
     }
+
+    // Properties
+
+    /// Get the configured timeout in seconds
+    #[getter]
+    fn timeout(&self) -> f64 {
+        self.client.timeout().as_secs_f64()
+    }
+
+    // Account API
+
+    /// Get current account information (async)
+    fn account<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
+        let client = self.client.clone();
+        future_into_py(py, async move {
+            let handler = AccountHandler::new((*client).clone());
+            let account = handler.get_current_account().await.into_py_result()?;
+            let json = serde_json::to_value(&account)
+                .map_err(|e| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))?;
+            Python::with_gil(|py| Ok(json_to_py(py, json)))
+        })
+    }
+
+    /// Get current account information (sync)
+    fn account_sync(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
+        let client = self.client.clone();
+        let result = block_on(py, async move {
+            let handler = AccountHandler::new((*client).clone());
+            handler.get_current_account().await.into_py_result()
+        })?;
+        let json = serde_json::to_value(&result)
+            .map_err(|e| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))?;
+        Ok(json_to_py(py, json))
+    }
+
+    // Pagination helpers
+
+    /// Get all databases in a subscription with automatic pagination (async)
+    fn all_databases<'py>(
+        &self,
+        py: Python<'py>,
+        subscription_id: i64,
+    ) -> PyResult<Bound<'py, PyAny>> {
+        let client = self.client.clone();
+        future_into_py(py, async move {
+            let handler = DatabaseHandler::new((*client).clone());
+            let dbs = handler
+                .get_all_databases(subscription_id as i32)
+                .await
+                .into_py_result()?;
+            let json = serde_json::to_value(&dbs)
+                .map_err(|e| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))?;
+            Python::with_gil(|py| Ok(json_to_py(py, json)))
+        })
+    }
+
+    /// Get all databases in a subscription with automatic pagination (sync)
+    fn all_databases_sync(&self, py: Python<'_>, subscription_id: i64) -> PyResult<Py<PyAny>> {
+        let client = self.client.clone();
+        let result = block_on(py, async move {
+            let handler = DatabaseHandler::new((*client).clone());
+            handler
+                .get_all_databases(subscription_id as i32)
+                .await
+                .into_py_result()
+        })?;
+        let json = serde_json::to_value(&result)
+            .map_err(|e| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))?;
+        Ok(json_to_py(py, json))
+    }
 }
 
 /// Convert serde_json::Value to Python object
@@ -350,3 +420,7 @@ pub fn py_to_json(py: Python<'_>, obj: Py<PyAny>) -> PyResult<serde_json::Value>
         ))
     }
 }
+
+// Note: Rust-side unit tests for json_to_py and py_to_json require linking
+// against Python which is complex in pure Rust test context. These functions
+// are tested via Python-side integration tests in tests/test_client.py instead.
