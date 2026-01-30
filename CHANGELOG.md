@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.0](https://github.com/redis-developer/redis-cloud-rs/compare/v0.8.0...v0.9.0) - 2026-01-30
+
+### Added
+
+- update Python bindings with new methods and add tests ([#33](https://github.com/redis-developer/redis-cloud-rs/pull/33))
+
+### Fixed
+
+- use Link type instead of HashMap for HATEOAS links ([#28](https://github.com/redis-developer/redis-cloud-rs/pull/28))
+- address multiple bugs in client and cost_report modules ([#25](https://github.com/redis-developer/redis-cloud-rs/pull/25))
+- add README to PyPI package ([#3](https://github.com/redis-developer/redis-cloud-rs/pull/3))
+
+### Other
+
+- code cleanup and add examples ([#42](https://github.com/redis-developer/redis-cloud-rs/pull/42))
+- align Rust types with Go client (rediscloud-go-api) ([#41](https://github.com/redis-developer/redis-cloud-rs/pull/41))
+- add dependency audit and code coverage ([#34](https://github.com/redis-developer/redis-cloud-rs/pull/34))
+- reduce VPC peering duplication and add pagination helpers ([#32](https://github.com/redis-developer/redis-cloud-rs/pull/32))
+- fix README examples and add handler method documentation ([#31](https://github.com/redis-developer/redis-cloud-rs/pull/31))
+- API cleanup and ergonomic improvements ([#30](https://github.com/redis-developer/redis-cloud-rs/pull/30))
+- improve type safety for response and request types ([#29](https://github.com/redis-developer/redis-cloud-rs/pull/29))
+- consolidate duplicate ProcessorResponse and error handling ([#26](https://github.com/redis-developer/redis-cloud-rs/pull/26))
+
 ## [0.8.0](https://github.com/redis-developer/redis-cloud-rs/compare/v0.7.6...v0.8.0) - 2026-01-30
 
 ### Added
