@@ -158,6 +158,290 @@ impl CloudClient {
         self.timeout
     }
 
+    // ========================================================================
+    // Fluent API - Handler accessors
+    // ========================================================================
+
+    /// Get an account handler for account management operations
+    ///
+    /// # Example
+    ///
+    /// ```rust,no_run
+    /// # use redis_cloud::CloudClient;
+    /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
+    /// let client = CloudClient::builder()
+    ///     .api_key("key")
+    ///     .api_secret("secret")
+    ///     .build()?;
+    ///
+    /// let account = client.account().get_current_account().await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub fn account(&self) -> crate::AccountHandler {
+        crate::AccountHandler::new(self.clone())
+    }
+
+    /// Get a subscription handler for Pro subscription operations
+    ///
+    /// # Example
+    ///
+    /// ```rust,no_run
+    /// # use redis_cloud::CloudClient;
+    /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
+    /// let client = CloudClient::builder()
+    ///     .api_key("key")
+    ///     .api_secret("secret")
+    ///     .build()?;
+    ///
+    /// let subscriptions = client.subscriptions().get_all_subscriptions().await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub fn subscriptions(&self) -> crate::SubscriptionHandler {
+        crate::SubscriptionHandler::new(self.clone())
+    }
+
+    /// Get a database handler for Pro database operations
+    ///
+    /// # Example
+    ///
+    /// ```rust,no_run
+    /// # use redis_cloud::CloudClient;
+    /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
+    /// let client = CloudClient::builder()
+    ///     .api_key("key")
+    ///     .api_secret("secret")
+    ///     .build()?;
+    ///
+    /// let databases = client.databases().get_subscription_databases(123, None, None).await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub fn databases(&self) -> crate::DatabaseHandler {
+        crate::DatabaseHandler::new(self.clone())
+    }
+
+    /// Get a fixed subscription handler for Essentials subscription operations
+    ///
+    /// # Example
+    ///
+    /// ```rust,no_run
+    /// # use redis_cloud::CloudClient;
+    /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
+    /// let client = CloudClient::builder()
+    ///     .api_key("key")
+    ///     .api_secret("secret")
+    ///     .build()?;
+    ///
+    /// let subscriptions = client.fixed_subscriptions().list().await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub fn fixed_subscriptions(&self) -> crate::FixedSubscriptionHandler {
+        crate::FixedSubscriptionHandler::new(self.clone())
+    }
+
+    /// Get a fixed database handler for Essentials database operations
+    ///
+    /// # Example
+    ///
+    /// ```rust,no_run
+    /// # use redis_cloud::CloudClient;
+    /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
+    /// let client = CloudClient::builder()
+    ///     .api_key("key")
+    ///     .api_secret("secret")
+    ///     .build()?;
+    ///
+    /// let databases = client.fixed_databases().list(123, None, None).await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub fn fixed_databases(&self) -> crate::FixedDatabaseHandler {
+        crate::FixedDatabaseHandler::new(self.clone())
+    }
+
+    /// Get an ACL handler for access control operations
+    ///
+    /// # Example
+    ///
+    /// ```rust,no_run
+    /// # use redis_cloud::CloudClient;
+    /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
+    /// let client = CloudClient::builder()
+    ///     .api_key("key")
+    ///     .api_secret("secret")
+    ///     .build()?;
+    ///
+    /// let users = client.acl().get_all_users().await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub fn acl(&self) -> crate::AclHandler {
+        crate::AclHandler::new(self.clone())
+    }
+
+    /// Get a users handler for user management operations
+    ///
+    /// # Example
+    ///
+    /// ```rust,no_run
+    /// # use redis_cloud::CloudClient;
+    /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
+    /// let client = CloudClient::builder()
+    ///     .api_key("key")
+    ///     .api_secret("secret")
+    ///     .build()?;
+    ///
+    /// let users = client.users().get_all_users().await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub fn users(&self) -> crate::UserHandler {
+        crate::UserHandler::new(self.clone())
+    }
+
+    /// Get a tasks handler for async operation tracking
+    ///
+    /// # Example
+    ///
+    /// ```rust,no_run
+    /// # use redis_cloud::CloudClient;
+    /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
+    /// let client = CloudClient::builder()
+    ///     .api_key("key")
+    ///     .api_secret("secret")
+    ///     .build()?;
+    ///
+    /// let tasks = client.tasks().get_all_tasks().await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub fn tasks(&self) -> crate::TaskHandler {
+        crate::TaskHandler::new(self.clone())
+    }
+
+    /// Get a cloud accounts handler for cloud provider integration
+    ///
+    /// # Example
+    ///
+    /// ```rust,no_run
+    /// # use redis_cloud::CloudClient;
+    /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
+    /// let client = CloudClient::builder()
+    ///     .api_key("key")
+    ///     .api_secret("secret")
+    ///     .build()?;
+    ///
+    /// let accounts = client.cloud_accounts().get_cloud_accounts().await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub fn cloud_accounts(&self) -> crate::CloudAccountHandler {
+        crate::CloudAccountHandler::new(self.clone())
+    }
+
+    /// Get a VPC peering handler for VPC peering operations
+    ///
+    /// # Example
+    ///
+    /// ```rust,no_run
+    /// # use redis_cloud::CloudClient;
+    /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
+    /// let client = CloudClient::builder()
+    ///     .api_key("key")
+    ///     .api_secret("secret")
+    ///     .build()?;
+    ///
+    /// let peering = client.vpc_peering().get(123).await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub fn vpc_peering(&self) -> crate::VpcPeeringHandler {
+        crate::VpcPeeringHandler::new(self.clone())
+    }
+
+    /// Get a transit gateway handler for AWS Transit Gateway operations
+    ///
+    /// # Example
+    ///
+    /// ```rust,no_run
+    /// # use redis_cloud::CloudClient;
+    /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
+    /// let client = CloudClient::builder()
+    ///     .api_key("key")
+    ///     .api_secret("secret")
+    ///     .build()?;
+    ///
+    /// let attachments = client.transit_gateway().get_attachments(123).await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub fn transit_gateway(&self) -> crate::TransitGatewayHandler {
+        crate::TransitGatewayHandler::new(self.clone())
+    }
+
+    /// Get a Private Service Connect handler for GCP PSC operations
+    ///
+    /// # Example
+    ///
+    /// ```rust,no_run
+    /// # use redis_cloud::CloudClient;
+    /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
+    /// let client = CloudClient::builder()
+    ///     .api_key("key")
+    ///     .api_secret("secret")
+    ///     .build()?;
+    ///
+    /// let service = client.psc().get_service(123).await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub fn psc(&self) -> crate::PscHandler {
+        crate::PscHandler::new(self.clone())
+    }
+
+    /// Get a PrivateLink handler for AWS PrivateLink operations
+    ///
+    /// # Example
+    ///
+    /// ```rust,no_run
+    /// # use redis_cloud::CloudClient;
+    /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
+    /// let client = CloudClient::builder()
+    ///     .api_key("key")
+    ///     .api_secret("secret")
+    ///     .build()?;
+    ///
+    /// let config = client.private_link().get(123).await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub fn private_link(&self) -> crate::PrivateLinkHandler {
+        crate::PrivateLinkHandler::new(self.clone())
+    }
+
+    /// Get a cost report handler for generating cost reports
+    ///
+    /// # Example
+    ///
+    /// ```rust,no_run
+    /// # use redis_cloud::CloudClient;
+    /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
+    /// let client = CloudClient::builder()
+    ///     .api_key("key")
+    ///     .api_secret("secret")
+    ///     .build()?;
+    ///
+    /// let handler = client.cost_reports();
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub fn cost_reports(&self) -> crate::CostReportHandler {
+        crate::CostReportHandler::new(self.clone())
+    }
+
     /// Normalize URL path concatenation to avoid double slashes
     fn normalize_url(&self, path: &str) -> String {
         let base = self.base_url.trim_end_matches('/');
