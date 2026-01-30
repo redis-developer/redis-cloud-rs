@@ -353,6 +353,22 @@ impl AclHandler {
     /// Gets a list of all Redis ACL rules for this account.
     ///
     /// GET /acl/redisRules
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use redis_cloud::CloudClient;
+    ///
+    /// # async fn example() -> redis_cloud::Result<()> {
+    /// let client = CloudClient::builder()
+    ///     .api_key("your-api-key")
+    ///     .api_secret("your-api-secret")
+    ///     .build()?;
+    ///
+    /// let rules = client.acl().get_all_redis_rules().await?;
+    /// # Ok(())
+    /// # }
+    /// ```
     pub async fn get_all_redis_rules(&self) -> Result<AccountACLRedisRules> {
         self.client.get("/acl/redisRules").await
     }
@@ -398,6 +414,22 @@ impl AclHandler {
     /// Gets a list of all database access roles for this account.
     ///
     /// GET /acl/roles
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use redis_cloud::CloudClient;
+    ///
+    /// # async fn example() -> redis_cloud::Result<()> {
+    /// let client = CloudClient::builder()
+    ///     .api_key("your-api-key")
+    ///     .api_secret("your-api-secret")
+    ///     .build()?;
+    ///
+    /// let roles = client.acl().get_roles().await?;
+    /// # Ok(())
+    /// # }
+    /// ```
     pub async fn get_roles(&self) -> Result<AccountACLRoles> {
         self.client.get("/acl/roles").await
     }

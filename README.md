@@ -27,10 +27,10 @@ A comprehensive Rust client library for the Redis Cloud REST API, with Python bi
 
 ```toml
 [dependencies]
-redis-cloud = "0.7"
+redis-cloud = "0.8"
 
 # Optional: Enable Tower service integration
-redis-cloud = { version = "0.7", features = ["tower-integration"] }
+redis-cloud = { version = "0.8", features = ["tower-integration"] }
 ```
 
 ## Quick Start
@@ -46,17 +46,37 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .api_secret("your-api-secret")
         .build()?;
 
-    // Get account information
-    let account = client.account().get().await?;
+    // Get account information using fluent API
+    let account = client.account().get_current_account().await?;
     println!("Account: {:?}", account);
 
     // List all subscriptions
-    let subscriptions = client.subscription().list().await?;
+    let subscriptions = client.subscriptions().get_all_subscriptions().await?;
     println!("Subscriptions: {:?}", subscriptions);
 
     // List databases in a subscription
-    let databases = client.database().list("subscription-id").await?;
+    let databases = client.databases().get_subscription_databases(123, None, None).await?;
     println!("Databases: {:?}", databases);
+
+    Ok(())
+}
+```
+
+You can also use explicit handler creation if preferred:
+
+```rust
+use redis_cloud::{CloudClient, SubscriptionHandler};
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let client = CloudClient::builder()
+        .api_key("your-api-key")
+        .api_secret("your-api-secret")
+        .build()?;
+
+    // Explicit handler creation
+    let handler = SubscriptionHandler::new(client.clone());
+    let subscriptions = handler.get_all_subscriptions().await?;
 
     Ok(())
 }

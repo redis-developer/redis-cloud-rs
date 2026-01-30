@@ -145,6 +145,23 @@ impl TasksHandler {
     /// Gets details and status of a single task by the Task ID.
     ///
     /// GET /tasks/{taskId}
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use redis_cloud::CloudClient;
+    ///
+    /// # async fn example() -> redis_cloud::Result<()> {
+    /// let client = CloudClient::builder()
+    ///     .api_key("your-api-key")
+    ///     .api_secret("your-api-secret")
+    ///     .build()?;
+    ///
+    /// let task = client.tasks().get_task_by_id("task-id".to_string()).await?;
+    /// println!("Task status: {:?}", task.status);
+    /// # Ok(())
+    /// # }
+    /// ```
     pub async fn get_task_by_id(&self, task_id: String) -> Result<TaskStateUpdate> {
         self.client.get(&format!("/tasks/{}", task_id)).await
     }

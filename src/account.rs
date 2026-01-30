@@ -304,6 +304,23 @@ impl AccountHandler {
     /// Gets information on this account.
     ///
     /// GET /
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use redis_cloud::CloudClient;
+    ///
+    /// # async fn example() -> redis_cloud::Result<()> {
+    /// let client = CloudClient::builder()
+    ///     .api_key("your-api-key")
+    ///     .api_secret("your-api-secret")
+    ///     .build()?;
+    ///
+    /// let account = client.account().get_current_account().await?;
+    /// println!("Account ID: {}", account.id);
+    /// # Ok(())
+    /// # }
+    /// ```
     pub async fn get_current_account(&self) -> Result<RootAccount> {
         self.client.get("/").await
     }

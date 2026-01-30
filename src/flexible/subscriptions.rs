@@ -859,9 +859,31 @@ impl SubscriptionHandler {
     }
 
     /// Get Pro subscriptions
+    ///
     /// Gets a list of all Pro subscriptions in the current account.
     ///
     /// GET /subscriptions
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use redis_cloud::CloudClient;
+    ///
+    /// # async fn example() -> redis_cloud::Result<()> {
+    /// let client = CloudClient::builder()
+    ///     .api_key("your-api-key")
+    ///     .api_secret("your-api-secret")
+    ///     .build()?;
+    ///
+    /// let subscriptions = client.subscriptions().get_all_subscriptions().await?;
+    ///
+    /// // Access subscription data from the extra field
+    /// if let Some(subs) = subscriptions.extra.get("subscriptions") {
+    ///     println!("Found {} subscriptions", subs.as_array().map(|a| a.len()).unwrap_or(0));
+    /// }
+    /// # Ok(())
+    /// # }
+    /// ```
     pub async fn get_all_subscriptions(&self) -> Result<AccountSubscriptions> {
         self.client.get("/subscriptions").await
     }
@@ -909,9 +931,30 @@ impl SubscriptionHandler {
     }
 
     /// Get a single Pro subscription
+    ///
     /// Gets information on the specified Pro subscription.
     ///
     /// GET /subscriptions/{subscriptionId}
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use redis_cloud::CloudClient;
+    ///
+    /// # async fn example() -> redis_cloud::Result<()> {
+    /// let client = CloudClient::builder()
+    ///     .api_key("your-api-key")
+    ///     .api_secret("your-api-secret")
+    ///     .build()?;
+    ///
+    /// let subscription = client.subscriptions().get_subscription_by_id(123).await?;
+    ///
+    /// println!("Subscription: {} (status: {:?})",
+    ///     subscription.name.unwrap_or_default(),
+    ///     subscription.status);
+    /// # Ok(())
+    /// # }
+    /// ```
     pub async fn get_subscription_by_id(&self, subscription_id: i32) -> Result<Subscription> {
         self.client
             .get(&format!("/subscriptions/{}", subscription_id))
