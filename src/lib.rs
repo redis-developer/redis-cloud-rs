@@ -277,12 +277,16 @@
 //! - Optional: set a custom base URL via the builder for non‑prod/test environments (defaults to `https://api.redislabs.com/v1`).
 
 pub mod client;
+pub mod error;
 
 #[cfg(test)]
 mod lib_tests;
 
 // Re-export client types
 pub use client::{CloudClient, CloudClientBuilder};
+
+// Re-export error types
+pub use error::{CloudError, Result};
 
 // Re-export Tower integration when feature is enabled
 #[cfg(feature = "tower-integration")]
@@ -339,77 +343,3 @@ pub use cost_report::CostReportHandler;
 pub use cost_report::{CostReportCreateRequest, CostReportFormat, SubscriptionType, Tag};
 pub use tasks::TasksHandler as TaskHandler;
 pub use users::UsersHandler as UserHandler;
-
-// Re-export error types
-use thiserror::Error;
-
-#[derive(Error, Debug, Clone)]
-pub enum CloudError {
-    #[error("HTTP request failed: {0}")]
-    Request(String),
-
-    #[error("Bad Request (400): {message}")]
-    BadRequest { message: String },
-
-    #[error("Authentication failed (401): {message}")]
-    AuthenticationFailed { message: String },
-
-    #[error("Forbidden (403): {message}")]
-    Forbidden { message: String },
-
-    #[error("Not Found (404): {message}")]
-    NotFound { message: String },
-
-    #[error("Precondition Failed (412): Feature flag for this flow is off")]
-    PreconditionFailed,
-
-    #[error("Rate Limited (429): {message}")]
-    RateLimited { message: String },
-
-    #[error("Internal Server Error (500): {message}")]
-    InternalServerError { message: String },
-
-    #[error("Service Unavailable (503): {message}")]
-    ServiceUnavailable { message: String },
-
-    #[error("API error ({code}): {message}")]
-    ApiError { code: u16, message: String },
-
-    #[error("Connection error: {0}")]
-    ConnectionError(String),
-
-    #[error("JSON error: {0}")]
-    JsonError(String),
-}
-
-impl CloudError {
-    /// Returns true if this error is retryable.
-    ///
-    /// Retryable errors include:
-    /// - Rate limited (429)
-    /// - Service unavailable (503)
-    /// - Connection/request errors (may be transient network issues)
-    pub fn is_retryable(&self) -> bool {
-        matches!(
-            self,
-            CloudError::RateLimited { .. }
-                | CloudError::ServiceUnavailable { .. }
-                | CloudError::Request(_)
-                | CloudError::ConnectionError(_)
-        )
-    }
-}
-
-impl From<reqwest::Error> for CloudError {
-    fn from(err: reqwest::Error) -> Self {
-        CloudError::Request(err.to_string())
-    }
-}
-
-impl From<serde_json::Error> for CloudError {
-    fn from(err: serde_json::Error) -> Self {
-        CloudError::JsonError(err.to_string())
-    }
-}
-
-pub type Result<T> = std::result::Result<T, CloudError>;
