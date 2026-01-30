@@ -1,7 +1,7 @@
 //! Cost Report Generation and Retrieval
 //!
 //! This module provides functionality for generating and downloading cost reports
-//! in FOCUS format from Redis Cloud. FOCUS (FinOps Cost and Usage Specification)
+//! in FOCUS format from Redis Cloud. FOCUS (`FinOps` Cost and Usage Specification)
 //! is an open standard for cloud cost data.
 //!
 //! # Overview
@@ -60,7 +60,7 @@
 //!
 //! The cost report follows the [FOCUS specification](https://focus.finops.org/),
 //! providing standardized columns including:
-//! - BilledCost, EffectiveCost, ListCost, ContractedCost
+//! - `BilledCost`, `EffectiveCost`, `ListCost`, `ContractedCost`
 //! - Resource identifiers (subscription, database)
 //! - Service categories and SKU details
 //! - Billing period and usage information
@@ -143,7 +143,7 @@ pub struct CostReportCreateRequest {
     pub start_date: String,
 
     /// End date for the report (YYYY-MM-DD format, required)
-    /// Must be after start_date and within 40 days of start_date
+    /// Must be after `start_date` and within 40 days of `start_date`
     pub end_date: String,
 
     /// Output format (csv or json, defaults to csv)
@@ -173,6 +173,7 @@ pub struct CostReportCreateRequest {
 
 impl CostReportCreateRequest {
     /// Create a new cost report request builder
+    #[must_use]
     pub fn builder() -> CostReportCreateRequestBuilder {
         CostReportCreateRequestBuilder::default()
     }
@@ -187,7 +188,7 @@ impl CostReportCreateRequest {
     }
 }
 
-/// Builder for CostReportCreateRequest
+/// Builder for `CostReportCreateRequest`
 #[derive(Debug, Clone, Default)]
 pub struct CostReportCreateRequestBuilder {
     start_date: Option<String>,
@@ -202,54 +203,63 @@ pub struct CostReportCreateRequestBuilder {
 
 impl CostReportCreateRequestBuilder {
     /// Set the start date (required, YYYY-MM-DD format)
+    #[must_use]
     pub fn start_date(mut self, date: impl Into<String>) -> Self {
         self.start_date = Some(date.into());
         self
     }
 
     /// Set the end date (required, YYYY-MM-DD format)
+    #[must_use]
     pub fn end_date(mut self, date: impl Into<String>) -> Self {
         self.end_date = Some(date.into());
         self
     }
 
     /// Set the output format
+    #[must_use]
     pub fn format(mut self, format: CostReportFormat) -> Self {
         self.format = Some(format);
         self
     }
 
     /// Filter by subscription IDs
+    #[must_use]
     pub fn subscription_ids(mut self, ids: Vec<i32>) -> Self {
         self.subscription_ids = Some(ids);
         self
     }
 
     /// Filter by database IDs
+    #[must_use]
     pub fn database_ids(mut self, ids: Vec<i32>) -> Self {
         self.database_ids = Some(ids);
         self
     }
 
     /// Filter by subscription type
+    #[must_use]
     pub fn subscription_type(mut self, sub_type: SubscriptionType) -> Self {
         self.subscription_type = Some(sub_type);
         self
     }
 
     /// Filter by regions
+    #[must_use]
     pub fn regions(mut self, regions: Vec<String>) -> Self {
         self.regions = Some(regions);
         self
     }
 
     /// Filter by tags
+    #[must_use]
     pub fn tags(mut self, tags: Vec<Tag>) -> Self {
         self.tags = Some(tags);
         self
     }
 
     /// Add a single tag filter
+    #[must_use]
     pub fn tag(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
         let tag = Tag::new(key, value);
         match &mut self.tags {
@@ -300,6 +310,7 @@ pub struct CostReportHandler {
 
 impl CostReportHandler {
     /// Create a new handler
+    #[must_use]
     pub fn new(client: CloudClient) -> Self {
         Self { client }
     }
@@ -309,8 +320,8 @@ impl CostReportHandler {
     /// Generates a cost report in FOCUS format for the specified time period
     /// and filters. The maximum date range is 40 days.
     ///
-    /// This is an asynchronous operation. The returned TaskStateUpdate contains
-    /// a task_id that can be used to track progress. Once complete, the task
+    /// This is an asynchronous operation. The returned `TaskStateUpdate` contains
+    /// a `task_id` that can be used to track progress. Once complete, the task
     /// response will contain the costReportId needed to download the report.
     ///
     /// POST /cost-report
@@ -319,7 +330,7 @@ impl CostReportHandler {
     /// * `request` - The cost report generation request with date range and filters
     ///
     /// # Returns
-    /// A TaskStateUpdate with the task ID for tracking the generation
+    /// A `TaskStateUpdate` with the task ID for tracking the generation
     ///
     /// # Example
     /// ```no_run
@@ -377,7 +388,7 @@ impl CostReportHandler {
     /// ```
     pub async fn download_cost_report(&self, cost_report_id: &str) -> Result<Vec<u8>> {
         self.client
-            .get_bytes(&format!("/cost-report/{}", cost_report_id))
+            .get_bytes(&format!("/cost-report/{cost_report_id}"))
             .await
     }
 }

@@ -105,7 +105,7 @@ pub struct GcpCreationScript {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub bash: Option<String>,
 
-    /// PowerShell script for endpoint creation
+    /// `PowerShell` script for endpoint creation
     #[serde(skip_serializing_if = "Option::is_none")]
     pub powershell: Option<String>,
 
@@ -152,7 +152,7 @@ pub struct GcpDeletionScript {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub bash: Option<String>,
 
-    /// PowerShell script for endpoint deletion
+    /// `PowerShell` script for endpoint deletion
     #[serde(skip_serializing_if = "Option::is_none")]
     pub powershell: Option<String>,
 }
@@ -164,6 +164,7 @@ pub struct PscHandler {
 
 impl PscHandler {
     /// Create a new PSC handler
+    #[must_use]
     pub fn new(client: CloudClient) -> Self {
         Self { client }
     }
@@ -176,8 +177,7 @@ impl PscHandler {
     pub async fn delete_service(&self, subscription_id: i32) -> Result<serde_json::Value> {
         self.client
             .delete(&format!(
-                "/subscriptions/{}/private-service-connect",
-                subscription_id
+                "/subscriptions/{subscription_id}/private-service-connect"
             ))
             .await?;
         Ok(serde_json::Value::Null)
@@ -187,8 +187,7 @@ impl PscHandler {
     pub async fn get_service(&self, subscription_id: i32) -> Result<TaskStateUpdate> {
         self.client
             .get(&format!(
-                "/subscriptions/{}/private-service-connect",
-                subscription_id
+                "/subscriptions/{subscription_id}/private-service-connect"
             ))
             .await
     }
@@ -197,7 +196,7 @@ impl PscHandler {
     pub async fn create_service(&self, subscription_id: i32) -> Result<TaskStateUpdate> {
         self.client
             .post(
-                &format!("/subscriptions/{}/private-service-connect", subscription_id),
+                &format!("/subscriptions/{subscription_id}/private-service-connect"),
                 &serde_json::json!({}),
             )
             .await
@@ -207,8 +206,7 @@ impl PscHandler {
     pub async fn get_endpoints(&self, subscription_id: i32) -> Result<TaskStateUpdate> {
         self.client
             .get(&format!(
-                "/subscriptions/{}/private-service-connect/endpoints",
-                subscription_id
+                "/subscriptions/{subscription_id}/private-service-connect/endpoints"
             ))
             .await
     }
@@ -221,10 +219,7 @@ impl PscHandler {
     ) -> Result<TaskStateUpdate> {
         self.client
             .post(
-                &format!(
-                    "/subscriptions/{}/private-service-connect/endpoints",
-                    subscription_id
-                ),
+                &format!("/subscriptions/{subscription_id}/private-service-connect/endpoints"),
                 request,
             )
             .await
@@ -238,8 +233,7 @@ impl PscHandler {
     ) -> Result<serde_json::Value> {
         self.client
             .delete(&format!(
-                "/subscriptions/{}/private-service-connect/endpoints/{}",
-                subscription_id, endpoint_id
+                "/subscriptions/{subscription_id}/private-service-connect/endpoints/{endpoint_id}"
             ))
             .await?;
         Ok(serde_json::Value::Null)
@@ -257,8 +251,7 @@ impl PscHandler {
         self.client
             .put(
                 &format!(
-                    "/subscriptions/{}/private-service-connect/{}/endpoints/{}",
-                    subscription_id, psc_service_id, endpoint_id
+                    "/subscriptions/{subscription_id}/private-service-connect/{psc_service_id}/endpoints/{endpoint_id}"
                 ),
                 request,
             )
@@ -273,8 +266,7 @@ impl PscHandler {
     ) -> Result<String> {
         self.client
             .get(&format!(
-                "/subscriptions/{}/private-service-connect/endpoints/{}/creationScripts",
-                subscription_id, endpoint_id
+                "/subscriptions/{subscription_id}/private-service-connect/endpoints/{endpoint_id}/creationScripts"
             ))
             .await
     }
@@ -287,8 +279,7 @@ impl PscHandler {
     ) -> Result<String> {
         self.client
             .get(&format!(
-                "/subscriptions/{}/private-service-connect/endpoints/{}/deletionScripts",
-                subscription_id, endpoint_id
+                "/subscriptions/{subscription_id}/private-service-connect/endpoints/{endpoint_id}/deletionScripts"
             ))
             .await
     }
@@ -304,8 +295,7 @@ impl PscHandler {
     ) -> Result<serde_json::Value> {
         self.client
             .delete(&format!(
-                "/subscriptions/{}/regions/private-service-connect",
-                subscription_id
+                "/subscriptions/{subscription_id}/regions/private-service-connect"
             ))
             .await?;
         Ok(serde_json::Value::Null)
@@ -315,8 +305,7 @@ impl PscHandler {
     pub async fn get_service_active_active(&self, subscription_id: i32) -> Result<TaskStateUpdate> {
         self.client
             .get(&format!(
-                "/subscriptions/{}/regions/private-service-connect",
-                subscription_id
+                "/subscriptions/{subscription_id}/regions/private-service-connect"
             ))
             .await
     }
@@ -328,10 +317,7 @@ impl PscHandler {
     ) -> Result<TaskStateUpdate> {
         self.client
             .post(
-                &format!(
-                    "/subscriptions/{}/regions/private-service-connect",
-                    subscription_id
-                ),
+                &format!("/subscriptions/{subscription_id}/regions/private-service-connect"),
                 &serde_json::json!({}),
             )
             .await
@@ -344,8 +330,7 @@ impl PscHandler {
     ) -> Result<TaskStateUpdate> {
         self.client
             .get(&format!(
-                "/subscriptions/{}/regions/private-service-connect/endpoints",
-                subscription_id
+                "/subscriptions/{subscription_id}/regions/private-service-connect/endpoints"
             ))
             .await
     }
@@ -359,8 +344,7 @@ impl PscHandler {
         self.client
             .post(
                 &format!(
-                    "/subscriptions/{}/regions/private-service-connect/endpoints",
-                    subscription_id
+                    "/subscriptions/{subscription_id}/regions/private-service-connect/endpoints"
                 ),
                 request,
             )
@@ -376,8 +360,7 @@ impl PscHandler {
     ) -> Result<serde_json::Value> {
         self.client
             .delete(&format!(
-                "/subscriptions/{}/regions/{}/private-service-connect/endpoints/{}",
-                subscription_id, region_id, endpoint_id
+                "/subscriptions/{subscription_id}/regions/{region_id}/private-service-connect/endpoints/{endpoint_id}"
             ))
             .await?;
         Ok(serde_json::Value::Null)
@@ -394,8 +377,7 @@ impl PscHandler {
         self.client
             .put(
                 &format!(
-                    "/subscriptions/{}/regions/{}/private-service-connect/{}/endpoints/{}",
-                    subscription_id, region_id, subscription_id, endpoint_id
+                    "/subscriptions/{subscription_id}/regions/{region_id}/private-service-connect/{subscription_id}/endpoints/{endpoint_id}"
                 ),
                 request,
             )
@@ -412,8 +394,7 @@ impl PscHandler {
     ) -> Result<String> {
         self.client
             .get(&format!(
-                "/subscriptions/{}/regions/{}/private-service-connect/{}/endpoints/{}/creationScripts",
-                subscription_id, region_id, psc_service_id, endpoint_id
+                "/subscriptions/{subscription_id}/regions/{region_id}/private-service-connect/{psc_service_id}/endpoints/{endpoint_id}/creationScripts"
             ))
             .await
     }
@@ -428,8 +409,7 @@ impl PscHandler {
     ) -> Result<String> {
         self.client
             .get(&format!(
-                "/subscriptions/{}/regions/{}/private-service-connect/{}/endpoints/{}/deletionScripts",
-                subscription_id, region_id, psc_service_id, endpoint_id
+                "/subscriptions/{subscription_id}/regions/{region_id}/private-service-connect/{psc_service_id}/endpoints/{endpoint_id}/deletionScripts"
             ))
             .await
     }

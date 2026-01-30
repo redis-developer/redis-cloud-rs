@@ -257,6 +257,7 @@ pub struct VpcPeeringHandler {
 
 impl VpcPeeringHandler {
     /// Create a new VPC peering handler
+    #[must_use]
     pub fn new(client: CloudClient) -> Self {
         Self { client }
     }
@@ -268,7 +269,7 @@ impl VpcPeeringHandler {
     /// Get VPC peering for subscription
     pub async fn get(&self, subscription_id: i32) -> Result<TaskStateUpdate> {
         self.client
-            .get(&format!("/subscriptions/{}/peerings", subscription_id))
+            .get(&format!("/subscriptions/{subscription_id}/peerings"))
             .await
     }
 
@@ -280,7 +281,7 @@ impl VpcPeeringHandler {
     ) -> Result<TaskStateUpdate> {
         self.client
             .post(
-                &format!("/subscriptions/{}/peerings", subscription_id),
+                &format!("/subscriptions/{subscription_id}/peerings"),
                 request,
             )
             .await
@@ -290,8 +291,7 @@ impl VpcPeeringHandler {
     pub async fn delete(&self, subscription_id: i32, peering_id: i32) -> Result<serde_json::Value> {
         self.client
             .delete(&format!(
-                "/subscriptions/{}/peerings/{}",
-                subscription_id, peering_id
+                "/subscriptions/{subscription_id}/peerings/{peering_id}"
             ))
             .await?;
         Ok(serde_json::Value::Null)
@@ -306,7 +306,7 @@ impl VpcPeeringHandler {
     ) -> Result<TaskStateUpdate> {
         self.client
             .put(
-                &format!("/subscriptions/{}/peerings/{}", subscription_id, peering_id),
+                &format!("/subscriptions/{subscription_id}/peerings/{peering_id}"),
                 request,
             )
             .await

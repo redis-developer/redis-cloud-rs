@@ -55,7 +55,7 @@ use std::collections::HashMap;
 // Models
 // ============================================================================
 
-/// RedisLabs Account Subscription Databases information
+/// `RedisLabs` Account Subscription Databases information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AccountFixedSubscriptionDatabases {
@@ -107,7 +107,7 @@ pub struct DatabaseTagUpdateRequest {
     pub command_type: Option<String>,
 }
 
-/// DynamicEndpoints
+/// `DynamicEndpoints`
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DynamicEndpoints {
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -152,7 +152,7 @@ pub struct DatabaseTagsUpdateRequest {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DatabaseSyncSourceSpec {
-    /// Redis URI of a source database. Example format: 'redis://user:password@host:port'. If the URI provided is a Redis Cloud database, only host and port should be provided. Example: 'redis://endpoint1:6379'.
+    /// Redis URI of a source database. Example format: 'redis://user:password@host:port'. If the URI provided is a Redis Cloud database, only host and port should be provided. Example: '<redis://endpoint1:6379>'.
     pub endpoint: String,
 
     /// Defines if encryption should be used to connect to the sync source. If not set the source is a Redis Cloud database, it will automatically detect if the source uses encryption.
@@ -315,7 +315,7 @@ pub struct CloudTags {
     pub links: Option<Vec<Link>>,
 }
 
-/// FixedDatabase
+/// `FixedDatabase`
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct FixedDatabase {
@@ -460,7 +460,7 @@ pub struct FixedDatabase {
     pub links: Option<Vec<Link>>,
 }
 
-/// DatabaseSlowLogEntries
+/// `DatabaseSlowLogEntries`
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DatabaseSlowLogEntries {
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -471,7 +471,7 @@ pub struct DatabaseSlowLogEntries {
     pub links: Option<Vec<Link>>,
 }
 
-/// TaskStateUpdate
+/// `TaskStateUpdate`
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TaskStateUpdate {
@@ -568,7 +568,7 @@ pub struct FixedDatabaseCreateRequest {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub regex_rules: Option<Vec<String>>,
 
-    /// Optional. This database will be a replica of the specified Redis databases provided as one or more URI(s). Example: 'redis://user:password@host:port'. If the URI provided is a Redis Cloud database, only host and port should be provided. Example: ['redis://endpoint1:6379', 'redis://endpoint2:6380'].
+    /// Optional. This database will be a replica of the specified Redis databases provided as one or more URI(s). Example: 'redis://user:password@host:port'. If the URI provided is a Redis Cloud database, only host and port should be provided. Example: ['<redis://endpoint1:6379>', '<redis://endpoint2:6380>'].
     #[serde(skip_serializing_if = "Option::is_none")]
     pub replica_of: Option<Vec<String>>,
 
@@ -665,7 +665,7 @@ pub struct FixedDatabaseUpdateRequest {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub source_ips: Option<Vec<String>>,
 
-    /// Optional. This database will be a replica of the specified Redis databases provided as one or more URI (sample format: 'redis://user:password@host:port)'. If the URI provided is Redis Cloud instance, only host and port should be provided (using the format: ['redis://endpoint1:6379', 'redis://endpoint2:6380'] ).
+    /// Optional. This database will be a replica of the specified Redis databases provided as one or more URI (sample format: 'redis://user:password@host:port)'. If the URI provided is Redis Cloud instance, only host and port should be provided (using the format: ['<redis://endpoint1:6379>', '<redis://endpoint2:6380>'] ).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub replica_of: Option<Vec<String>>,
 
@@ -718,6 +718,7 @@ pub struct FixedDatabaseHandler {
 
 impl FixedDatabaseHandler {
     /// Create a new handler
+    #[must_use]
     pub fn new(client: CloudClient) -> Self {
         Self { client }
     }
@@ -734,10 +735,10 @@ impl FixedDatabaseHandler {
     ) -> Result<AccountFixedSubscriptionDatabases> {
         let mut query = Vec::new();
         if let Some(v) = offset {
-            query.push(format!("offset={}", v));
+            query.push(format!("offset={v}"));
         }
         if let Some(v) = limit {
-            query.push(format!("limit={}", v));
+            query.push(format!("limit={v}"));
         }
         let query_string = if query.is_empty() {
             String::new()
@@ -746,8 +747,7 @@ impl FixedDatabaseHandler {
         };
         self.client
             .get(&format!(
-                "/fixed/subscriptions/{}/databases{}",
-                subscription_id, query_string
+                "/fixed/subscriptions/{subscription_id}/databases{query_string}"
             ))
             .await
     }
@@ -763,7 +763,7 @@ impl FixedDatabaseHandler {
     ) -> Result<TaskStateUpdate> {
         self.client
             .post(
-                &format!("/fixed/subscriptions/{}/databases", subscription_id),
+                &format!("/fixed/subscriptions/{subscription_id}/databases"),
                 request,
             )
             .await
@@ -781,8 +781,7 @@ impl FixedDatabaseHandler {
         let response = self
             .client
             .delete_raw(&format!(
-                "/fixed/subscriptions/{}/databases/{}",
-                subscription_id, database_id
+                "/fixed/subscriptions/{subscription_id}/databases/{database_id}"
             ))
             .await?;
         serde_json::from_value(response).map_err(Into::into)
@@ -795,8 +794,7 @@ impl FixedDatabaseHandler {
     pub async fn get_by_id(&self, subscription_id: i32, database_id: i32) -> Result<FixedDatabase> {
         self.client
             .get(&format!(
-                "/fixed/subscriptions/{}/databases/{}",
-                subscription_id, database_id
+                "/fixed/subscriptions/{subscription_id}/databases/{database_id}"
             ))
             .await
     }
@@ -813,10 +811,7 @@ impl FixedDatabaseHandler {
     ) -> Result<TaskStateUpdate> {
         self.client
             .put(
-                &format!(
-                    "/fixed/subscriptions/{}/databases/{}",
-                    subscription_id, database_id
-                ),
+                &format!("/fixed/subscriptions/{subscription_id}/databases/{database_id}"),
                 request,
             )
             .await
@@ -833,8 +828,7 @@ impl FixedDatabaseHandler {
     ) -> Result<TaskStateUpdate> {
         self.client
             .get(&format!(
-                "/fixed/subscriptions/{}/databases/{}/backup",
-                subscription_id, database_id
+                "/fixed/subscriptions/{subscription_id}/databases/{database_id}/backup"
             ))
             .await
     }
@@ -851,10 +845,7 @@ impl FixedDatabaseHandler {
     ) -> Result<TaskStateUpdate> {
         self.client
             .post(
-                &format!(
-                    "/fixed/subscriptions/{}/databases/{}/backup",
-                    subscription_id, database_id
-                ),
+                &format!("/fixed/subscriptions/{subscription_id}/databases/{database_id}/backup"),
                 request,
             )
             .await
@@ -871,8 +862,7 @@ impl FixedDatabaseHandler {
     ) -> Result<TaskStateUpdate> {
         self.client
             .get(&format!(
-                "/fixed/subscriptions/{}/databases/{}/import",
-                subscription_id, database_id
+                "/fixed/subscriptions/{subscription_id}/databases/{database_id}/import"
             ))
             .await
     }
@@ -889,10 +879,7 @@ impl FixedDatabaseHandler {
     ) -> Result<TaskStateUpdate> {
         self.client
             .post(
-                &format!(
-                    "/fixed/subscriptions/{}/databases/{}/import",
-                    subscription_id, database_id
-                ),
+                &format!("/fixed/subscriptions/{subscription_id}/databases/{database_id}/import"),
                 request,
             )
             .await
@@ -909,8 +896,7 @@ impl FixedDatabaseHandler {
     ) -> Result<DatabaseSlowLogEntries> {
         self.client
             .get(&format!(
-                "/fixed/subscriptions/{}/databases/{}/slow-log",
-                subscription_id, database_id
+                "/fixed/subscriptions/{subscription_id}/databases/{database_id}/slow-log"
             ))
             .await
     }
@@ -922,8 +908,7 @@ impl FixedDatabaseHandler {
     pub async fn get_tags(&self, subscription_id: i32, database_id: i32) -> Result<CloudTags> {
         self.client
             .get(&format!(
-                "/fixed/subscriptions/{}/databases/{}/tags",
-                subscription_id, database_id
+                "/fixed/subscriptions/{subscription_id}/databases/{database_id}/tags"
             ))
             .await
     }
@@ -940,10 +925,7 @@ impl FixedDatabaseHandler {
     ) -> Result<CloudTag> {
         self.client
             .post(
-                &format!(
-                    "/fixed/subscriptions/{}/databases/{}/tags",
-                    subscription_id, database_id
-                ),
+                &format!("/fixed/subscriptions/{subscription_id}/databases/{database_id}/tags"),
                 request,
             )
             .await
@@ -961,10 +943,7 @@ impl FixedDatabaseHandler {
     ) -> Result<CloudTags> {
         self.client
             .put(
-                &format!(
-                    "/fixed/subscriptions/{}/databases/{}/tags",
-                    subscription_id, database_id
-                ),
+                &format!("/fixed/subscriptions/{subscription_id}/databases/{database_id}/tags"),
                 request,
             )
             .await
@@ -983,8 +962,7 @@ impl FixedDatabaseHandler {
         let response = self
             .client
             .delete_raw(&format!(
-                "/fixed/subscriptions/{}/databases/{}/tags/{}",
-                subscription_id, database_id, tag_key
+                "/fixed/subscriptions/{subscription_id}/databases/{database_id}/tags/{tag_key}"
             ))
             .await?;
         serde_json::from_value(response).map_err(Into::into)
@@ -1004,8 +982,7 @@ impl FixedDatabaseHandler {
         self.client
             .put(
                 &format!(
-                    "/fixed/subscriptions/{}/databases/{}/tags/{}",
-                    subscription_id, database_id, tag_key
+                    "/fixed/subscriptions/{subscription_id}/databases/{database_id}/tags/{tag_key}"
                 ),
                 request,
             )
@@ -1027,8 +1004,7 @@ impl FixedDatabaseHandler {
     ) -> Result<Value> {
         self.client
             .get_raw(&format!(
-                "/fixed/subscriptions/{}/databases/{}/available-target-versions",
-                subscription_id, database_id
+                "/fixed/subscriptions/{subscription_id}/databases/{database_id}/available-target-versions"
             ))
             .await
     }
@@ -1044,8 +1020,7 @@ impl FixedDatabaseHandler {
     ) -> Result<Value> {
         self.client
             .get_raw(&format!(
-                "/fixed/subscriptions/{}/databases/{}/upgrade",
-                subscription_id, database_id
+                "/fixed/subscriptions/{subscription_id}/databases/{database_id}/upgrade"
             ))
             .await
     }
@@ -1065,10 +1040,7 @@ impl FixedDatabaseHandler {
         });
         self.client
             .post_raw(
-                &format!(
-                    "/fixed/subscriptions/{}/databases/{}/upgrade",
-                    subscription_id, database_id
-                ),
+                &format!("/fixed/subscriptions/{subscription_id}/databases/{database_id}/upgrade"),
                 request,
             )
             .await

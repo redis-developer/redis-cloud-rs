@@ -57,7 +57,7 @@ use serde::{Deserialize, Serialize};
 // Models
 // ============================================================================
 
-/// RedisVersions
+/// `RedisVersions`
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RedisVersions {
@@ -214,12 +214,16 @@ pub struct FixedSubscriptions {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub account_id: Option<i32>,
 
+    /// List of Essentials subscriptions
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub subscriptions: Option<Vec<FixedSubscription>>,
+
     /// HATEOAS links
     #[serde(skip_serializing_if = "Option::is_none")]
     pub links: Option<Vec<Link>>,
 }
 
-/// RedisVersion
+/// `RedisVersion`
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RedisVersion {
@@ -323,7 +327,7 @@ pub struct FixedSubscription {
     pub links: Option<Vec<Link>>,
 }
 
-/// TaskStateUpdate
+/// `TaskStateUpdate`
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TaskStateUpdate {
@@ -364,6 +368,7 @@ pub struct FixedSubscriptionHandler {
 
 impl FixedSubscriptionHandler {
     /// Create a new handler
+    #[must_use]
     pub fn new(client: CloudClient) -> Self {
         Self { client }
     }
@@ -379,10 +384,10 @@ impl FixedSubscriptionHandler {
     ) -> Result<FixedSubscriptionsPlans> {
         let mut query = Vec::new();
         if let Some(v) = provider {
-            query.push(format!("provider={}", v));
+            query.push(format!("provider={v}"));
         }
         if let Some(v) = redis_flex {
-            query.push(format!("redisFlex={}", v));
+            query.push(format!("redisFlex={v}"));
         }
         let query_string = if query.is_empty() {
             String::new()
@@ -390,7 +395,7 @@ impl FixedSubscriptionHandler {
             format!("?{}", query.join("&"))
         };
         self.client
-            .get(&format!("/fixed/plans{}", query_string))
+            .get(&format!("/fixed/plans{query_string}"))
             .await
     }
 
@@ -403,7 +408,7 @@ impl FixedSubscriptionHandler {
         subscription_id: i32,
     ) -> Result<FixedSubscriptionsPlans> {
         self.client
-            .get(&format!("/fixed/plans/subscriptions/{}", subscription_id))
+            .get(&format!("/fixed/plans/subscriptions/{subscription_id}"))
             .await
     }
 
@@ -412,7 +417,7 @@ impl FixedSubscriptionHandler {
     ///
     /// GET /fixed/plans/{planId}
     pub async fn get_plan_by_id(&self, plan_id: i32) -> Result<FixedSubscriptionsPlan> {
-        self.client.get(&format!("/fixed/plans/{}", plan_id)).await
+        self.client.get(&format!("/fixed/plans/{plan_id}")).await
     }
 
     /// Get available Redis database versions for specific Essentials subscription
@@ -421,14 +426,14 @@ impl FixedSubscriptionHandler {
     /// GET /fixed/redis-versions
     pub async fn get_redis_versions(&self, subscription_id: i32) -> Result<RedisVersions> {
         let mut query = Vec::new();
-        query.push(format!("subscriptionId={}", subscription_id));
+        query.push(format!("subscriptionId={subscription_id}"));
         let query_string = if query.is_empty() {
             String::new()
         } else {
             format!("?{}", query.join("&"))
         };
         self.client
-            .get(&format!("/fixed/redis-versions{}", query_string))
+            .get(&format!("/fixed/redis-versions{query_string}"))
             .await
     }
 
@@ -458,7 +463,7 @@ impl FixedSubscriptionHandler {
     pub async fn delete_by_id(&self, subscription_id: i32) -> Result<TaskStateUpdate> {
         let response = self
             .client
-            .delete_raw(&format!("/fixed/subscriptions/{}", subscription_id))
+            .delete_raw(&format!("/fixed/subscriptions/{subscription_id}"))
             .await?;
         serde_json::from_value(response).map_err(Into::into)
     }
@@ -469,7 +474,7 @@ impl FixedSubscriptionHandler {
     /// GET /fixed/subscriptions/{subscriptionId}
     pub async fn get_by_id(&self, subscription_id: i32) -> Result<FixedSubscription> {
         self.client
-            .get(&format!("/fixed/subscriptions/{}", subscription_id))
+            .get(&format!("/fixed/subscriptions/{subscription_id}"))
             .await
     }
 
@@ -483,10 +488,7 @@ impl FixedSubscriptionHandler {
         request: &FixedSubscriptionUpdateRequest,
     ) -> Result<TaskStateUpdate> {
         self.client
-            .put(
-                &format!("/fixed/subscriptions/{}", subscription_id),
-                request,
-            )
+            .put(&format!("/fixed/subscriptions/{subscription_id}"), request)
             .await
     }
 }

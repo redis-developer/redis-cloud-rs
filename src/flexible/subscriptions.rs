@@ -170,7 +170,7 @@ pub struct SubscriptionUpdateCMKRequest {
     pub customer_managed_keys: Vec<CustomerManagedKey>,
 }
 
-/// SubscriptionPricings
+/// `SubscriptionPricings`
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SubscriptionPricings {
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -217,7 +217,7 @@ pub struct CidrAllowlistUpdateRequest {
     pub command_type: Option<String>,
 }
 
-/// SubscriptionMaintenanceWindowsSpec
+/// `SubscriptionMaintenanceWindowsSpec`
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SubscriptionMaintenanceWindowsSpec {
     /// Maintenance window mode: either 'manual' or 'automatic'. Must provide 'windows' if manual.
@@ -228,7 +228,7 @@ pub struct SubscriptionMaintenanceWindowsSpec {
     pub windows: Option<Vec<MaintenanceWindowSpec>>,
 }
 
-/// MaintenanceWindowSkipStatus
+/// `MaintenanceWindowSkipStatus`
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct MaintenanceWindowSkipStatus {
@@ -251,7 +251,7 @@ pub struct ActiveActiveSubscriptionRegions {
     pub links: Option<Vec<Link>>,
 }
 
-/// SubscriptionPricing
+/// `SubscriptionPricing`
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SubscriptionPricing {
@@ -443,7 +443,7 @@ pub struct SubscriptionRegionNetworkingSpec {
     pub security_group_id: Option<String>,
 }
 
-/// RedisVersion
+/// `RedisVersion`
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RedisVersion {
@@ -460,7 +460,7 @@ pub struct RedisVersion {
     pub is_default: Option<bool>,
 }
 
-/// MaintenanceWindow
+/// `MaintenanceWindow`
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct MaintenanceWindow {
@@ -537,7 +537,7 @@ pub struct SubscriptionNetworking {
     pub subnet_id: Option<String>,
 }
 
-/// RedisLabs Subscription information
+/// `RedisLabs` Subscription information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 /// Subscription
@@ -636,7 +636,7 @@ pub struct MaintenanceWindowSpec {
     pub days: Vec<String>,
 }
 
-/// RedisLabs list of subscriptions in current account
+/// `RedisLabs` list of subscriptions in current account
 ///
 /// Response from GET /subscriptions
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -693,7 +693,7 @@ pub struct ActiveActiveRegionCreateRequest {
     pub command_type: Option<String>,
 }
 
-/// RedisVersions
+/// `RedisVersions`
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RedisVersions {
@@ -728,7 +728,7 @@ pub struct ActiveActiveRegionToDelete {
     pub region: Option<String>,
 }
 
-/// TaskStateUpdate
+/// `TaskStateUpdate`
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TaskStateUpdate {
@@ -774,7 +774,7 @@ pub struct SubscriptionRegionSpec {
     pub networking: Option<SubscriptionRegionNetworkingSpec>,
 }
 
-/// SubscriptionMaintenanceWindows
+/// `SubscriptionMaintenanceWindows`
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SubscriptionMaintenanceWindows {
@@ -805,6 +805,7 @@ pub struct SubscriptionHandler {
 
 impl SubscriptionHandler {
     /// Create a new handler
+    #[must_use]
     pub fn new(client: CloudClient) -> Self {
         Self { client }
     }
@@ -857,7 +858,7 @@ impl SubscriptionHandler {
     pub async fn get_redis_versions(&self, subscription_id: Option<i32>) -> Result<RedisVersions> {
         let mut query = Vec::new();
         if let Some(v) = subscription_id {
-            query.push(format!("subscriptionId={}", v));
+            query.push(format!("subscriptionId={v}"));
         }
         let query_string = if query.is_empty() {
             String::new()
@@ -865,7 +866,7 @@ impl SubscriptionHandler {
             format!("?{}", query.join("&"))
         };
         self.client
-            .get(&format!("/subscriptions/redis-versions{}", query_string))
+            .get(&format!("/subscriptions/redis-versions{query_string}"))
             .await
     }
 
@@ -876,7 +877,7 @@ impl SubscriptionHandler {
     pub async fn delete_subscription_by_id(&self, subscription_id: i32) -> Result<TaskStateUpdate> {
         let response = self
             .client
-            .delete_raw(&format!("/subscriptions/{}", subscription_id))
+            .delete_raw(&format!("/subscriptions/{subscription_id}"))
             .await?;
         serde_json::from_value(response).map_err(Into::into)
     }
@@ -908,7 +909,7 @@ impl SubscriptionHandler {
     /// ```
     pub async fn get_subscription_by_id(&self, subscription_id: i32) -> Result<Subscription> {
         self.client
-            .get(&format!("/subscriptions/{}", subscription_id))
+            .get(&format!("/subscriptions/{subscription_id}"))
             .await
     }
 
@@ -922,7 +923,7 @@ impl SubscriptionHandler {
         request: &BaseSubscriptionUpdateRequest,
     ) -> Result<TaskStateUpdate> {
         self.client
-            .put(&format!("/subscriptions/{}", subscription_id), request)
+            .put(&format!("/subscriptions/{subscription_id}"), request)
             .await
     }
 
@@ -932,7 +933,7 @@ impl SubscriptionHandler {
     /// GET /subscriptions/{subscriptionId}/cidr
     pub async fn get_cidr_allowlist(&self, subscription_id: i32) -> Result<TaskStateUpdate> {
         self.client
-            .get(&format!("/subscriptions/{}/cidr", subscription_id))
+            .get(&format!("/subscriptions/{subscription_id}/cidr"))
             .await
     }
 
@@ -946,7 +947,7 @@ impl SubscriptionHandler {
         request: &CidrAllowlistUpdateRequest,
     ) -> Result<TaskStateUpdate> {
         self.client
-            .put(&format!("/subscriptions/{}/cidr", subscription_id), request)
+            .put(&format!("/subscriptions/{subscription_id}/cidr"), request)
             .await
     }
 
@@ -960,8 +961,7 @@ impl SubscriptionHandler {
     ) -> Result<SubscriptionMaintenanceWindows> {
         self.client
             .get(&format!(
-                "/subscriptions/{}/maintenance-windows",
-                subscription_id
+                "/subscriptions/{subscription_id}/maintenance-windows"
             ))
             .await
     }
@@ -977,7 +977,7 @@ impl SubscriptionHandler {
     ) -> Result<TaskStateUpdate> {
         self.client
             .put(
-                &format!("/subscriptions/{}/maintenance-windows", subscription_id),
+                &format!("/subscriptions/{subscription_id}/maintenance-windows"),
                 request,
             )
             .await
@@ -992,7 +992,7 @@ impl SubscriptionHandler {
         subscription_id: i32,
     ) -> Result<SubscriptionPricings> {
         self.client
-            .get(&format!("/subscriptions/{}/pricing", subscription_id))
+            .get(&format!("/subscriptions/{subscription_id}/pricing"))
             .await
     }
 
@@ -1009,7 +1009,7 @@ impl SubscriptionHandler {
         let _ = request; // Suppress unused variable warning
         let response = self
             .client
-            .delete_raw(&format!("/subscriptions/{}/regions", subscription_id))
+            .delete_raw(&format!("/subscriptions/{subscription_id}/regions"))
             .await?;
         serde_json::from_value(response).map_err(Into::into)
     }
@@ -1023,7 +1023,7 @@ impl SubscriptionHandler {
         subscription_id: i32,
     ) -> Result<ActiveActiveSubscriptionRegions> {
         self.client
-            .get(&format!("/subscriptions/{}/regions", subscription_id))
+            .get(&format!("/subscriptions/{subscription_id}/regions"))
             .await
     }
 
@@ -1038,7 +1038,7 @@ impl SubscriptionHandler {
     ) -> Result<TaskStateUpdate> {
         self.client
             .post(
-                &format!("/subscriptions/{}/regions", subscription_id),
+                &format!("/subscriptions/{subscription_id}/regions"),
                 request,
             )
             .await

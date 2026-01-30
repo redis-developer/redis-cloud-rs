@@ -73,7 +73,7 @@ pub struct TaskStateUpdate {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub task_id: Option<String>,
 
-    /// Type of command being executed (e.g., "CREATE_DATABASE", "DELETE_SUBSCRIPTION")
+    /// Type of command being executed (e.g., "`CREATE_DATABASE`", "`DELETE_SUBSCRIPTION`")
     #[serde(skip_serializing_if = "Option::is_none")]
     pub command_type: Option<String>,
 
@@ -116,6 +116,7 @@ pub struct TasksHandler {
 
 impl TasksHandler {
     /// Create a new handler
+    #[must_use]
     pub fn new(client: CloudClient) -> Self {
         Self { client }
     }
@@ -158,6 +159,6 @@ impl TasksHandler {
     /// # }
     /// ```
     pub async fn get_task_by_id(&self, task_id: String) -> Result<TaskStateUpdate> {
-        self.client.get(&format!("/tasks/{}", task_id)).await
+        self.client.get(&format!("/tasks/{task_id}")).await
     }
 }

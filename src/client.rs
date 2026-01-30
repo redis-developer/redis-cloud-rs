@@ -16,10 +16,10 @@ use tracing::{debug, instrument, trace};
 /// Default user agent for the Redis Cloud client
 const DEFAULT_USER_AGENT: &str = concat!("redis-cloud/", env!("CARGO_PKG_VERSION"));
 
-/// Builder for constructing a CloudClient with custom configuration
+/// Builder for constructing a `CloudClient` with custom configuration
 ///
 /// Provides a fluent interface for configuring API credentials, base URL, timeouts,
-/// and other client settings before creating the final CloudClient instance.
+/// and other client settings before creating the final `CloudClient` instance.
 ///
 /// # Examples
 ///
@@ -64,29 +64,34 @@ impl Default for CloudClientBuilder {
 
 impl CloudClientBuilder {
     /// Create a new builder
+    #[must_use]
     pub fn new() -> Self {
         Self::default()
     }
 
     /// Set the API key
+    #[must_use]
     pub fn api_key(mut self, key: impl Into<String>) -> Self {
         self.api_key = Some(key.into());
         self
     }
 
     /// Set the API secret
+    #[must_use]
     pub fn api_secret(mut self, secret: impl Into<String>) -> Self {
         self.api_secret = Some(secret.into());
         self
     }
 
     /// Set the base URL
+    #[must_use]
     pub fn base_url(mut self, url: impl Into<String>) -> Self {
         self.base_url = url.into();
         self
     }
 
     /// Set the timeout
+    #[must_use]
     pub fn timeout(mut self, timeout: std::time::Duration) -> Self {
         self.timeout = timeout;
         self
@@ -97,6 +102,7 @@ impl CloudClientBuilder {
     /// The default user agent is `redis-cloud/{version}`.
     /// This can be overridden to identify specific clients, for example:
     /// `redisctl/1.2.3` or `my-app/1.0.0`.
+    #[must_use]
     pub fn user_agent(mut self, user_agent: impl Into<String>) -> Self {
         self.user_agent = user_agent.into();
         self
@@ -115,7 +121,7 @@ impl CloudClientBuilder {
         default_headers.insert(
             USER_AGENT,
             HeaderValue::from_str(&self.user_agent)
-                .map_err(|e| RestError::ConnectionError(format!("Invalid user agent: {}", e)))?,
+                .map_err(|e| RestError::ConnectionError(format!("Invalid user agent: {e}")))?,
         );
 
         let client = Client::builder()
@@ -146,6 +152,7 @@ pub struct CloudClient {
 
 impl CloudClient {
     /// Create a new builder for the client
+    #[must_use]
     pub fn builder() -> CloudClientBuilder {
         CloudClientBuilder::new()
     }
@@ -154,6 +161,7 @@ impl CloudClient {
     ///
     /// Returns the timeout duration that was set when building the client.
     /// This timeout is applied to all HTTP requests made by this client.
+    #[must_use]
     pub fn timeout(&self) -> std::time::Duration {
         self.timeout
     }
@@ -178,6 +186,7 @@ impl CloudClient {
     /// # Ok(())
     /// # }
     /// ```
+    #[must_use]
     pub fn account(&self) -> crate::AccountHandler {
         crate::AccountHandler::new(self.clone())
     }
@@ -198,6 +207,7 @@ impl CloudClient {
     /// # Ok(())
     /// # }
     /// ```
+    #[must_use]
     pub fn subscriptions(&self) -> crate::SubscriptionHandler {
         crate::SubscriptionHandler::new(self.clone())
     }
@@ -218,6 +228,7 @@ impl CloudClient {
     /// # Ok(())
     /// # }
     /// ```
+    #[must_use]
     pub fn databases(&self) -> crate::DatabaseHandler {
         crate::DatabaseHandler::new(self.clone())
     }
@@ -238,6 +249,7 @@ impl CloudClient {
     /// # Ok(())
     /// # }
     /// ```
+    #[must_use]
     pub fn fixed_subscriptions(&self) -> crate::FixedSubscriptionHandler {
         crate::FixedSubscriptionHandler::new(self.clone())
     }
@@ -258,6 +270,7 @@ impl CloudClient {
     /// # Ok(())
     /// # }
     /// ```
+    #[must_use]
     pub fn fixed_databases(&self) -> crate::FixedDatabaseHandler {
         crate::FixedDatabaseHandler::new(self.clone())
     }
@@ -278,6 +291,7 @@ impl CloudClient {
     /// # Ok(())
     /// # }
     /// ```
+    #[must_use]
     pub fn acl(&self) -> crate::AclHandler {
         crate::AclHandler::new(self.clone())
     }
@@ -298,6 +312,7 @@ impl CloudClient {
     /// # Ok(())
     /// # }
     /// ```
+    #[must_use]
     pub fn users(&self) -> crate::UserHandler {
         crate::UserHandler::new(self.clone())
     }
@@ -318,6 +333,7 @@ impl CloudClient {
     /// # Ok(())
     /// # }
     /// ```
+    #[must_use]
     pub fn tasks(&self) -> crate::TaskHandler {
         crate::TaskHandler::new(self.clone())
     }
@@ -338,6 +354,7 @@ impl CloudClient {
     /// # Ok(())
     /// # }
     /// ```
+    #[must_use]
     pub fn cloud_accounts(&self) -> crate::CloudAccountHandler {
         crate::CloudAccountHandler::new(self.clone())
     }
@@ -358,6 +375,7 @@ impl CloudClient {
     /// # Ok(())
     /// # }
     /// ```
+    #[must_use]
     pub fn vpc_peering(&self) -> crate::VpcPeeringHandler {
         crate::VpcPeeringHandler::new(self.clone())
     }
@@ -378,6 +396,7 @@ impl CloudClient {
     /// # Ok(())
     /// # }
     /// ```
+    #[must_use]
     pub fn transit_gateway(&self) -> crate::TransitGatewayHandler {
         crate::TransitGatewayHandler::new(self.clone())
     }
@@ -398,11 +417,12 @@ impl CloudClient {
     /// # Ok(())
     /// # }
     /// ```
+    #[must_use]
     pub fn psc(&self) -> crate::PscHandler {
         crate::PscHandler::new(self.clone())
     }
 
-    /// Get a PrivateLink handler for AWS PrivateLink operations
+    /// Get a `PrivateLink` handler for AWS `PrivateLink` operations
     ///
     /// # Example
     ///
@@ -418,6 +438,7 @@ impl CloudClient {
     /// # Ok(())
     /// # }
     /// ```
+    #[must_use]
     pub fn private_link(&self) -> crate::PrivateLinkHandler {
         crate::PrivateLinkHandler::new(self.clone())
     }
@@ -438,6 +459,7 @@ impl CloudClient {
     /// # Ok(())
     /// # }
     /// ```
+    #[must_use]
     pub fn cost_reports(&self) -> crate::CostReportHandler {
         crate::CostReportHandler::new(self.clone())
     }
@@ -446,7 +468,7 @@ impl CloudClient {
     fn normalize_url(&self, path: &str) -> String {
         let base = self.base_url.trim_end_matches('/');
         let path = path.trim_start_matches('/');
-        format!("{}/{}", base, path)
+        format!("{base}/{path}")
     }
 
     /// Convert HTTP status code and response text to appropriate error
@@ -562,7 +584,7 @@ impl CloudClient {
             let text = response
                 .text()
                 .await
-                .unwrap_or_else(|e| format!("(failed to read response body: {})", e));
+                .unwrap_or_else(|e| format!("(failed to read response body: {e})"));
             Err(Self::status_to_error(status, text))
         }
     }
@@ -597,12 +619,12 @@ impl CloudClient {
                 .bytes()
                 .await
                 .map(|b| b.to_vec())
-                .map_err(|e| RestError::ConnectionError(format!("Failed to read response: {}", e)))
+                .map_err(|e| RestError::ConnectionError(format!("Failed to read response: {e}")))
         } else {
             let text = response
                 .text()
                 .await
-                .unwrap_or_else(|e| format!("(failed to read response body: {})", e));
+                .unwrap_or_else(|e| format!("(failed to read response body: {e})"));
             Err(Self::status_to_error(status, text))
         }
     }
@@ -671,12 +693,12 @@ impl CloudClient {
             let text = response
                 .text()
                 .await
-                .unwrap_or_else(|e| format!("(failed to read response body: {})", e));
+                .unwrap_or_else(|e| format!("(failed to read response body: {e})"));
             Err(Self::status_to_error(status, text))
         }
     }
 
-    /// Execute DELETE request with JSON body (used by some endpoints like PrivateLink principals)
+    /// Execute DELETE request with JSON body (used by some endpoints like `PrivateLink` principals)
     #[instrument(skip(self, body), fields(method = "DELETE"))]
     pub async fn delete_with_body<T: serde::de::DeserializeOwned>(
         &self,
@@ -713,12 +735,13 @@ impl CloudClient {
         let status_code = status.as_u16();
 
         if status.is_success() {
-            let bytes = response.bytes().await.map_err(|e| {
-                RestError::ConnectionError(format!("Failed to read response: {}", e))
-            })?;
+            let bytes = response
+                .bytes()
+                .await
+                .map_err(|e| RestError::ConnectionError(format!("Failed to read response: {e}")))?;
 
             let value: serde_json::Value = serde_json::from_slice(&bytes).map_err(|e| {
-                RestError::ConnectionError(format!("Failed to parse JSON response: {}", e))
+                RestError::ConnectionError(format!("Failed to parse JSON response: {e}"))
             })?;
 
             Ok((status_code, value))
@@ -726,7 +749,7 @@ impl CloudClient {
             let text = response
                 .text()
                 .await
-                .unwrap_or_else(|e| format!("(failed to read response body: {})", e));
+                .unwrap_or_else(|e| format!("(failed to read response body: {e})"));
             Err(Self::status_to_error(status, text))
         }
     }
@@ -740,9 +763,10 @@ impl CloudClient {
 
         if status.is_success() {
             // Get the response bytes for better error reporting
-            let bytes = response.bytes().await.map_err(|e| {
-                RestError::ConnectionError(format!("Failed to read response: {}", e))
-            })?;
+            let bytes = response
+                .bytes()
+                .await
+                .map_err(|e| RestError::ConnectionError(format!("Failed to read response: {e}")))?;
 
             // Use serde_path_to_error for better deserialization error messages
             let deserializer = &mut serde_json::Deserializer::from_slice(&bytes);
@@ -759,15 +783,15 @@ impl CloudClient {
             let text = response
                 .text()
                 .await
-                .unwrap_or_else(|e| format!("(failed to read response body: {})", e));
+                .unwrap_or_else(|e| format!("(failed to read response body: {e})"));
             Err(Self::status_to_error(status, text))
         }
     }
 }
 
-/// Tower Service integration for CloudClient
+/// Tower Service integration for `CloudClient`
 ///
-/// This module provides Tower Service implementations for CloudClient, enabling
+/// This module provides Tower Service implementations for `CloudClient`, enabling
 /// middleware composition with patterns like circuit breakers, retry, and rate limiting.
 ///
 /// # Feature Flag
@@ -798,7 +822,7 @@ impl CloudClient {
 /// ```
 #[cfg(feature = "tower-integration")]
 pub mod tower_support {
-    use super::*;
+    use super::{CloudClient, RestError, Result};
     use std::future::Future;
     use std::pin::Pin;
     use std::task::{Context, Poll};
@@ -915,6 +939,7 @@ pub mod tower_support {
         /// # Ok(())
         /// # }
         /// ```
+        #[must_use]
         pub fn into_service(self) -> Self {
             self
         }
