@@ -1117,9 +1117,36 @@ impl DatabaseHandler {
     }
 
     /// Get all databases in a Pro subscription
+    ///
     /// Gets a list of all databases in the specified Pro subscription.
     ///
     /// GET /subscriptions/{subscriptionId}/databases
+    ///
+    /// # Arguments
+    ///
+    /// * `subscription_id` - The subscription ID
+    /// * `offset` - Optional offset for pagination
+    /// * `limit` - Optional limit for pagination
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use redis_cloud::CloudClient;
+    ///
+    /// # async fn example() -> redis_cloud::Result<()> {
+    /// let client = CloudClient::builder()
+    ///     .api_key("your-api-key")
+    ///     .api_secret("your-api-secret")
+    ///     .build()?;
+    ///
+    /// // Get all databases in subscription 123
+    /// let databases = client.databases().get_subscription_databases(123, None, None).await?;
+    ///
+    /// // With pagination
+    /// let page = client.databases().get_subscription_databases(123, Some(0), Some(10)).await?;
+    /// # Ok(())
+    /// # }
+    /// ```
     pub async fn get_subscription_databases(
         &self,
         subscription_id: i32,
@@ -1183,9 +1210,30 @@ impl DatabaseHandler {
     }
 
     /// Get a single Pro database
+    ///
     /// Gets details and settings of a single database in a Pro subscription.
     ///
     /// GET /subscriptions/{subscriptionId}/databases/{databaseId}
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use redis_cloud::CloudClient;
+    ///
+    /// # async fn example() -> redis_cloud::Result<()> {
+    /// let client = CloudClient::builder()
+    ///     .api_key("your-api-key")
+    ///     .api_secret("your-api-secret")
+    ///     .build()?;
+    ///
+    /// let database = client.databases().get_subscription_database_by_id(123, 456).await?;
+    ///
+    /// println!("Database: {} (status: {:?})",
+    ///     database.name.unwrap_or_default(),
+    ///     database.status);
+    /// # Ok(())
+    /// # }
+    /// ```
     pub async fn get_subscription_database_by_id(
         &self,
         subscription_id: i32,
