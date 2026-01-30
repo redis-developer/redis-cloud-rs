@@ -264,7 +264,7 @@ pub struct PaymentMethod {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Module {
-    /// Module name (e.g., "RedisJSON", "RediSearch")
+    /// Module name (e.g., "`RedisJSON`", "`RediSearch`")
     #[serde(skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
 
@@ -418,6 +418,7 @@ pub struct AccountHandler {
 
 impl AccountHandler {
     /// Create a new handler
+    #[must_use]
     pub fn new(client: CloudClient) -> Self {
         Self { client }
     }
@@ -476,17 +477,17 @@ impl AccountHandler {
     ) -> Result<AccountSystemLogEntries> {
         let mut query = Vec::new();
         if let Some(v) = offset {
-            query.push(format!("offset={}", v));
+            query.push(format!("offset={v}"));
         }
         if let Some(v) = limit {
-            query.push(format!("limit={}", v));
+            query.push(format!("limit={v}"));
         }
         let query_string = if query.is_empty() {
             String::new()
         } else {
             format!("?{}", query.join("&"))
         };
-        self.client.get(&format!("/logs{}", query_string)).await
+        self.client.get(&format!("/logs{query_string}")).await
     }
 
     /// Get payment methods
@@ -512,14 +513,14 @@ impl AccountHandler {
     pub async fn get_supported_regions(&self, provider: Option<String>) -> Result<Regions> {
         let mut query = Vec::new();
         if let Some(v) = provider {
-            query.push(format!("provider={}", v));
+            query.push(format!("provider={v}"));
         }
         let query_string = if query.is_empty() {
             String::new()
         } else {
             format!("?{}", query.join("&"))
         };
-        self.client.get(&format!("/regions{}", query_string)).await
+        self.client.get(&format!("/regions{query_string}")).await
     }
 
     /// Get session logs
@@ -533,10 +534,10 @@ impl AccountHandler {
     ) -> Result<AccountSessionLogEntries> {
         let mut query = Vec::new();
         if let Some(v) = offset {
-            query.push(format!("offset={}", v));
+            query.push(format!("offset={v}"));
         }
         if let Some(v) = limit {
-            query.push(format!("limit={}", v));
+            query.push(format!("limit={v}"));
         }
         let query_string = if query.is_empty() {
             String::new()
@@ -544,7 +545,7 @@ impl AccountHandler {
             format!("?{}", query.join("&"))
         };
         self.client
-            .get(&format!("/session-logs{}", query_string))
+            .get(&format!("/session-logs{query_string}"))
             .await
     }
 }

@@ -9,7 +9,7 @@ use serde_json::Value;
 // Task Types (Most common - appears in 37 endpoints)
 // ============================================================================
 
-/// TaskStateUpdate - Line 9725 in OpenAPI spec
+/// `TaskStateUpdate` - Line 9725 in `OpenAPI` spec
 /// Represents the state of an asynchronous task
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -43,7 +43,7 @@ pub struct TaskStateUpdate {
     pub links: Option<Vec<Link>>,
 }
 
-/// TaskStatus enum - Part of TaskStateUpdate schema
+/// `TaskStatus` enum - Part of `TaskStateUpdate` schema
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum TaskStatus {
@@ -54,7 +54,7 @@ pub enum TaskStatus {
     ProcessingError,
 }
 
-/// ProcessorResponse - Line 14268 in OpenAPI spec
+/// `ProcessorResponse` - Line 14268 in `OpenAPI` spec
 /// Contains the result or error from task processing
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -80,7 +80,7 @@ pub struct ProcessorResponse {
     pub additional_info: Option<String>,
 }
 
-/// ProcessorError - Subset of massive error enum for common errors
+/// `ProcessorError` - Subset of massive error enum for common errors
 /// Full enum has 600+ values, we'll add as needed
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ProcessorError {
@@ -96,7 +96,7 @@ pub enum ProcessorError {
     Other,
 }
 
-/// TasksStateUpdate - Collection of task updates
+/// `TasksStateUpdate` - Collection of task updates
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TasksStateUpdate {
     pub tasks: Vec<TaskStateUpdate>,
@@ -106,14 +106,14 @@ pub struct TasksStateUpdate {
 // Tag Types (Used in database and subscription endpoints)
 // ============================================================================
 
-/// CloudTag - Individual tag with key-value
+/// `CloudTag` - Individual tag with key-value
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CloudTag {
     pub key: String,
     pub value: String,
 }
 
-/// CloudTags - Collection of tags
+/// `CloudTags` - Collection of tags
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CloudTags {
     pub tags: Vec<CloudTag>,

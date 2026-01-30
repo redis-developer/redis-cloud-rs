@@ -181,6 +181,7 @@ pub struct UsersHandler {
 
 impl UsersHandler {
     /// Create a new handler
+    #[must_use]
     pub fn new(client: CloudClient) -> Self {
         Self { client }
     }
@@ -198,10 +199,7 @@ impl UsersHandler {
     ///
     /// DELETE /users/{userId}
     pub async fn delete_user_by_id(&self, user_id: i32) -> Result<TaskStateUpdate> {
-        let response = self
-            .client
-            .delete_raw(&format!("/users/{}", user_id))
-            .await?;
+        let response = self.client.delete_raw(&format!("/users/{user_id}")).await?;
         serde_json::from_value(response).map_err(Into::into)
     }
 
@@ -210,7 +208,7 @@ impl UsersHandler {
     ///
     /// GET /users/{userId}
     pub async fn get_user_by_id(&self, user_id: i32) -> Result<AccountUser> {
-        self.client.get(&format!("/users/{}", user_id)).await
+        self.client.get(&format!("/users/{user_id}")).await
     }
 
     /// Update a user
@@ -222,8 +220,6 @@ impl UsersHandler {
         user_id: i32,
         request: &AccountUserUpdateRequest,
     ) -> Result<TaskStateUpdate> {
-        self.client
-            .put(&format!("/users/{}", user_id), request)
-            .await
+        self.client.put(&format!("/users/{user_id}"), request).await
     }
 }

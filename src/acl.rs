@@ -219,7 +219,7 @@ pub struct ACLRoleUser {
 
 /// Redis rule as embedded in an ACL role response
 ///
-/// This has different field names than ACLRedisRule because the API
+/// This has different field names than `ACLRedisRule` because the API
 /// uses different JSON keys when rules are embedded in role responses.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -408,6 +408,7 @@ pub struct AclHandler {
 
 impl AclHandler {
     /// Create a new handler
+    #[must_use]
     pub fn new(client: CloudClient) -> Self {
         Self { client }
     }
@@ -454,7 +455,7 @@ impl AclHandler {
     pub async fn delete_redis_rule(&self, acl_redis_rule_id: i32) -> Result<TaskStateUpdate> {
         let response = self
             .client
-            .delete_raw(&format!("/acl/redisRules/{}", acl_redis_rule_id))
+            .delete_raw(&format!("/acl/redisRules/{acl_redis_rule_id}"))
             .await?;
         serde_json::from_value(response).map_err(Into::into)
     }
@@ -469,7 +470,7 @@ impl AclHandler {
         request: &AclRedisRuleUpdateRequest,
     ) -> Result<TaskStateUpdate> {
         self.client
-            .put(&format!("/acl/redisRules/{}", acl_redis_rule_id), request)
+            .put(&format!("/acl/redisRules/{acl_redis_rule_id}"), request)
             .await
     }
 
@@ -512,7 +513,7 @@ impl AclHandler {
     pub async fn delete_acl_role(&self, acl_role_id: i32) -> Result<TaskStateUpdate> {
         let response = self
             .client
-            .delete_raw(&format!("/acl/roles/{}", acl_role_id))
+            .delete_raw(&format!("/acl/roles/{acl_role_id}"))
             .await?;
         serde_json::from_value(response).map_err(Into::into)
     }
@@ -527,7 +528,7 @@ impl AclHandler {
         request: &AclRoleUpdateRequest,
     ) -> Result<TaskStateUpdate> {
         self.client
-            .put(&format!("/acl/roles/{}", acl_role_id), request)
+            .put(&format!("/acl/roles/{acl_role_id}"), request)
             .await
     }
 
@@ -554,7 +555,7 @@ impl AclHandler {
     pub async fn delete_user(&self, acl_user_id: i32) -> Result<TaskStateUpdate> {
         let response = self
             .client
-            .delete_raw(&format!("/acl/users/{}", acl_user_id))
+            .delete_raw(&format!("/acl/users/{acl_user_id}"))
             .await?;
         serde_json::from_value(response).map_err(Into::into)
     }
@@ -564,9 +565,7 @@ impl AclHandler {
     ///
     /// GET /acl/users/{aclUserId}
     pub async fn get_user_by_id(&self, acl_user_id: i32) -> Result<ACLUser> {
-        self.client
-            .get(&format!("/acl/users/{}", acl_user_id))
-            .await
+        self.client.get(&format!("/acl/users/{acl_user_id}")).await
     }
 
     /// Update access control user
@@ -579,7 +578,7 @@ impl AclHandler {
         request: &AclUserUpdateRequest,
     ) -> Result<TaskStateUpdate> {
         self.client
-            .put(&format!("/acl/users/{}", acl_user_id), request)
+            .put(&format!("/acl/users/{acl_user_id}"), request)
             .await
     }
 }

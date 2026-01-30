@@ -1,3 +1,6 @@
+// Allow doc strings with quoted values like 'true'/'false' from OpenAPI spec
+#![allow(clippy::doc_link_with_quotes)]
+
 //! Redis Cloud REST API Client
 //!
 //! A comprehensive Rust client for the Redis Cloud REST API, providing full access to

@@ -1,20 +1,20 @@
-//! AWS PrivateLink connectivity operations
+//! AWS `PrivateLink` connectivity operations
 //!
-//! This module provides AWS PrivateLink connectivity functionality for Redis Cloud,
+//! This module provides AWS `PrivateLink` connectivity functionality for Redis Cloud,
 //! enabling secure, private connections from AWS VPCs to Redis Cloud databases.
 //!
 //! # Overview
 //!
-//! AWS PrivateLink allows you to connect to Redis Cloud from your AWS VPC without
+//! AWS `PrivateLink` allows you to connect to Redis Cloud from your AWS VPC without
 //! traversing the public internet. This provides enhanced security and potentially
 //! lower latency.
 //!
 //! # Features
 //!
-//! - **PrivateLink Management**: Create and retrieve PrivateLink configurations
+//! - **`PrivateLink` Management**: Create and retrieve `PrivateLink` configurations
 //! - **Principal Management**: Control which AWS principals can access the service
 //! - **Endpoint Scripts**: Get scripts to create endpoints in your AWS account
-//! - **Active-Active Support**: PrivateLink for CRDB (Active-Active) databases
+//! - **Active-Active Support**: `PrivateLink` for CRDB (Active-Active) databases
 //!
 //! # Example Usage
 //!
@@ -53,7 +53,7 @@ use serde_json::Value;
 // Request/Response Types
 // ============================================================================
 
-/// Principal type for PrivateLink access control
+/// Principal type for `PrivateLink` access control
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum PrincipalType {
@@ -71,11 +71,11 @@ pub enum PrincipalType {
     ServicePrincipal,
 }
 
-/// Request to create a PrivateLink configuration
+/// Request to create a `PrivateLink` configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PrivateLinkCreateRequest {
-    /// Share name for the PrivateLink service (max 64 characters)
+    /// Share name for the `PrivateLink` service (max 64 characters)
     pub share_name: String,
 
     /// AWS principal (account ID, role ARN, etc.)
@@ -85,12 +85,12 @@ pub struct PrivateLinkCreateRequest {
     #[serde(rename = "type")]
     pub principal_type: PrincipalType,
 
-    /// Optional alias for the PrivateLink
+    /// Optional alias for the `PrivateLink`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub alias: Option<String>,
 }
 
-/// Request to add a principal to PrivateLink access list
+/// Request to add a principal to `PrivateLink` access list
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PrivateLinkAddPrincipalRequest {
@@ -106,7 +106,7 @@ pub struct PrivateLinkAddPrincipalRequest {
     pub alias: Option<String>,
 }
 
-/// Request to remove a principal from PrivateLink access list
+/// Request to remove a principal from `PrivateLink` access list
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PrivateLinkRemovePrincipalRequest {
@@ -122,11 +122,11 @@ pub struct PrivateLinkRemovePrincipalRequest {
     pub alias: Option<String>,
 }
 
-/// PrivateLink configuration response
+/// `PrivateLink` configuration response
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PrivateLink {
-    /// PrivateLink status
+    /// `PrivateLink` status
     #[serde(skip_serializing_if = "Option::is_none")]
     pub status: Option<String>,
 
@@ -150,11 +150,11 @@ pub struct PrivateLink {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub share_name: Option<String>,
 
-    /// List of PrivateLink connections
+    /// List of `PrivateLink` connections
     #[serde(skip_serializing_if = "Option::is_none")]
     pub connections: Option<Vec<PrivateLinkConnection>>,
 
-    /// List of databases accessible via PrivateLink
+    /// List of databases accessible via `PrivateLink`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub databases: Option<Vec<PrivateLinkDatabase>>,
 
@@ -171,7 +171,7 @@ pub struct PrivateLink {
     pub error_message: Option<String>,
 }
 
-/// PrivateLink principal information
+/// `PrivateLink` principal information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PrivateLinkPrincipal {
@@ -192,7 +192,7 @@ pub struct PrivateLinkPrincipal {
     pub status: Option<String>,
 }
 
-/// PrivateLink connection information
+/// `PrivateLink` connection information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PrivateLinkConnection {
@@ -217,7 +217,7 @@ pub struct PrivateLinkConnection {
     pub association_date: Option<String>,
 }
 
-/// Database accessible via PrivateLink
+/// Database accessible via `PrivateLink`
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PrivateLinkDatabase {
@@ -234,7 +234,7 @@ pub struct PrivateLinkDatabase {
     pub resource_link_endpoint: Option<String>,
 }
 
-/// PrivateLink endpoint script response
+/// `PrivateLink` endpoint script response
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PrivateLinkEndpointScript {
@@ -247,22 +247,23 @@ pub struct PrivateLinkEndpointScript {
     pub terraform_aws_script: Option<String>,
 }
 
-/// AWS PrivateLink handler
+/// AWS `PrivateLink` handler
 ///
-/// Manages AWS PrivateLink connectivity for Redis Cloud subscriptions.
+/// Manages AWS `PrivateLink` connectivity for Redis Cloud subscriptions.
 pub struct PrivateLinkHandler {
     client: CloudClient,
 }
 
 impl PrivateLinkHandler {
-    /// Create a new PrivateLink handler
+    /// Create a new `PrivateLink` handler
+    #[must_use]
     pub fn new(client: CloudClient) -> Self {
         Self { client }
     }
 
-    /// Get PrivateLink configuration
+    /// Get `PrivateLink` configuration
     ///
-    /// Gets the AWS PrivateLink configuration for a subscription.
+    /// Gets the AWS `PrivateLink` configuration for a subscription.
     ///
     /// GET /subscriptions/{subscriptionId}/private-link
     ///
@@ -272,23 +273,23 @@ impl PrivateLinkHandler {
     ///
     /// # Returns
     ///
-    /// Returns the PrivateLink configuration as JSON
+    /// Returns the `PrivateLink` configuration as JSON
     pub async fn get(&self, subscription_id: i32) -> Result<Value> {
         self.client
-            .get(&format!("/subscriptions/{}/private-link", subscription_id))
+            .get(&format!("/subscriptions/{subscription_id}/private-link"))
             .await
     }
 
-    /// Create a PrivateLink
+    /// Create a `PrivateLink`
     ///
-    /// Creates a new AWS PrivateLink configuration for a subscription.
+    /// Creates a new AWS `PrivateLink` configuration for a subscription.
     ///
     /// POST /subscriptions/{subscriptionId}/private-link
     ///
     /// # Arguments
     ///
     /// * `subscription_id` - The subscription ID
-    /// * `request` - PrivateLink creation request
+    /// * `request` - `PrivateLink` creation request
     ///
     /// # Returns
     ///
@@ -300,15 +301,15 @@ impl PrivateLinkHandler {
     ) -> Result<Value> {
         self.client
             .post(
-                &format!("/subscriptions/{}/private-link", subscription_id),
+                &format!("/subscriptions/{subscription_id}/private-link"),
                 request,
             )
             .await
     }
 
-    /// Add principals to PrivateLink
+    /// Add principals to `PrivateLink`
     ///
-    /// Adds AWS principals (accounts, IAM roles, etc.) that can access the PrivateLink.
+    /// Adds AWS principals (accounts, IAM roles, etc.) that can access the `PrivateLink`.
     ///
     /// POST /subscriptions/{subscriptionId}/private-link/principals
     ///
@@ -327,15 +328,15 @@ impl PrivateLinkHandler {
     ) -> Result<Value> {
         self.client
             .post(
-                &format!("/subscriptions/{}/private-link/principals", subscription_id),
+                &format!("/subscriptions/{subscription_id}/private-link/principals"),
                 request,
             )
             .await
     }
 
-    /// Remove principals from PrivateLink
+    /// Remove principals from `PrivateLink`
     ///
-    /// Removes AWS principals from the PrivateLink access list.
+    /// Removes AWS principals from the `PrivateLink` access list.
     ///
     /// DELETE /subscriptions/{subscriptionId}/private-link/principals
     ///
@@ -354,7 +355,7 @@ impl PrivateLinkHandler {
     ) -> Result<Value> {
         self.client
             .delete_with_body(
-                &format!("/subscriptions/{}/private-link/principals", subscription_id),
+                &format!("/subscriptions/{subscription_id}/private-link/principals"),
                 serde_json::to_value(request).unwrap_or_default(),
             )
             .await
@@ -376,15 +377,14 @@ impl PrivateLinkHandler {
     pub async fn get_endpoint_script(&self, subscription_id: i32) -> Result<Value> {
         self.client
             .get(&format!(
-                "/subscriptions/{}/private-link/endpoint-script",
-                subscription_id
+                "/subscriptions/{subscription_id}/private-link/endpoint-script"
             ))
             .await
     }
 
-    /// Delete PrivateLink
+    /// Delete `PrivateLink`
     ///
-    /// Deletes the AWS PrivateLink configuration for a subscription.
+    /// Deletes the AWS `PrivateLink` configuration for a subscription.
     ///
     /// DELETE /subscriptions/{subscriptionId}/private-link
     ///
@@ -397,13 +397,13 @@ impl PrivateLinkHandler {
     /// Returns task information for tracking the deletion
     pub async fn delete(&self, subscription_id: i32) -> Result<Value> {
         self.client
-            .delete_raw(&format!("/subscriptions/{}/private-link", subscription_id))
+            .delete_raw(&format!("/subscriptions/{subscription_id}/private-link"))
             .await
     }
 
-    /// Get Active-Active PrivateLink configuration
+    /// Get Active-Active `PrivateLink` configuration
     ///
-    /// Gets the AWS PrivateLink configuration for an Active-Active (CRDB) subscription region.
+    /// Gets the AWS `PrivateLink` configuration for an Active-Active (CRDB) subscription region.
     ///
     /// GET /subscriptions/{subscriptionId}/regions/{regionId}/private-link
     ///
@@ -414,19 +414,18 @@ impl PrivateLinkHandler {
     ///
     /// # Returns
     ///
-    /// Returns the PrivateLink configuration for the region
+    /// Returns the `PrivateLink` configuration for the region
     pub async fn get_active_active(&self, subscription_id: i32, region_id: i32) -> Result<Value> {
         self.client
             .get(&format!(
-                "/subscriptions/{}/regions/{}/private-link",
-                subscription_id, region_id
+                "/subscriptions/{subscription_id}/regions/{region_id}/private-link"
             ))
             .await
     }
 
-    /// Create Active-Active PrivateLink
+    /// Create Active-Active `PrivateLink`
     ///
-    /// Creates a new AWS PrivateLink for an Active-Active (CRDB) subscription region.
+    /// Creates a new AWS `PrivateLink` for an Active-Active (CRDB) subscription region.
     ///
     /// POST /subscriptions/{subscriptionId}/regions/{regionId}/private-link
     ///
@@ -434,7 +433,7 @@ impl PrivateLinkHandler {
     ///
     /// * `subscription_id` - The subscription ID
     /// * `region_id` - The region ID
-    /// * `request` - PrivateLink creation request
+    /// * `request` - `PrivateLink` creation request
     ///
     /// # Returns
     ///
@@ -447,18 +446,15 @@ impl PrivateLinkHandler {
     ) -> Result<Value> {
         self.client
             .post(
-                &format!(
-                    "/subscriptions/{}/regions/{}/private-link",
-                    subscription_id, region_id
-                ),
+                &format!("/subscriptions/{subscription_id}/regions/{region_id}/private-link"),
                 request,
             )
             .await
     }
 
-    /// Add principals to Active-Active PrivateLink
+    /// Add principals to Active-Active `PrivateLink`
     ///
-    /// Adds AWS principals to an Active-Active PrivateLink.
+    /// Adds AWS principals to an Active-Active `PrivateLink`.
     ///
     /// POST /subscriptions/{subscriptionId}/regions/{regionId}/private-link/principals
     ///
@@ -480,17 +476,16 @@ impl PrivateLinkHandler {
         self.client
             .post(
                 &format!(
-                    "/subscriptions/{}/regions/{}/private-link/principals",
-                    subscription_id, region_id
+                    "/subscriptions/{subscription_id}/regions/{region_id}/private-link/principals"
                 ),
                 request,
             )
             .await
     }
 
-    /// Remove principals from Active-Active PrivateLink
+    /// Remove principals from Active-Active `PrivateLink`
     ///
-    /// Removes AWS principals from an Active-Active PrivateLink.
+    /// Removes AWS principals from an Active-Active `PrivateLink`.
     ///
     /// DELETE /subscriptions/{subscriptionId}/regions/{regionId}/private-link/principals
     ///
@@ -512,8 +507,7 @@ impl PrivateLinkHandler {
         self.client
             .delete_with_body(
                 &format!(
-                    "/subscriptions/{}/regions/{}/private-link/principals",
-                    subscription_id, region_id
+                    "/subscriptions/{subscription_id}/regions/{region_id}/private-link/principals"
                 ),
                 serde_json::to_value(request).unwrap_or_default(),
             )
@@ -541,8 +535,7 @@ impl PrivateLinkHandler {
     ) -> Result<Value> {
         self.client
             .get(&format!(
-                "/subscriptions/{}/regions/{}/private-link/endpoint-script",
-                subscription_id, region_id
+                "/subscriptions/{subscription_id}/regions/{region_id}/private-link/endpoint-script"
             ))
             .await
     }

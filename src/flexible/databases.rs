@@ -15,7 +15,7 @@
 //! - **Database Lifecycle**: Create, update, delete, and manage databases
 //! - **Backup & Restore**: Automated and on-demand backup operations
 //! - **Import/Export**: Import data from RDB files or other Redis instances
-//! - **Modules**: Support for RedisJSON, RediSearch, RedisGraph, RedisTimeSeries, RedisBloom
+//! - **Modules**: Support for `RedisJSON`, `RediSearch`, `RedisGraph`, `RedisTimeSeries`, `RedisBloom`
 //! - **High Availability**: Replication, auto-failover, and clustering support
 //! - **Monitoring**: Metrics, alerts, and performance insights
 //! - **Security**: TLS, password protection, and ACL support
@@ -63,7 +63,7 @@ use std::collections::HashMap;
 // Models
 // ============================================================================
 
-/// RedisLabs Account Subscription Databases information
+/// `RedisLabs` Account Subscription Databases information
 ///
 /// Response from GET /subscriptions/{subscriptionId}/databases
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -83,7 +83,7 @@ pub struct AccountSubscriptionDatabases {
     pub links: Option<Vec<Link>>,
 }
 
-/// Subscription databases info returned within AccountSubscriptionDatabases
+/// Subscription databases info returned within `AccountSubscriptionDatabases`
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SubscriptionDatabasesInfo {
@@ -125,8 +125,7 @@ where
             Ok(vec![item])
         }
         Some(other) => Err(serde::de::Error::custom(format!(
-            "expected array or object for subscription, got {:?}",
-            other
+            "expected array or object for subscription, got {other:?}"
         ))),
     }
 }
@@ -226,7 +225,7 @@ pub struct DatabaseTagsUpdateRequest {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DatabaseSyncSourceSpec {
-    /// Redis URI of a source database. Example format: 'redis://user:password@host:port'. If the URI provided is a Redis Cloud database, only host and port should be provided. Example: 'redis://endpoint1:6379'.
+    /// Redis URI of a source database. Example format: 'redis://user:password@host:port'. If the URI provided is a Redis Cloud database, only host and port should be provided. Example: '<redis://endpoint1:6379>'.
     pub endpoint: String,
 
     /// Defines if encryption should be used to connect to the sync source. If not set the source is a Redis Cloud database, it will automatically detect if the source uses encryption.
@@ -267,7 +266,7 @@ pub struct CloudTag {
     pub links: Option<Vec<Link>>,
 }
 
-/// BdbVersionUpgradeStatus
+/// `BdbVersionUpgradeStatus`
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct BdbVersionUpgradeStatus {
@@ -828,7 +827,7 @@ pub struct Database {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub source_ip: Option<Vec<String>>,
 
-    /// Client TLS/SSL certificate (deprecated, use client_tls_certificates)
+    /// Client TLS/SSL certificate (deprecated, use `client_tls_certificates`)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub client_ssl_certificate: Option<String>,
 
@@ -992,7 +991,7 @@ pub struct DatabaseCreateRequest {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub replication: Option<bool>,
 
-    /// Optional. This database will be a replica of the specified Redis databases provided as one or more URI(s). Example: 'redis://user:password@host:port'. If the URI provided is a Redis Cloud database, only host and port should be provided. Example: ['redis://endpoint1:6379', 'redis://endpoint2:6380'].
+    /// Optional. This database will be a replica of the specified Redis databases provided as one or more URI(s). Example: 'redis://user:password@host:port'. If the URI provided is a Redis Cloud database, only host and port should be provided. Example: ['<redis://endpoint1:6379>', '<redis://endpoint2:6380>'].
     #[serde(skip_serializing_if = "Option::is_none")]
     pub replica_of: Option<Vec<String>>,
 
@@ -1114,7 +1113,7 @@ pub struct DatabaseUpgradeRedisVersionRequest {
     pub command_type: Option<String>,
 }
 
-/// DatabaseSlowLogEntries
+/// `DatabaseSlowLogEntries`
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DatabaseSlowLogEntries {
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -1160,7 +1159,7 @@ pub struct LocalRegionProperties {
     pub resp_version: Option<String>,
 }
 
-/// TaskStateUpdate
+/// `TaskStateUpdate`
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TaskStateUpdate {
@@ -1236,7 +1235,7 @@ pub struct DatabaseUpdateRequest {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub regex_rules: Option<Vec<String>>,
 
-    /// Optional. This database will be a replica of the specified Redis databases provided as one or more URI(s). Example: 'redis://user:password@host:port'. If the URI provided is a Redis Cloud database, only host and port should be provided. Example: ['redis://endpoint1:6379', 'redis://endpoint2:6380'].
+    /// Optional. This database will be a replica of the specified Redis databases provided as one or more URI(s). Example: 'redis://user:password@host:port'. If the URI provided is a Redis Cloud database, only host and port should be provided. Example: ['<redis://endpoint1:6379>', '<redis://endpoint2:6380>'].
     #[serde(skip_serializing_if = "Option::is_none")]
     pub replica_of: Option<Vec<String>>,
 
@@ -1316,6 +1315,7 @@ pub struct DatabaseHandler {
 
 impl DatabaseHandler {
     /// Create a new handler
+    #[must_use]
     pub fn new(client: CloudClient) -> Self {
         Self { client }
     }
@@ -1359,10 +1359,10 @@ impl DatabaseHandler {
     ) -> Result<AccountSubscriptionDatabases> {
         let mut query = Vec::new();
         if let Some(v) = offset {
-            query.push(format!("offset={}", v));
+            query.push(format!("offset={v}"));
         }
         if let Some(v) = limit {
-            query.push(format!("limit={}", v));
+            query.push(format!("limit={v}"));
         }
         let query_string = if query.is_empty() {
             String::new()
@@ -1371,8 +1371,7 @@ impl DatabaseHandler {
         };
         self.client
             .get(&format!(
-                "/subscriptions/{}/databases{}",
-                subscription_id, query_string
+                "/subscriptions/{subscription_id}/databases{query_string}"
             ))
             .await
     }
@@ -1388,7 +1387,7 @@ impl DatabaseHandler {
     ) -> Result<TaskStateUpdate> {
         self.client
             .post(
-                &format!("/subscriptions/{}/databases", subscription_id),
+                &format!("/subscriptions/{subscription_id}/databases"),
                 request,
             )
             .await
@@ -1406,8 +1405,7 @@ impl DatabaseHandler {
         let response = self
             .client
             .delete_raw(&format!(
-                "/subscriptions/{}/databases/{}",
-                subscription_id, database_id
+                "/subscriptions/{subscription_id}/databases/{database_id}"
             ))
             .await?;
         serde_json::from_value(response).map_err(Into::into)
@@ -1445,8 +1443,7 @@ impl DatabaseHandler {
     ) -> Result<Database> {
         self.client
             .get(&format!(
-                "/subscriptions/{}/databases/{}",
-                subscription_id, database_id
+                "/subscriptions/{subscription_id}/databases/{database_id}"
             ))
             .await
     }
@@ -1463,10 +1460,7 @@ impl DatabaseHandler {
     ) -> Result<TaskStateUpdate> {
         self.client
             .put(
-                &format!(
-                    "/subscriptions/{}/databases/{}",
-                    subscription_id, database_id
-                ),
+                &format!("/subscriptions/{subscription_id}/databases/{database_id}"),
                 request,
             )
             .await
@@ -1484,7 +1478,7 @@ impl DatabaseHandler {
     ) -> Result<TaskStateUpdate> {
         let mut query = Vec::new();
         if let Some(v) = region_name {
-            query.push(format!("regionName={}", v));
+            query.push(format!("regionName={v}"));
         }
         let query_string = if query.is_empty() {
             String::new()
@@ -1493,8 +1487,7 @@ impl DatabaseHandler {
         };
         self.client
             .get(&format!(
-                "/subscriptions/{}/databases/{}/backup{}",
-                subscription_id, database_id, query_string
+                "/subscriptions/{subscription_id}/databases/{database_id}/backup{query_string}"
             ))
             .await
     }
@@ -1511,10 +1504,7 @@ impl DatabaseHandler {
     ) -> Result<TaskStateUpdate> {
         self.client
             .post(
-                &format!(
-                    "/subscriptions/{}/databases/{}/backup",
-                    subscription_id, database_id
-                ),
+                &format!("/subscriptions/{subscription_id}/databases/{database_id}/backup"),
                 request,
             )
             .await
@@ -1531,8 +1521,7 @@ impl DatabaseHandler {
     ) -> Result<DatabaseCertificate> {
         self.client
             .get(&format!(
-                "/subscriptions/{}/databases/{}/certificate",
-                subscription_id, database_id
+                "/subscriptions/{subscription_id}/databases/{database_id}/certificate"
             ))
             .await
     }
@@ -1549,10 +1538,7 @@ impl DatabaseHandler {
     ) -> Result<TaskStateUpdate> {
         self.client
             .put(
-                &format!(
-                    "/subscriptions/{}/databases/{}/flush",
-                    subscription_id, database_id
-                ),
+                &format!("/subscriptions/{subscription_id}/databases/{database_id}/flush"),
                 request,
             )
             .await
@@ -1569,8 +1555,7 @@ impl DatabaseHandler {
     ) -> Result<TaskStateUpdate> {
         self.client
             .get(&format!(
-                "/subscriptions/{}/databases/{}/import",
-                subscription_id, database_id
+                "/subscriptions/{subscription_id}/databases/{database_id}/import"
             ))
             .await
     }
@@ -1587,10 +1572,7 @@ impl DatabaseHandler {
     ) -> Result<TaskStateUpdate> {
         self.client
             .post(
-                &format!(
-                    "/subscriptions/{}/databases/{}/import",
-                    subscription_id, database_id
-                ),
+                &format!("/subscriptions/{subscription_id}/databases/{database_id}/import"),
                 request,
             )
             .await
@@ -1608,10 +1590,7 @@ impl DatabaseHandler {
     ) -> Result<TaskStateUpdate> {
         self.client
             .put(
-                &format!(
-                    "/subscriptions/{}/databases/{}/regions",
-                    subscription_id, database_id
-                ),
+                &format!("/subscriptions/{subscription_id}/databases/{database_id}/regions"),
                 request,
             )
             .await
@@ -1629,7 +1608,7 @@ impl DatabaseHandler {
     ) -> Result<DatabaseSlowLogEntries> {
         let mut query = Vec::new();
         if let Some(v) = region_name {
-            query.push(format!("regionName={}", v));
+            query.push(format!("regionName={v}"));
         }
         let query_string = if query.is_empty() {
             String::new()
@@ -1638,8 +1617,7 @@ impl DatabaseHandler {
         };
         self.client
             .get(&format!(
-                "/subscriptions/{}/databases/{}/slow-log{}",
-                subscription_id, database_id, query_string
+                "/subscriptions/{subscription_id}/databases/{database_id}/slow-log{query_string}"
             ))
             .await
     }
@@ -1651,8 +1629,7 @@ impl DatabaseHandler {
     pub async fn get_tags(&self, subscription_id: i32, database_id: i32) -> Result<CloudTags> {
         self.client
             .get(&format!(
-                "/subscriptions/{}/databases/{}/tags",
-                subscription_id, database_id
+                "/subscriptions/{subscription_id}/databases/{database_id}/tags"
             ))
             .await
     }
@@ -1669,10 +1646,7 @@ impl DatabaseHandler {
     ) -> Result<CloudTag> {
         self.client
             .post(
-                &format!(
-                    "/subscriptions/{}/databases/{}/tags",
-                    subscription_id, database_id
-                ),
+                &format!("/subscriptions/{subscription_id}/databases/{database_id}/tags"),
                 request,
             )
             .await
@@ -1690,10 +1664,7 @@ impl DatabaseHandler {
     ) -> Result<CloudTags> {
         self.client
             .put(
-                &format!(
-                    "/subscriptions/{}/databases/{}/tags",
-                    subscription_id, database_id
-                ),
+                &format!("/subscriptions/{subscription_id}/databases/{database_id}/tags"),
                 request,
             )
             .await
@@ -1712,8 +1683,7 @@ impl DatabaseHandler {
         let response = self
             .client
             .delete_raw(&format!(
-                "/subscriptions/{}/databases/{}/tags/{}",
-                subscription_id, database_id, tag_key
+                "/subscriptions/{subscription_id}/databases/{database_id}/tags/{tag_key}"
             ))
             .await?;
         serde_json::from_value(response).map_err(Into::into)
@@ -1732,10 +1702,7 @@ impl DatabaseHandler {
     ) -> Result<CloudTag> {
         self.client
             .put(
-                &format!(
-                    "/subscriptions/{}/databases/{}/tags/{}",
-                    subscription_id, database_id, tag_key
-                ),
+                &format!("/subscriptions/{subscription_id}/databases/{database_id}/tags/{tag_key}"),
                 request,
             )
             .await
@@ -1752,8 +1719,7 @@ impl DatabaseHandler {
     ) -> Result<BdbVersionUpgradeStatus> {
         self.client
             .get(&format!(
-                "/subscriptions/{}/databases/{}/upgrade",
-                subscription_id, database_id
+                "/subscriptions/{subscription_id}/databases/{database_id}/upgrade"
             ))
             .await
     }
@@ -1769,10 +1735,7 @@ impl DatabaseHandler {
     ) -> Result<TaskStateUpdate> {
         self.client
             .post(
-                &format!(
-                    "/subscriptions/{}/databases/{}/upgrade",
-                    subscription_id, database_id
-                ),
+                &format!("/subscriptions/{subscription_id}/databases/{database_id}/upgrade"),
                 request,
             )
             .await
@@ -1789,8 +1752,7 @@ impl DatabaseHandler {
     ) -> Result<Value> {
         self.client
             .get_raw(&format!(
-                "/subscriptions/{}/databases/{}/available-target-versions",
-                subscription_id, database_id
+                "/subscriptions/{subscription_id}/databases/{database_id}/available-target-versions"
             ))
             .await
     }
@@ -1807,10 +1769,7 @@ impl DatabaseHandler {
         // Empty body for standard flush
         self.client
             .put_raw(
-                &format!(
-                    "/subscriptions/{}/databases/{}/flush",
-                    subscription_id, database_id
-                ),
+                &format!("/subscriptions/{subscription_id}/databases/{database_id}/flush"),
                 serde_json::json!({}),
             )
             .await
@@ -1889,13 +1848,14 @@ impl DatabaseHandler {
                     break;
                 }
 
-                let count = databases.len() as i32;
+                let count = databases.len();
                 for db in databases {
                     yield db;
                 }
 
                 // If we got fewer than page_size, we've reached the end
-                if count < page_size {
+                #[allow(clippy::cast_sign_loss)]
+                if count < page_size as usize {
                     break;
                 }
 
@@ -1941,10 +1901,11 @@ impl DatabaseHandler {
                 .await?;
 
             let page = Self::extract_databases_from_response(&response);
-            let count = page.len() as i32;
+            let count = page.len();
             databases.extend(page);
 
-            if count < page_size {
+            #[allow(clippy::cast_sign_loss)]
+            if count < page_size as usize {
                 break;
             }
             offset += page_size;
@@ -1953,7 +1914,7 @@ impl DatabaseHandler {
         Ok(databases)
     }
 
-    /// Extract databases from an AccountSubscriptionDatabases response
+    /// Extract databases from an `AccountSubscriptionDatabases` response
     fn extract_databases_from_response(response: &AccountSubscriptionDatabases) -> Vec<Database> {
         response
             .subscription

@@ -121,6 +121,7 @@ impl CloudError {
     /// let error = CloudError::NotFound { message: "Resource not found".to_string() };
     /// assert!(!error.is_retryable());
     /// ```
+    #[must_use]
     pub fn is_retryable(&self) -> bool {
         matches!(
             self,

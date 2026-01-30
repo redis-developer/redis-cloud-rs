@@ -241,6 +241,7 @@ pub struct CloudAccountsHandler {
 
 impl CloudAccountsHandler {
     /// Create a new handler
+    #[must_use]
     pub fn new(client: CloudClient) -> Self {
         Self { client }
     }
@@ -286,7 +287,7 @@ impl CloudAccountsHandler {
     pub async fn delete_cloud_account(&self, cloud_account_id: i32) -> Result<TaskStateUpdate> {
         let response = self
             .client
-            .delete_raw(&format!("/cloud-accounts/{}", cloud_account_id))
+            .delete_raw(&format!("/cloud-accounts/{cloud_account_id}"))
             .await?;
         serde_json::from_value(response).map_err(Into::into)
     }
@@ -302,7 +303,7 @@ impl CloudAccountsHandler {
     /// See [OpenAPI Spec](https://redis.io/docs/latest/operate/rc/api/api-reference/openapi.json) - `getCloudAccountById`
     pub async fn get_cloud_account_by_id(&self, cloud_account_id: i32) -> Result<CloudAccount> {
         self.client
-            .get(&format!("/cloud-accounts/{}", cloud_account_id))
+            .get(&format!("/cloud-accounts/{cloud_account_id}"))
             .await
     }
 
@@ -321,7 +322,7 @@ impl CloudAccountsHandler {
         request: &CloudAccountUpdateRequest,
     ) -> Result<TaskStateUpdate> {
         self.client
-            .put(&format!("/cloud-accounts/{}", cloud_account_id), request)
+            .put(&format!("/cloud-accounts/{cloud_account_id}"), request)
             .await
     }
 }
