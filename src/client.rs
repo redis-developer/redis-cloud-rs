@@ -165,6 +165,27 @@ impl CloudClient {
         format!("{}/{}", base, path)
     }
 
+    /// Convert HTTP status code and response text to appropriate error
+    ///
+    /// This is a helper to avoid duplicating the error handling pattern
+    /// across multiple methods.
+    fn status_to_error(status: reqwest::StatusCode, text: String) -> RestError {
+        match status.as_u16() {
+            400 => RestError::BadRequest { message: text },
+            401 => RestError::AuthenticationFailed { message: text },
+            403 => RestError::Forbidden { message: text },
+            404 => RestError::NotFound { message: text },
+            412 => RestError::PreconditionFailed,
+            429 => RestError::RateLimited { message: text },
+            500 => RestError::InternalServerError { message: text },
+            503 => RestError::ServiceUnavailable { message: text },
+            _ => RestError::ApiError {
+                code: status.as_u16(),
+                message: text,
+            },
+        }
+    }
+
     /// Make a GET request with API key authentication
     #[instrument(skip(self), fields(method = "GET"))]
     pub async fn get<T: serde::de::DeserializeOwned>(&self, path: &str) -> Result<T> {
@@ -258,21 +279,7 @@ impl CloudClient {
                 .text()
                 .await
                 .unwrap_or_else(|e| format!("(failed to read response body: {})", e));
-
-            match status.as_u16() {
-                400 => Err(RestError::BadRequest { message: text }),
-                401 => Err(RestError::AuthenticationFailed { message: text }),
-                403 => Err(RestError::Forbidden { message: text }),
-                404 => Err(RestError::NotFound { message: text }),
-                412 => Err(RestError::PreconditionFailed),
-                429 => Err(RestError::RateLimited { message: text }),
-                500 => Err(RestError::InternalServerError { message: text }),
-                503 => Err(RestError::ServiceUnavailable { message: text }),
-                _ => Err(RestError::ApiError {
-                    code: status.as_u16(),
-                    message: text,
-                }),
-            }
+            Err(Self::status_to_error(status, text))
         }
     }
 
@@ -312,21 +319,7 @@ impl CloudClient {
                 .text()
                 .await
                 .unwrap_or_else(|e| format!("(failed to read response body: {})", e));
-
-            match status.as_u16() {
-                400 => Err(RestError::BadRequest { message: text }),
-                401 => Err(RestError::AuthenticationFailed { message: text }),
-                403 => Err(RestError::Forbidden { message: text }),
-                404 => Err(RestError::NotFound { message: text }),
-                412 => Err(RestError::PreconditionFailed),
-                429 => Err(RestError::RateLimited { message: text }),
-                500 => Err(RestError::InternalServerError { message: text }),
-                503 => Err(RestError::ServiceUnavailable { message: text }),
-                _ => Err(RestError::ApiError {
-                    code: status.as_u16(),
-                    message: text,
-                }),
-            }
+            Err(Self::status_to_error(status, text))
         }
     }
 
@@ -395,21 +388,7 @@ impl CloudClient {
                 .text()
                 .await
                 .unwrap_or_else(|e| format!("(failed to read response body: {})", e));
-
-            match status.as_u16() {
-                400 => Err(RestError::BadRequest { message: text }),
-                401 => Err(RestError::AuthenticationFailed { message: text }),
-                403 => Err(RestError::Forbidden { message: text }),
-                404 => Err(RestError::NotFound { message: text }),
-                412 => Err(RestError::PreconditionFailed),
-                429 => Err(RestError::RateLimited { message: text }),
-                500 => Err(RestError::InternalServerError { message: text }),
-                503 => Err(RestError::ServiceUnavailable { message: text }),
-                _ => Err(RestError::ApiError {
-                    code: status.as_u16(),
-                    message: text,
-                }),
-            }
+            Err(Self::status_to_error(status, text))
         }
     }
 
@@ -464,21 +443,7 @@ impl CloudClient {
                 .text()
                 .await
                 .unwrap_or_else(|e| format!("(failed to read response body: {})", e));
-
-            match status_code {
-                400 => Err(RestError::BadRequest { message: text }),
-                401 => Err(RestError::AuthenticationFailed { message: text }),
-                403 => Err(RestError::Forbidden { message: text }),
-                404 => Err(RestError::NotFound { message: text }),
-                412 => Err(RestError::PreconditionFailed),
-                429 => Err(RestError::RateLimited { message: text }),
-                500 => Err(RestError::InternalServerError { message: text }),
-                503 => Err(RestError::ServiceUnavailable { message: text }),
-                _ => Err(RestError::ApiError {
-                    code: status_code,
-                    message: text,
-                }),
-            }
+            Err(Self::status_to_error(status, text))
         }
     }
 
@@ -511,21 +476,7 @@ impl CloudClient {
                 .text()
                 .await
                 .unwrap_or_else(|e| format!("(failed to read response body: {})", e));
-
-            match status.as_u16() {
-                400 => Err(RestError::BadRequest { message: text }),
-                401 => Err(RestError::AuthenticationFailed { message: text }),
-                403 => Err(RestError::Forbidden { message: text }),
-                404 => Err(RestError::NotFound { message: text }),
-                412 => Err(RestError::PreconditionFailed),
-                429 => Err(RestError::RateLimited { message: text }),
-                500 => Err(RestError::InternalServerError { message: text }),
-                503 => Err(RestError::ServiceUnavailable { message: text }),
-                _ => Err(RestError::ApiError {
-                    code: status.as_u16(),
-                    message: text,
-                }),
-            }
+            Err(Self::status_to_error(status, text))
         }
     }
 }

@@ -49,6 +49,7 @@
 //! # }
 //! ```
 
+use crate::types::ProcessorResponse;
 use crate::{CloudClient, Result};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -76,30 +77,6 @@ pub struct FixedSubscriptionsPlans {
     /// HATEOAS links
     #[serde(skip_serializing_if = "Option::is_none")]
     pub links: Option<Vec<HashMap<String, Value>>>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
-}
-
-/// ProcessorResponse
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct ProcessorResponse {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub resource_id: Option<i32>,
-
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub additional_resource_id: Option<i32>,
-
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub resource: Option<HashMap<String, Value>>,
-
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub error: Option<String>,
-
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub additional_info: Option<String>,
 
     /// Additional fields from the API
     #[serde(flatten)]

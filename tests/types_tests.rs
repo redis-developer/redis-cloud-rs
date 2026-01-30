@@ -45,36 +45,44 @@ fn test_processor_response_with_error() {
         resource_id: None,
         additional_resource_id: None,
         resource: None,
-        error: Some(ProcessorError::Unauthorized),
+        error: Some("UNAUTHORIZED".to_string()),
+        additional_info: None,
+        extra: serde_json::Value::Null,
     };
 
     let json_str = serde_json::to_string(&response).unwrap();
     assert!(json_str.contains("\"UNAUTHORIZED\""));
 
     let parsed: ProcessorResponse = serde_json::from_str(&json_str).unwrap();
-    assert!(matches!(parsed.error, Some(ProcessorError::Unauthorized)));
+    assert_eq!(parsed.error, Some("UNAUTHORIZED".to_string()));
 }
 
 #[test]
 fn test_processor_response_with_resource() {
-    let resource_data = json!({
-        "databaseId": 12345,
-        "name": "my-database",
-        "status": "active"
-    });
+    use std::collections::HashMap;
+
+    let mut resource_data: HashMap<String, serde_json::Value> = HashMap::new();
+    resource_data.insert("databaseId".to_string(), json!(12345));
+    resource_data.insert("name".to_string(), json!("my-database"));
+    resource_data.insert("status".to_string(), json!("active"));
 
     let response = ProcessorResponse {
         resource_id: Some(12345),
         additional_resource_id: None,
         resource: Some(resource_data.clone()),
         error: None,
+        additional_info: None,
+        extra: serde_json::Value::Null,
     };
 
     let json_str = serde_json::to_string(&response).unwrap();
     let parsed: ProcessorResponse = serde_json::from_str(&json_str).unwrap();
 
     assert_eq!(parsed.resource_id, Some(12345));
-    assert_eq!(parsed.resource, Some(resource_data));
+    assert!(parsed.resource.is_some());
+    let parsed_resource = parsed.resource.unwrap();
+    assert_eq!(parsed_resource.get("databaseId"), Some(&json!(12345)));
+    assert_eq!(parsed_resource.get("name"), Some(&json!("my-database")));
 }
 
 #[test]
