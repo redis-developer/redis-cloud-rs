@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.0](https://github.com/redis-developer/redis-cloud-rs/compare/v0.7.6...v0.8.0) - 2026-01-30
+
+### Added
+
+- add Python bindings ([#2](https://github.com/redis-developer/redis-cloud-rs/pull/2))
+- initial standalone redis-cloud crate
+
 ## [0.7.6](https://github.com/redis-developer/redisctl/compare/redis-cloud-v0.7.5...redis-cloud-v0.7.6) - 2026-01-23
 
 ### Fixed
