@@ -16,12 +16,13 @@ A comprehensive Rust client library for the Redis Cloud REST API, with Python bi
 - Comprehensive error handling
 - Optional Tower service integration for middleware composition
 - Support for all Redis Cloud features including:
-  - Subscriptions and databases
+  - Pro and Essentials subscriptions and databases
   - User and ACL management
-  - Backup and restore operations
-  - VPC peering and networking
-  - Metrics and monitoring
-  - Billing and payment management
+  - Backup, restore, and import operations
+  - VPC peering, Transit Gateway, Private Service Connect, PrivateLink
+  - Cloud account integration (AWS, GCP, Azure)
+  - Task tracking for async operations
+  - Cost reports (FOCUS format)
 
 ## Installation
 
@@ -113,6 +114,21 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 This enables composition with Tower middleware like circuit breakers, retry, rate limiting, and more.
 
+## Examples
+
+See the `examples/` directory for runnable examples:
+
+```bash
+# Basic usage - connect and list subscriptions
+REDIS_CLOUD_API_KEY=xxx REDIS_CLOUD_API_SECRET=yyy cargo run --example basic
+
+# Database operations
+REDIS_CLOUD_API_KEY=xxx REDIS_CLOUD_API_SECRET=yyy cargo run --example databases
+
+# Streaming with pagination
+REDIS_CLOUD_API_KEY=xxx REDIS_CLOUD_API_SECRET=yyy cargo run --example stream_databases -- SUBSCRIPTION_ID
+```
+
 ## Python Bindings
 
 This library also provides Python bindings via PyO3:
@@ -174,15 +190,24 @@ subs = client.subscriptions_sync()
 
 ## API Coverage
 
-This library provides comprehensive coverage of the Redis Cloud REST API, including:
+This library provides comprehensive coverage of the Redis Cloud REST API:
 
-- **Account Management** - Account info, users, payment methods
-- **Subscriptions** - CRUD operations, pricing, CIDR management
-- **Databases** - Full database lifecycle, backups, imports, metrics
-- **ACL Management** - Users, roles, Redis rules
-- **Networking** - VPC peering, Transit Gateway, Private Service Connect
-- **Monitoring** - Metrics, logs, alerts
-- **Billing** - Invoices, payment methods, usage
+| Handler | Description |
+|---------|-------------|
+| `account()` | Account info, payment methods, regions, logs |
+| `subscriptions()` | Pro subscription CRUD, pricing, CIDR, maintenance windows |
+| `databases()` | Pro database lifecycle, backups, imports, flush |
+| `fixed_subscriptions()` | Essentials subscription management |
+| `fixed_databases()` | Essentials database management |
+| `acl()` | ACL users, roles, Redis rules |
+| `users()` | Account user management |
+| `cloud_accounts()` | Cloud provider integration (AWS, GCP, Azure) |
+| `vpc_peering()` | VPC peering (standard and Active-Active) |
+| `transit_gateway()` | AWS Transit Gateway attachments |
+| `psc()` | GCP Private Service Connect |
+| `private_link()` | AWS PrivateLink |
+| `tasks()` | Async operation tracking |
+| `cost_reports()` | Cost reports in FOCUS format |
 
 ## Documentation
 
