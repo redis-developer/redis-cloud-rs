@@ -70,10 +70,6 @@ pub struct BaseSubscriptionUpdateRequest {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub command_type: Option<String>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// Subscription update request message
@@ -97,10 +93,6 @@ pub struct SubscriptionUpdateRequest {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub command_type: Option<String>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// Cloud provider, region, and networking details.
@@ -117,10 +109,6 @@ pub struct SubscriptionSpec {
 
     /// The cloud provider region or list of regions (Active-Active only) and networking details.
     pub regions: Vec<SubscriptionRegionSpec>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// Object representing a customer managed key (CMK), along with the region it is associated to.
@@ -133,10 +121,6 @@ pub struct CustomerManagedKey {
     /// Name of region to for the customer managed key as defined by the cloud provider. Required for active-active subscriptions.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub region: Option<String>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// Optional. Expected read and write throughput for this region.
@@ -154,10 +138,6 @@ pub struct LocalThroughput {
     /// Read operations for this region per second. Default: 1000 ops/sec
     #[serde(skip_serializing_if = "Option::is_none")]
     pub read_operations_per_second: Option<i64>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// List of databases in the subscription with local throughput details. Default: 1000 read and write ops/sec for each database
@@ -170,10 +150,6 @@ pub struct CrdbRegionSpec {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub local_throughput_measurement: Option<LocalThroughput>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// Subscription update request message
@@ -192,10 +168,6 @@ pub struct SubscriptionUpdateCMKRequest {
 
     /// The customer managed keys (CMK) to use for this subscription. If is active-active subscription, must set a key for each region.
     pub customer_managed_keys: Vec<CustomerManagedKey>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// SubscriptionPricings
@@ -203,10 +175,6 @@ pub struct SubscriptionUpdateCMKRequest {
 pub struct SubscriptionPricings {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub pricing: Option<Vec<SubscriptionPricing>>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// Optional. Throughput measurement method.
@@ -217,10 +185,6 @@ pub struct DatabaseThroughputSpec {
 
     /// Throughput value in the selected measurement method.
     pub value: i64,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// Optional. Redis advanced capabilities (also known as modules) to be provisioned in the database. Use GET /database-modules to get a list of available advanced capabilities.
@@ -232,10 +196,6 @@ pub struct DatabaseModuleSpec {
     /// Optional. Redis advanced capability parameters. Use GET /database-modules to get the available capabilities and their parameters.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub parameters: Option<HashMap<String, Value>>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// Update Pro subscription
@@ -255,10 +215,6 @@ pub struct CidrAllowlistUpdateRequest {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub command_type: Option<String>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// SubscriptionMaintenanceWindowsSpec
@@ -270,10 +226,6 @@ pub struct SubscriptionMaintenanceWindowsSpec {
     /// Maintenance window timeframes if mode is set to 'manual'. Up to 7 maintenance windows can be provided.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub windows: Option<Vec<MaintenanceWindowSpec>>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// MaintenanceWindowSkipStatus
@@ -285,10 +237,6 @@ pub struct MaintenanceWindowSkipStatus {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub current_skip_end: Option<String>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// List of active-active subscription regions
@@ -301,16 +249,16 @@ pub struct ActiveActiveSubscriptionRegions {
     /// HATEOAS links
     #[serde(skip_serializing_if = "Option::is_none")]
     pub links: Option<Vec<Link>>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// SubscriptionPricing
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SubscriptionPricing {
+    /// Database name this pricing applies to
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub database_name: Option<String>,
+
     #[serde(skip_serializing_if = "Option::is_none")]
     pub r#type: Option<String>,
 
@@ -334,10 +282,6 @@ pub struct SubscriptionPricing {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub region: Option<String>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// Request structure for creating a new Pro subscription
@@ -387,10 +331,6 @@ pub struct SubscriptionCreateRequest {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub command_type: Option<String>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// Configuration regarding customer managed persistent storage encryption
@@ -414,10 +354,6 @@ pub struct CustomerManagedKeyAccessDetails {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub deletion_grace_period_options: Option<Vec<String>>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// One or more database specification(s) to create in this subscription.
@@ -484,10 +420,6 @@ pub struct SubscriptionDatabaseSpec {
     /// Optional. The query performance factor adds extra compute power specifically for search and query databases. You can increase your queries per second by the selected factor.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub query_performance_factor: Option<String>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// Optional. Cloud networking details, per region. Required if creating an Active-Active subscription.
@@ -509,10 +441,6 @@ pub struct SubscriptionRegionNetworkingSpec {
     /// Optional. Enter a security group identifier that exists in the hosted AWS account. Security group Identifier must be in a valid format (for example: 'sg-0125be68a4625884ad') and must exist within the hosting account.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub security_group_id: Option<String>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// RedisVersion
@@ -530,10 +458,6 @@ pub struct RedisVersion {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub is_default: Option<bool>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// MaintenanceWindow
@@ -548,10 +472,69 @@ pub struct MaintenanceWindow {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub duration_in_hours: Option<i32>,
+}
 
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
+/// Cloud provider details for a subscription
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CloudDetail {
+    /// Cloud provider (e.g., "AWS", "GCP", "Azure")
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub provider: Option<String>,
+
+    /// Cloud account ID (Redis Cloud internal or BYOA)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub cloud_account_id: Option<i32>,
+
+    /// AWS account ID (for AWS deployments)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub aws_account_id: Option<String>,
+
+    /// Total size of the subscription in GB
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub total_size_in_gb: Option<f64>,
+
+    /// Regions configured for this cloud provider
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub regions: Option<Vec<SubscriptionRegion>>,
+}
+
+/// Region details in a subscription response
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SubscriptionRegion {
+    /// Region name (e.g., "us-east-1")
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub region: Option<String>,
+
+    /// Networking configuration for this region
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub networking: Option<Vec<SubscriptionNetworking>>,
+
+    /// Preferred availability zones
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub preferred_availability_zones: Option<Vec<String>>,
+
+    /// Whether multiple availability zones are enabled
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub multiple_availability_zones: Option<bool>,
+}
+
+/// Networking configuration in a subscription region
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SubscriptionNetworking {
+    /// Deployment CIDR
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub deployment_cidr: Option<String>,
+
+    /// VPC ID
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub vpc_id: Option<String>,
+
+    /// Subnet ID
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub subnet_id: Option<String>,
 }
 
 /// RedisLabs Subscription information
@@ -604,7 +587,7 @@ pub struct Subscription {
 
     /// Cloud provider details (AWS, GCP, Azure configurations)
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub cloud_details: Option<Vec<Value>>,
+    pub cloud_details: Option<Vec<CloudDetail>>,
 
     /// Pricing details for the subscription
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -622,6 +605,14 @@ pub struct Subscription {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub customer_managed_key_access_details: Option<CustomerManagedKeyAccessDetails>,
 
+    /// Whether storage encryption is enabled
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub storage_encryption: Option<bool>,
+
+    /// Whether public endpoint access is enabled
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub public_endpoint_access: Option<bool>,
+
     /// Timestamp when subscription was created
     #[serde(skip_serializing_if = "Option::is_none")]
     pub created_timestamp: Option<String>,
@@ -629,10 +620,6 @@ pub struct Subscription {
     /// HATEOAS links for API navigation
     #[serde(skip_serializing_if = "Option::is_none")]
     pub links: Option<Vec<Link>>,
-
-    /// Only for truly unknown/future API fields. All documented fields should be first-class members above.
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// Maintenance window timeframes if mode is set to 'manual'. Up to 7 maintenance windows can be provided.
@@ -647,10 +634,6 @@ pub struct MaintenanceWindowSpec {
 
     /// Days where this maintenance window applies. Can contain one or more of: "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", or "Sunday".
     pub days: Vec<String>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// RedisLabs list of subscriptions in current account
@@ -670,10 +653,6 @@ pub struct AccountSubscriptions {
     /// HATEOAS links for API navigation
     #[serde(skip_serializing_if = "Option::is_none")]
     pub links: Option<Vec<Link>>,
-
-    /// Only for truly unknown/future API fields
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// Active active region creation request message
@@ -712,10 +691,6 @@ pub struct ActiveActiveRegionCreateRequest {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub command_type: Option<String>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// RedisVersions
@@ -724,10 +699,6 @@ pub struct ActiveActiveRegionCreateRequest {
 pub struct RedisVersions {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub redis_versions: Option<Vec<RedisVersion>>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// Active active region deletion request message
@@ -747,10 +718,6 @@ pub struct ActiveActiveRegionDeleteRequest {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub command_type: Option<String>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// The names of the regions to delete.
@@ -759,10 +726,6 @@ pub struct ActiveActiveRegionToDelete {
     /// Name of the cloud provider region to delete.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub region: Option<String>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// TaskStateUpdate
@@ -790,10 +753,6 @@ pub struct TaskStateUpdate {
     /// HATEOAS links
     #[serde(skip_serializing_if = "Option::is_none")]
     pub links: Option<Vec<Link>>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// The cloud provider region or list of regions (Active-Active only) and networking details.
@@ -813,10 +772,6 @@ pub struct SubscriptionRegionSpec {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub networking: Option<SubscriptionRegionNetworkingSpec>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// SubscriptionMaintenanceWindows
@@ -834,10 +789,6 @@ pub struct SubscriptionMaintenanceWindows {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub skip_status: Option<MaintenanceWindowSkipStatus>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 // ============================================================================
@@ -877,9 +828,9 @@ impl SubscriptionHandler {
     ///
     /// let subscriptions = client.subscriptions().get_all_subscriptions().await?;
     ///
-    /// // Access subscription data from the extra field
-    /// if let Some(subs) = subscriptions.extra.get("subscriptions") {
-    ///     println!("Found {} subscriptions", subs.as_array().map(|a| a.len()).unwrap_or(0));
+    /// // Access subscription data
+    /// if let Some(subs) = &subscriptions.subscriptions {
+    ///     println!("Found {} subscriptions", subs.len());
     /// }
     /// # Ok(())
     /// # }

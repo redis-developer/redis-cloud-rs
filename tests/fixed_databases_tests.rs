@@ -99,7 +99,6 @@ async fn test_create_fixed_database() {
         alerts: None,
         modules: None,
         command_type: None,
-        extra: serde_json::Value::Null,
     };
 
     let result = handler.create(123, &request).await.unwrap();
@@ -161,7 +160,6 @@ async fn test_fixed_database_update() {
         enable_default_user: None,
         alerts: None,
         command_type: None,
-        extra: serde_json::Value::Null,
     };
 
     let result = handler.update(123, 456, &request).await.unwrap();
@@ -231,7 +229,6 @@ async fn test_backup_fixed_database() {
         database_id: None,
         adhoc_backup_path: None,
         command_type: None,
-        extra: serde_json::Value::Null,
     };
     let result = handler.backup(123, 456, &request).await.unwrap();
 
@@ -269,7 +266,6 @@ async fn test_import_fixed_database() {
         subscription_id: None,
         database_id: None,
         command_type: None,
-        extra: serde_json::Value::Null,
     };
 
     let result = handler.import(123, 456, &request).await.unwrap();
@@ -306,7 +302,6 @@ async fn test_tag_operations() {
         subscription_id: None,
         database_id: None,
         command_type: None,
-        extra: serde_json::Value::Null,
     };
 
     let result = handler.create_tag(123, 456, &request).await.unwrap();
@@ -454,7 +449,6 @@ async fn test_error_handling_500() {
         alerts: None,
         modules: None,
         command_type: None,
-        extra: serde_json::Value::Null,
     };
     let result = handler.create(123, &request).await;
 

@@ -79,7 +79,6 @@ async fn test_create_private_link() {
         principal: "123456789012".to_string(),
         principal_type: PrincipalType::AwsAccount,
         alias: Some("Production Account".to_string()),
-        extra: serde_json::Value::Object(serde_json::Map::new()),
     };
 
     let result = handler.create(123, &request).await.unwrap();
@@ -125,7 +124,6 @@ async fn test_add_principals() {
         principal: "987654321098".to_string(),
         principal_type: Some(PrincipalType::IamRole),
         alias: Some("Dev Role".to_string()),
-        extra: serde_json::Value::Object(serde_json::Map::new()),
     };
 
     let result = handler.add_principals(123, &request).await.unwrap();
@@ -163,7 +161,6 @@ async fn test_remove_principals() {
         principal: "987654321098".to_string(),
         principal_type: Some(PrincipalType::IamRole),
         alias: Some("Dev Role".to_string()),
-        extra: serde_json::Value::Object(serde_json::Map::new()),
     };
 
     let result = handler.remove_principals(123, &request).await.unwrap();
@@ -270,7 +267,6 @@ async fn test_create_active_active_private_link() {
         principal: "111222333444".to_string(),
         principal_type: PrincipalType::AwsAccount,
         alias: None,
-        extra: serde_json::Value::Object(serde_json::Map::new()),
     };
 
     let result = handler
@@ -319,7 +315,6 @@ async fn test_add_principals_active_active() {
         principal: "555666777888".to_string(),
         principal_type: Some(PrincipalType::AwsAccount),
         alias: None,
-        extra: serde_json::Value::Object(serde_json::Map::new()),
     };
 
     let result = handler
@@ -360,7 +355,6 @@ async fn test_remove_principals_active_active() {
         principal: "555666777888".to_string(),
         principal_type: Some(PrincipalType::AwsAccount),
         alias: None,
-        extra: serde_json::Value::Object(serde_json::Map::new()),
     };
 
     let result = handler
@@ -478,7 +472,6 @@ async fn test_error_handling_500() {
         principal: "123".to_string(),
         principal_type: PrincipalType::AwsAccount,
         alias: None,
-        extra: serde_json::Value::Object(serde_json::Map::new()),
     };
     let result = handler.create(123, &request).await;
 

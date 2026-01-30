@@ -55,7 +55,7 @@ use crate::types::{Link, ProcessorResponse};
 use crate::{CloudClient, Result};
 use async_stream::try_stream;
 use futures_core::Stream;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
 
@@ -73,18 +73,62 @@ pub struct AccountSubscriptionDatabases {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub account_id: Option<i32>,
 
-    /// Subscription information with nested databases array
-    /// Contains subscriptionId, numberOfDatabases, and databases array
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub subscription: Option<Value>,
+    /// Subscription information with nested databases array.
+    /// The API returns this as an array, each element containing subscriptionId, databases, and links.
+    #[serde(default, deserialize_with = "deserialize_subscription_info")]
+    pub subscription: Vec<SubscriptionDatabasesInfo>,
 
     /// HATEOAS links for API navigation
     #[serde(skip_serializing_if = "Option::is_none")]
     pub links: Option<Vec<Link>>,
+}
 
-    /// Only for truly unknown/future API fields
-    #[serde(flatten)]
-    pub extra: Value,
+/// Subscription databases info returned within AccountSubscriptionDatabases
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SubscriptionDatabasesInfo {
+    /// Subscription ID
+    pub subscription_id: i32,
+
+    /// Number of databases (may not always be present)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub number_of_databases: Option<i32>,
+
+    /// List of databases in this subscription
+    #[serde(default)]
+    pub databases: Vec<Database>,
+
+    /// HATEOAS links
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub links: Option<Vec<Link>>,
+}
+
+/// Custom deserializer that handles both object and array formats for subscription field.
+/// The API returns an array, but some test mocks use an object format.
+fn deserialize_subscription_info<'de, D>(
+    deserializer: D,
+) -> std::result::Result<Vec<SubscriptionDatabasesInfo>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let value: Option<Value> = Option::deserialize(deserializer)?;
+
+    match value {
+        None => Ok(Vec::new()),
+        Some(Value::Array(arr)) => {
+            serde_json::from_value(Value::Array(arr)).map_err(serde::de::Error::custom)
+        }
+        Some(Value::Object(obj)) => {
+            // Single object - wrap in array
+            let item: SubscriptionDatabasesInfo =
+                serde_json::from_value(Value::Object(obj)).map_err(serde::de::Error::custom)?;
+            Ok(vec![item])
+        }
+        Some(other) => Err(serde::de::Error::custom(format!(
+            "expected array or object for subscription, got {:?}",
+            other
+        ))),
+    }
 }
 
 /// Optional. Expected read and write throughput for this region.
@@ -102,10 +146,6 @@ pub struct LocalThroughput {
     /// Read operations for this region per second. Default: 1000 ops/sec
     #[serde(skip_serializing_if = "Option::is_none")]
     pub read_operations_per_second: Option<i64>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// Database tag update request message
@@ -126,10 +166,6 @@ pub struct DatabaseTagUpdateRequest {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub command_type: Option<String>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// Database tag
@@ -144,10 +180,6 @@ pub struct Tag {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub command_type: Option<String>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// Active-Active database flush request message
@@ -162,10 +194,6 @@ pub struct CrdbFlushRequest {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub command_type: Option<String>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// Database certificate
@@ -175,10 +203,6 @@ pub struct DatabaseCertificate {
     /// An X.509 PEM (base64) encoded server certificate with new line characters replaced by '\n'.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub public_certificate_pem_string: Option<String>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// Database tags update request message
@@ -196,10 +220,6 @@ pub struct DatabaseTagsUpdateRequest {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub command_type: Option<String>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// Optional. This database will be a replica of the specified Redis databases, provided as a list of objects with endpoint and certificate details.
@@ -216,10 +236,6 @@ pub struct DatabaseSyncSourceSpec {
     /// TLS/SSL certificate chain of the sync source. If not set and the source is a Redis Cloud database, it will automatically detect the certificate to use.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub server_cert: Option<String>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// Optional. A list of client TLS/SSL certificates. If specified, mTLS authentication will be required to authenticate user connections. If set to an empty list, TLS client certificates will be removed and mTLS will not be required. TLS connection may still apply, depending on the value of 'enableTls'.
@@ -228,10 +244,6 @@ pub struct DatabaseSyncSourceSpec {
 pub struct DatabaseCertificateSpec {
     /// Client certificate public key in PEM format, with new line characters replaced with '\n'.
     pub public_certificate_pem_string: String,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// Database tag
@@ -253,10 +265,6 @@ pub struct CloudTag {
     /// HATEOAS links
     #[serde(skip_serializing_if = "Option::is_none")]
     pub links: Option<Vec<Link>>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// BdbVersionUpgradeStatus
@@ -274,10 +282,6 @@ pub struct BdbVersionUpgradeStatus {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub upgrade_status: Option<String>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// Active-Active database update local properties request message
@@ -352,10 +356,6 @@ pub struct CrdbUpdatePropertiesRequest {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub command_type: Option<String>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// Database slowlog entry
@@ -373,10 +373,6 @@ pub struct DatabaseSlowLogEntry {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub arguments: Option<String>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// Database tag
@@ -397,10 +393,6 @@ pub struct DatabaseTagCreateRequest {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub command_type: Option<String>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// Optional. Throughput measurement method.
@@ -411,10 +403,6 @@ pub struct DatabaseThroughputSpec {
 
     /// Throughput value in the selected measurement method.
     pub value: i64,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// Optional. Changes Remote backup configuration details.
@@ -449,10 +437,6 @@ pub struct DatabaseBackupConfig {
     /// Required when active is 'true'. Path to the backup storage location.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub storage_path: Option<String>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// Optional. Redis advanced capabilities (also known as modules) to be provisioned in the database. Use GET /database-modules to get a list of available advanced capabilities.
@@ -464,10 +448,6 @@ pub struct DatabaseModuleSpec {
     /// Optional. Redis advanced capability parameters. Use GET /database-modules to get the available capabilities and their parameters.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub parameters: Option<HashMap<String, Value>>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// Optional. Changes Replica Of (also known as Active-Passive) configuration details.
@@ -476,10 +456,244 @@ pub struct DatabaseModuleSpec {
 pub struct ReplicaOfSpec {
     /// Optional. This database will be a replica of the specified Redis databases, provided as a list of objects with endpoint and certificate details.
     pub sync_sources: Vec<DatabaseSyncSourceSpec>,
+}
 
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
+/// Regex rule for custom hashing policy
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RegexRule {
+    /// The ordinal/order of this rule
+    pub ordinal: i32,
+
+    /// The regex pattern for this rule
+    pub pattern: String,
+}
+
+/// Backup configuration status (response)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Backup {
+    /// Whether remote backup is enabled
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub enable_remote_backup: Option<bool>,
+
+    /// Backup time in UTC
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub time_utc: Option<String>,
+
+    /// Backup interval (e.g., "every-24-hours", "every-12-hours")
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub interval: Option<String>,
+
+    /// Backup destination path
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub destination: Option<String>,
+}
+
+/// Security configuration (response)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Security {
+    /// Whether default Redis user is enabled
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub enable_default_user: Option<bool>,
+
+    /// Whether SSL client authentication is enabled
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ssl_client_authentication: Option<bool>,
+
+    /// Whether TLS client authentication is enabled
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tls_client_authentication: Option<bool>,
+
+    /// List of source IP addresses allowed to connect
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub source_ips: Option<Vec<String>>,
+
+    /// Database password (masked in responses)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub password: Option<String>,
+
+    /// Whether TLS is enabled
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub enable_tls: Option<bool>,
+}
+
+/// Clustering configuration (response)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Clustering {
+    /// Number of shards
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub number_of_shards: Option<i32>,
+
+    /// Regex rules for custom hashing
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub regex_rules: Option<Vec<RegexRule>>,
+
+    /// Hashing policy
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub hashing_policy: Option<String>,
+}
+
+/// Active-Active (CRDB) database information
+///
+/// Represents an Active-Active database with global settings and per-region configurations.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ActiveActiveDatabase {
+    /// Database ID
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub database_id: Option<i32>,
+
+    /// Database name
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub name: Option<String>,
+
+    /// Database protocol
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub protocol: Option<String>,
+
+    /// Database status
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub status: Option<String>,
+
+    /// Redis version
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub redis_version: Option<String>,
+
+    /// Memory storage type
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub memory_storage: Option<String>,
+
+    /// Whether this is an Active-Active database
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub active_active_redis: Option<bool>,
+
+    /// Timestamp when database was activated
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub activated_on: Option<String>,
+
+    /// Timestamp of last modification
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub last_modified: Option<String>,
+
+    /// Support for OSS Cluster API
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub support_oss_cluster_api: Option<bool>,
+
+    /// Use external endpoint for OSS Cluster API
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub use_external_endpoint_for_oss_cluster_api: Option<bool>,
+
+    /// Whether replication is enabled
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub replication: Option<bool>,
+
+    /// Data eviction policy
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub data_eviction_policy: Option<String>,
+
+    /// Security configuration
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub security: Option<Security>,
+
+    /// Redis modules enabled
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub modules: Option<Vec<DatabaseModuleSpec>>,
+
+    /// Global data persistence setting
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub global_data_persistence: Option<String>,
+
+    /// Global source IP allowlist
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub global_source_ip: Option<Vec<String>>,
+
+    /// Global password
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub global_password: Option<String>,
+
+    /// Global alert configurations
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub global_alerts: Option<Vec<DatabaseAlertSpec>>,
+
+    /// Global enable default user setting
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub global_enable_default_user: Option<bool>,
+
+    /// Per-region CRDB database configurations
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub crdb_databases: Option<Vec<CrdbDatabase>>,
+
+    /// Whether automatic minor version upgrades are enabled
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub auto_minor_version_upgrade: Option<bool>,
+}
+
+/// Per-region configuration for an Active-Active (CRDB) database
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CrdbDatabase {
+    /// Cloud provider
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub provider: Option<String>,
+
+    /// Cloud region
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub region: Option<String>,
+
+    /// Redis version compliance
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub redis_version_compliance: Option<String>,
+
+    /// Public endpoint
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub public_endpoint: Option<String>,
+
+    /// Private endpoint
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub private_endpoint: Option<String>,
+
+    /// Memory limit in GB
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub memory_limit_in_gb: Option<f64>,
+
+    /// Dataset size in GB
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub dataset_size_in_gb: Option<f64>,
+
+    /// Memory used in MB
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub memory_used_in_mb: Option<f64>,
+
+    /// Read operations per second
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub read_operations_per_second: Option<i32>,
+
+    /// Write operations per second
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub write_operations_per_second: Option<i32>,
+
+    /// Data persistence setting for this region
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub data_persistence: Option<String>,
+
+    /// Alert configurations for this region
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub alerts: Option<Vec<DatabaseAlertSpec>>,
+
+    /// Security configuration for this region
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub security: Option<Security>,
+
+    /// Backup configuration for this region
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub backup: Option<Backup>,
+
+    /// Query performance factor
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub query_performance_factor: Option<String>,
 }
 
 /// Database backup request message
@@ -502,10 +716,6 @@ pub struct DatabaseBackupRequest {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub command_type: Option<String>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// Database
@@ -666,6 +876,38 @@ pub struct Database {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub enable_default_user: Option<bool>,
 
+    /// Whether this is an Active-Active (CRDB) database
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub active_active_redis: Option<bool>,
+
+    /// Memory storage type: "ram" or "ram-and-flash" (Auto Tiering)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub memory_storage: Option<String>,
+
+    /// Redis version compliance status
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub redis_version_compliance: Option<String>,
+
+    /// Whether automatic minor version upgrades are enabled
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub auto_minor_version_upgrade: Option<bool>,
+
+    /// Number of shards in the database cluster
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub number_of_shards: Option<i32>,
+
+    /// Regex rules for custom hashing policy
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub regex_rules: Option<Vec<RegexRule>>,
+
+    /// Whether SSL client authentication is enabled
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ssl_client_authentication: Option<bool>,
+
+    /// Whether TLS client authentication is enabled
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tls_client_authentication: Option<bool>,
+
     /// Timestamp when database was activated
     #[serde(skip_serializing_if = "Option::is_none")]
     pub activated: Option<String>,
@@ -677,10 +919,6 @@ pub struct Database {
     /// HATEOAS links for API navigation
     #[serde(skip_serializing_if = "Option::is_none")]
     pub links: Option<Vec<Link>>,
-
-    /// Only for truly unknown/future API fields. All documented fields should be first-class members above.
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// Optional. Changes Redis database alert details.
@@ -691,10 +929,6 @@ pub struct DatabaseAlertSpec {
 
     /// Value over which an alert will be sent. Default values and range depend on the alert type. See [Configure alerts](https://redis.io/docs/latest/operate/rc/databases/monitor-performance/#configure-metric-alerts) for more information.
     pub value: i32,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// Request structure for creating a new Pro database
@@ -829,10 +1063,6 @@ pub struct DatabaseCreateRequest {
     /// Optional. The query performance factor adds extra compute power specifically for search and query databases. You can increase your queries per second by the selected factor.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub query_performance_factor: Option<String>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// Database import request
@@ -853,10 +1083,6 @@ pub struct DatabaseImportRequest {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub command_type: Option<String>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// Redis list of database tags
@@ -869,10 +1095,6 @@ pub struct CloudTags {
     /// HATEOAS links
     #[serde(skip_serializing_if = "Option::is_none")]
     pub links: Option<Vec<Link>>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// Upgrades the specified Pro database to a later Redis version.
@@ -890,10 +1112,6 @@ pub struct DatabaseUpgradeRedisVersionRequest {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub command_type: Option<String>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// DatabaseSlowLogEntries
@@ -905,10 +1123,6 @@ pub struct DatabaseSlowLogEntries {
     /// HATEOAS links
     #[serde(skip_serializing_if = "Option::is_none")]
     pub links: Option<Vec<Link>>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// Optional. A list of regions and local settings to update.
@@ -944,10 +1158,6 @@ pub struct LocalRegionProperties {
     /// Optional. Redis Serialization Protocol version for this region. Must be compatible with Redis version.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub resp_version: Option<String>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// TaskStateUpdate
@@ -975,10 +1185,6 @@ pub struct TaskStateUpdate {
     /// HATEOAS links
     #[serde(skip_serializing_if = "Option::is_none")]
     pub links: Option<Vec<Link>>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// Database update request
@@ -1094,10 +1300,6 @@ pub struct DatabaseUpdateRequest {
     /// Optional. Changes the query performance factor. The query performance factor adds extra compute power specifically for search and query databases. You can increase your queries per second by the selected factor.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub query_performance_factor: Option<String>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 // ============================================================================
@@ -1753,29 +1955,10 @@ impl DatabaseHandler {
 
     /// Extract databases from an AccountSubscriptionDatabases response
     fn extract_databases_from_response(response: &AccountSubscriptionDatabases) -> Vec<Database> {
-        // The subscription field contains: { "subscriptionId": X, "numberOfDatabases": Y, "databases": [...] }
-        // or it might be an array: [{ "subscriptionId": X, ... }]
-        let Some(subscription) = &response.subscription else {
-            return Vec::new();
-        };
-
-        // Handle both object and array formats
-        let databases_value = if subscription.is_array() {
-            // Array format: subscription[0].databases
-            subscription
-                .as_array()
-                .and_then(|arr| arr.first())
-                .and_then(|obj| obj.get("databases"))
-        } else {
-            // Object format: subscription.databases
-            subscription.get("databases")
-        };
-
-        let Some(databases_value) = databases_value else {
-            return Vec::new();
-        };
-
-        // Parse the databases array
-        serde_json::from_value::<Vec<Database>>(databases_value.clone()).unwrap_or_default()
+        response
+            .subscription
+            .first()
+            .map(|sub| sub.databases.clone())
+            .unwrap_or_default()
     }
 }

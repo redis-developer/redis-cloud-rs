@@ -71,7 +71,6 @@ async fn test_create_redis_rule() {
         name: "test-rule".to_string(),
         redis_rule: "+get +set".to_string(),
         command_type: None,
-        extra: serde_json::Value::Null,
     };
 
     let result = handler.create_redis_rule(&request).await.unwrap();
@@ -174,7 +173,6 @@ async fn test_create_user() {
         role: "test-role".to_string(),
         password: "test-password".to_string(),
         command_type: None,
-        extra: serde_json::Value::Null,
     };
 
     let result = handler.create_user(&request).await.unwrap();
@@ -244,7 +242,6 @@ async fn test_update_redis_rule() {
         name: "updated-rule".to_string(),
         redis_rule: "+get +set +del".to_string(),
         command_type: None,
-        extra: serde_json::Value::Null,
     };
 
     let result = handler.update_redis_rule(123, &request).await.unwrap();
@@ -290,12 +287,9 @@ async fn test_create_role() {
                 subscription_id: 100,
                 database_id: 200,
                 regions: Some(vec!["us-east-1".to_string()]),
-                extra: serde_json::Value::Null,
             }],
-            extra: serde_json::Value::Null,
         }],
         command_type: None,
-        extra: serde_json::Value::Null,
     };
 
     let result = handler.create_role(&request).await.unwrap();
@@ -369,13 +363,10 @@ async fn test_update_role() {
                 subscription_id: 101,
                 database_id: 201,
                 regions: None,
-                extra: serde_json::Value::Null,
             }],
-            extra: serde_json::Value::Null,
         }]),
         role_id: Some(789),
         command_type: None,
-        extra: serde_json::Value::Null,
     };
 
     let result = handler.update_role(789, &request).await.unwrap();
@@ -488,7 +479,6 @@ async fn test_update_user() {
         role: Some("updated-role".to_string()),
         password: Some("new-password".to_string()),
         command_type: None,
-        extra: serde_json::Value::Null,
     };
 
     let result = handler.update_acl_user(456, &request).await.unwrap();
@@ -579,12 +569,9 @@ async fn test_create_role_without_regions() {
                 subscription_id: 300,
                 database_id: 400,
                 regions: None,
-                extra: serde_json::Value::Null,
             }],
-            extra: serde_json::Value::Null,
         }],
         command_type: None,
-        extra: serde_json::Value::Null,
     };
 
     let result = handler.create_role(&request).await.unwrap();
@@ -691,7 +678,6 @@ async fn test_task_state_update_with_error() {
         name: "invalid-rule".to_string(),
         redis_rule: "+invalid".to_string(),
         command_type: None,
-        extra: serde_json::Value::Null,
     };
 
     let result = handler.create_redis_rule(&request).await.unwrap();
@@ -801,7 +787,6 @@ async fn test_error_handling_500() {
         role: "test-role".to_string(),
         password: "test-password".to_string(),
         command_type: None,
-        extra: serde_json::Value::Null,
     };
 
     let result = handler.create_user(&request).await;
@@ -814,7 +799,7 @@ async fn test_error_handling_500() {
 }
 
 #[tokio::test]
-async fn test_create_user_with_extra_fields() {
+async fn test_create_user_with_full_response() {
     let mock_server = MockServer::start().await;
 
     Mock::given(method("POST"))
@@ -831,7 +816,6 @@ async fn test_create_user_with_extra_fields() {
                 "resourceId": 999,
                 "additionalResourceId": 888
             },
-            "customField": "custom value",
             "links": [
                 {
                     "href": "https://api.redislabs.com/v1/tasks/task-789",
@@ -856,10 +840,6 @@ async fn test_create_user_with_extra_fields() {
         role: "test-role".to_string(),
         password: "test-password".to_string(),
         command_type: Some("CREATE_USER".to_string()),
-        extra: json!({
-            "metadata": "user metadata",
-            "customFlag": true
-        }),
     };
 
     let result = handler.create_user(&request).await.unwrap();
@@ -867,9 +847,6 @@ async fn test_create_user_with_extra_fields() {
     assert_eq!(result.command_type, Some("CREATE_USER".to_string()));
     assert_eq!(result.status, Some("processing".to_string()));
     assert_eq!(result.timestamp, Some("2024-01-01T16:00:00Z".to_string()));
-
-    // Test that extra fields are captured
-    assert!(result.extra.get("customField").is_some());
     assert!(result.links.is_some());
 
     let response = result.response.unwrap();

@@ -19,8 +19,7 @@
 //! # Example Usage
 //!
 //! ```no_run
-//! use redis_cloud::{CloudClient, PrivateLinkHandler};
-//! use serde_json::json;
+//! use redis_cloud::{CloudClient, PrivateLinkHandler, PrivateLinkCreateRequest, PrincipalType};
 //!
 //! # async fn example() -> Result<(), Box<dyn std::error::Error>> {
 //! let client = CloudClient::builder()
@@ -31,13 +30,13 @@
 //! let handler = PrivateLinkHandler::new(client);
 //!
 //! // Create a PrivateLink
-//! let request = json!({
-//!     "shareName": "my-redis-share",
-//!     "principal": "123456789012",
-//!     "type": "aws_account",
-//!     "alias": "Production Account"
-//! });
-//! let result = handler.create(123, request).await?;
+//! let request = PrivateLinkCreateRequest {
+//!     share_name: "my-redis-share".to_string(),
+//!     principal: "123456789012".to_string(),
+//!     principal_type: PrincipalType::AwsAccount,
+//!     alias: Some("Production Account".to_string()),
+//! };
+//! let result = handler.create(123, &request).await?;
 //!
 //! // Get PrivateLink configuration
 //! let config = handler.get(123).await?;
@@ -48,6 +47,7 @@
 use crate::{CloudClient, Result};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+// Note: Value is still needed for return types that use raw JSON responses
 
 // ============================================================================
 // Request/Response Types
@@ -88,10 +88,6 @@ pub struct PrivateLinkCreateRequest {
     /// Optional alias for the PrivateLink
     #[serde(skip_serializing_if = "Option::is_none")]
     pub alias: Option<String>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// Request to add a principal to PrivateLink access list
@@ -108,10 +104,6 @@ pub struct PrivateLinkAddPrincipalRequest {
     /// Optional alias for the principal
     #[serde(skip_serializing_if = "Option::is_none")]
     pub alias: Option<String>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// Request to remove a principal from PrivateLink access list
@@ -128,10 +120,131 @@ pub struct PrivateLinkRemovePrincipalRequest {
     /// Alias of the principal
     #[serde(skip_serializing_if = "Option::is_none")]
     pub alias: Option<String>,
+}
 
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
+/// PrivateLink configuration response
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PrivateLink {
+    /// PrivateLink status
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub status: Option<String>,
+
+    /// List of principals with access
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub principals: Option<Vec<PrivateLinkPrincipal>>,
+
+    /// AWS Resource Configuration ID
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub resource_configuration_id: Option<String>,
+
+    /// AWS Resource Configuration ARN
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub resource_configuration_arn: Option<String>,
+
+    /// RAM share ARN
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub share_arn: Option<String>,
+
+    /// Share name
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub share_name: Option<String>,
+
+    /// List of PrivateLink connections
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub connections: Option<Vec<PrivateLinkConnection>>,
+
+    /// List of databases accessible via PrivateLink
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub databases: Option<Vec<PrivateLinkDatabase>>,
+
+    /// Subscription ID
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub subscription_id: Option<i32>,
+
+    /// Region ID (for Active-Active)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub region_id: Option<i32>,
+
+    /// Error message if any
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub error_message: Option<String>,
+}
+
+/// PrivateLink principal information
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PrivateLinkPrincipal {
+    /// AWS principal (account ID, role ARN, etc.)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub principal: Option<String>,
+
+    /// Type of principal
+    #[serde(rename = "type", skip_serializing_if = "Option::is_none")]
+    pub principal_type: Option<String>,
+
+    /// Alias for the principal
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub alias: Option<String>,
+
+    /// Principal status
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub status: Option<String>,
+}
+
+/// PrivateLink connection information
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PrivateLinkConnection {
+    /// Association ID
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub association_id: Option<String>,
+
+    /// Connection ID
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub connection_id: Option<String>,
+
+    /// Connection type
+    #[serde(rename = "type", skip_serializing_if = "Option::is_none")]
+    pub connection_type: Option<String>,
+
+    /// Owner ID (AWS account)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub owner_id: Option<String>,
+
+    /// Association date
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub association_date: Option<String>,
+}
+
+/// Database accessible via PrivateLink
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PrivateLinkDatabase {
+    /// Database ID
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub database_id: Option<i32>,
+
+    /// Database port
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub port: Option<i32>,
+
+    /// Resource link endpoint URL
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub resource_link_endpoint: Option<String>,
+}
+
+/// PrivateLink endpoint script response
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PrivateLinkEndpointScript {
+    /// AWS CLI/CloudFormation script
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub resource_endpoint_script: Option<String>,
+
+    /// Terraform AWS script
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub terraform_aws_script: Option<String>,
 }
 
 /// AWS PrivateLink handler

@@ -5,7 +5,6 @@
 
 use crate::{CloudClient, Result};
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 
 /// CIDR block definition
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -13,10 +12,6 @@ use serde_json::Value;
 pub struct Cidr {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub cidr_address: Option<String>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// Transit Gateway CIDRs update request
@@ -29,10 +24,6 @@ pub struct TgwUpdateCidrsRequest {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub command_type: Option<String>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// Transit Gateway attachment request
@@ -50,14 +41,85 @@ pub struct TgwAttachmentRequest {
     /// CIDR blocks to route through the TGW
     #[serde(skip_serializing_if = "Option::is_none")]
     pub cidrs: Option<Vec<String>>,
-
-    /// Additional fields
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// Task state update response
 pub use crate::types::TaskStateUpdate;
+
+/// Transit Gateway attachment information
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TransitGatewayAttachment {
+    /// Attachment ID
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub id: Option<i32>,
+
+    /// AWS Transit Gateway UID
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub aws_tgw_uid: Option<String>,
+
+    /// AWS attachment UID
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub attachment_uid: Option<String>,
+
+    /// Attachment status
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub status: Option<String>,
+
+    /// AWS attachment status
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub attachment_status: Option<String>,
+
+    /// AWS account ID
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub aws_account_id: Option<String>,
+
+    /// CIDR blocks
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub cidrs: Option<Vec<CidrStatus>>,
+}
+
+/// CIDR block with status
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CidrStatus {
+    /// CIDR address
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub cidr_address: Option<String>,
+
+    /// CIDR status
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub status: Option<String>,
+}
+
+/// Transit Gateway resource share invitation
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TransitGatewayInvitation {
+    /// Invitation ID
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub id: Option<i32>,
+
+    /// Invitation name
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub name: Option<String>,
+
+    /// AWS Resource share UID
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub resource_share_uid: Option<String>,
+
+    /// AWS account ID
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub aws_account_id: Option<String>,
+
+    /// Invitation status
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub status: Option<String>,
+
+    /// Date the resource was shared
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub shared_date: Option<String>,
+}
 
 /// Transit Gateway handler
 pub struct TransitGatewayHandler {
@@ -149,12 +211,10 @@ impl TransitGatewayHandler {
         subscription_id: i32,
         tgw_id: &str,
     ) -> Result<TaskStateUpdate> {
-        // Create an empty request body as the API might expect one
         let request = TgwAttachmentRequest {
             tgw_id: Some(tgw_id.to_string()),
             aws_account_id: None,
             cidrs: None,
-            extra: serde_json::Value::Object(serde_json::Map::new()),
         };
 
         self.client

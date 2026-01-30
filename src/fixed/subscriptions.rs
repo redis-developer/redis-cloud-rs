@@ -52,7 +52,6 @@
 use crate::types::{Link, ProcessorResponse};
 use crate::{CloudClient, Result};
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 
 // ============================================================================
 // Models
@@ -64,10 +63,6 @@ use serde_json::Value;
 pub struct RedisVersions {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub redis_versions: Option<Vec<RedisVersion>>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// Redis list of Essentials subscriptions plans
@@ -76,10 +71,6 @@ pub struct FixedSubscriptionsPlans {
     /// HATEOAS links
     #[serde(skip_serializing_if = "Option::is_none")]
     pub links: Option<Vec<Link>>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// Essentials subscription update request
@@ -107,10 +98,6 @@ pub struct FixedSubscriptionUpdateRequest {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub command_type: Option<String>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// Redis Essentials subscription plan information
@@ -186,16 +173,16 @@ pub struct FixedSubscriptionsPlan {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub support_ssl: Option<bool>,
 
+    /// List of supported alert types for this plan
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub supported_alerts: Option<Vec<String>>,
+
     #[serde(skip_serializing_if = "Option::is_none")]
     pub customer_support: Option<String>,
 
     /// HATEOAS links
     #[serde(skip_serializing_if = "Option::is_none")]
     pub links: Option<Vec<Link>>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// Essentials subscription create request
@@ -218,10 +205,6 @@ pub struct FixedSubscriptionCreateRequest {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub command_type: Option<String>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// Redis list of Essentials subscriptions in current account
@@ -234,10 +217,6 @@ pub struct FixedSubscriptions {
     /// HATEOAS links
     #[serde(skip_serializing_if = "Option::is_none")]
     pub links: Option<Vec<Link>>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// RedisVersion
@@ -255,10 +234,6 @@ pub struct RedisVersion {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub is_default: Option<bool>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// Redis Essentials Subscription information
@@ -346,10 +321,6 @@ pub struct FixedSubscription {
     /// HATEOAS links
     #[serde(skip_serializing_if = "Option::is_none")]
     pub links: Option<Vec<Link>>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// TaskStateUpdate
@@ -377,10 +348,6 @@ pub struct TaskStateUpdate {
     /// HATEOAS links
     #[serde(skip_serializing_if = "Option::is_none")]
     pub links: Option<Vec<Link>>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 // ============================================================================

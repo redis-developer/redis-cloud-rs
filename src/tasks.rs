@@ -58,13 +58,12 @@
 use crate::types::{Link, ProcessorResponse};
 use crate::{CloudClient, Result};
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 
 // ============================================================================
 // Models
 // ============================================================================
 
-/// TaskStateUpdate
+/// Task state update
 ///
 /// Represents the state and result of an asynchronous task
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -101,10 +100,6 @@ pub struct TaskStateUpdate {
     /// HATEOAS links for API navigation
     #[serde(skip_serializing_if = "Option::is_none")]
     pub links: Option<Vec<Link>>,
-
-    /// Only for truly unknown/future API fields
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 // ============================================================================

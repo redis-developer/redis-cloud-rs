@@ -56,17 +56,16 @@
 use crate::types::{Link, ProcessorResponse};
 use crate::{CloudClient, Result};
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 
 // ============================================================================
 // Models
 // ============================================================================
 
-/// Cloud Account definition
+/// Cloud account update request
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CloudAccountUpdateRequest {
-    /// name
+    /// Cloud account display name
     #[serde(skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
 
@@ -91,18 +90,11 @@ pub struct CloudAccountUpdateRequest {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub command_type: Option<String>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
-/// RedisLabs Cloud Account information
+/// Cloud provider account information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-/// Cloud Account
-///
-/// Represents a cloud provider account integration with all known API fields
 pub struct CloudAccount {
     /// Cloud account ID
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -151,13 +143,9 @@ pub struct CloudAccount {
     /// HATEOAS links for API navigation
     #[serde(skip_serializing_if = "Option::is_none")]
     pub links: Option<Vec<Link>>,
-
-    /// Only for truly unknown/future API fields
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
-/// Cloud Account definition
+/// Cloud account create request
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CloudAccountCreateRequest {
@@ -185,13 +173,9 @@ pub struct CloudAccountCreateRequest {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub command_type: Option<String>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
-/// RedisLabs Cloud Accounts information
+/// Cloud accounts response
 ///
 /// Response from GET /cloud-accounts containing list of cloud provider integrations
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -201,48 +185,46 @@ pub struct CloudAccounts {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub account_id: Option<i32>,
 
-    /// List of cloud provider accounts (typically in extra as 'cloudAccounts' array)
+    /// List of cloud provider accounts
     #[serde(skip_serializing_if = "Option::is_none")]
     pub cloud_accounts: Option<Vec<CloudAccount>>,
 
     /// HATEOAS links for API navigation
     #[serde(skip_serializing_if = "Option::is_none")]
     pub links: Option<Vec<Link>>,
-
-    /// Only for truly unknown/future API fields
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
-/// TaskStateUpdate
+/// Task state update response
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TaskStateUpdate {
+    /// Task ID (UUID)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub task_id: Option<String>,
 
+    /// Command type
     #[serde(skip_serializing_if = "Option::is_none")]
     pub command_type: Option<String>,
 
+    /// Task status
     #[serde(skip_serializing_if = "Option::is_none")]
     pub status: Option<String>,
 
+    /// Task description
     #[serde(skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
 
+    /// Timestamp
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timestamp: Option<String>,
 
+    /// Task response with resource info
     #[serde(skip_serializing_if = "Option::is_none")]
     pub response: Option<ProcessorResponse>,
 
     /// HATEOAS links
     #[serde(skip_serializing_if = "Option::is_none")]
     pub links: Option<Vec<Link>>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 // ============================================================================

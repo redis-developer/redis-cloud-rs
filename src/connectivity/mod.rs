@@ -40,6 +40,7 @@ pub use vpc_peering::VpcPeeringHandler;
 pub use psc::PscEndpointUpdateRequest;
 pub use transit_gateway::{Cidr, TgwAttachmentRequest, TgwUpdateCidrsRequest};
 pub use vpc_peering::{
+    ActiveActiveVpcPeering, ActiveActiveVpcPeeringList, ActiveActiveVpcRegion, VpcCidr, VpcPeering,
     VpcPeeringCreateBaseRequest, VpcPeeringCreateRequest, VpcPeeringUpdateAwsRequest,
     VpcPeeringUpdateRequest,
 };
@@ -98,11 +99,13 @@ impl ConnectivityHandler {
         peering_id: i32,
         request: &VpcPeeringUpdateAwsRequest,
     ) -> crate::Result<crate::types::TaskStateUpdate> {
-        // VpcPeeringUpdateAwsRequest can be used as VpcPeeringCreateRequest for the update
+        // Map VpcPeeringUpdateAwsRequest fields to VpcPeeringCreateRequest
         let create_request = VpcPeeringCreateRequest {
             provider: None,
-            command_type: None,
-            extra: serde_json::json!(request),
+            command_type: request.command_type.clone(),
+            vpc_cidr: request.vpc_cidr.clone(),
+            vpc_cidrs: request.vpc_cidrs.clone(),
+            ..Default::default()
         };
         self.vpc_peering
             .update(subscription_id, peering_id, &create_request)
@@ -183,7 +186,6 @@ impl ConnectivityHandler {
                     .filter_map(|c| c.cidr_address.clone())
                     .collect()
             }),
-            extra: serde_json::Value::Object(serde_json::Map::new()),
         };
         self.transit_gateway
             .update_attachment_cidrs(

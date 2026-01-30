@@ -169,10 +169,6 @@ pub struct CostReportCreateRequest {
     /// Filter by tags (key-value pairs)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub tags: Option<Vec<Tag>>,
-
-    /// Additional fields for forward compatibility
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 impl CostReportCreateRequest {
@@ -287,7 +283,6 @@ impl CostReportCreateRequestBuilder {
             subscription_type: self.subscription_type,
             regions: self.regions,
             tags: self.tags,
-            extra: Value::Null,
         })
     }
 }
