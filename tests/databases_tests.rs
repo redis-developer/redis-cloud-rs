@@ -912,3 +912,204 @@ async fn test_error_handling_500() {
         _ => panic!("Expected InternalServerError error"),
     }
 }
+
+// ============================================================================
+// Pagination Tests
+// ============================================================================
+
+#[tokio::test]
+async fn test_get_all_databases_single_page() {
+    let mock_server = MockServer::start().await;
+
+    Mock::given(method("GET"))
+        .and(path("/subscriptions/123/databases"))
+        .and(query_param("offset", "0"))
+        .and(query_param("limit", "100"))
+        .and(header("x-api-key", "test-key"))
+        .and(header("x-api-secret-key", "test-secret"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "accountId": 456,
+            "subscription": {
+                "subscriptionId": 123,
+                "numberOfDatabases": 2,
+                "databases": [
+                    {
+                        "databaseId": 1,
+                        "name": "db-one",
+                        "status": "active"
+                    },
+                    {
+                        "databaseId": 2,
+                        "name": "db-two",
+                        "status": "active"
+                    }
+                ]
+            }
+        })))
+        .mount(&mock_server)
+        .await;
+
+    let client = CloudClient::builder()
+        .api_key("test-key".to_string())
+        .api_secret("test-secret".to_string())
+        .base_url(mock_server.uri())
+        .build()
+        .unwrap();
+
+    let handler = DatabaseHandler::new(client);
+    let databases = handler.get_all_databases(123).await.unwrap();
+
+    assert_eq!(databases.len(), 2);
+    assert_eq!(databases[0].database_id, 1);
+    assert_eq!(databases[0].name, Some("db-one".to_string()));
+    assert_eq!(databases[1].database_id, 2);
+    assert_eq!(databases[1].name, Some("db-two".to_string()));
+}
+
+#[tokio::test]
+async fn test_get_all_databases_multiple_pages() {
+    let mock_server = MockServer::start().await;
+
+    // First page - returns 2 items (page_size for this test)
+    Mock::given(method("GET"))
+        .and(path("/subscriptions/123/databases"))
+        .and(query_param("offset", "0"))
+        .and(query_param("limit", "2"))
+        .and(header("x-api-key", "test-key"))
+        .and(header("x-api-secret-key", "test-secret"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "accountId": 456,
+            "subscription": {
+                "subscriptionId": 123,
+                "numberOfDatabases": 3,
+                "databases": [
+                    { "databaseId": 1, "name": "db-one" },
+                    { "databaseId": 2, "name": "db-two" }
+                ]
+            }
+        })))
+        .mount(&mock_server)
+        .await;
+
+    // Second page - returns 1 item (less than page_size, signals end)
+    Mock::given(method("GET"))
+        .and(path("/subscriptions/123/databases"))
+        .and(query_param("offset", "2"))
+        .and(query_param("limit", "2"))
+        .and(header("x-api-key", "test-key"))
+        .and(header("x-api-secret-key", "test-secret"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "accountId": 456,
+            "subscription": {
+                "subscriptionId": 123,
+                "numberOfDatabases": 3,
+                "databases": [
+                    { "databaseId": 3, "name": "db-three" }
+                ]
+            }
+        })))
+        .mount(&mock_server)
+        .await;
+
+    let client = CloudClient::builder()
+        .api_key("test-key".to_string())
+        .api_secret("test-secret".to_string())
+        .base_url(mock_server.uri())
+        .build()
+        .unwrap();
+
+    let handler = DatabaseHandler::new(client);
+
+    // Use custom page size to test pagination with smaller pages
+    use futures::StreamExt;
+    use std::pin::pin;
+    let mut databases = Vec::new();
+    let mut stream = pin!(handler.stream_databases_with_page_size(123, 2));
+    while let Some(result) = stream.next().await {
+        databases.push(result.unwrap());
+    }
+
+    assert_eq!(databases.len(), 3);
+    assert_eq!(databases[0].database_id, 1);
+    assert_eq!(databases[1].database_id, 2);
+    assert_eq!(databases[2].database_id, 3);
+}
+
+#[tokio::test]
+async fn test_get_all_databases_empty() {
+    let mock_server = MockServer::start().await;
+
+    Mock::given(method("GET"))
+        .and(path("/subscriptions/123/databases"))
+        .and(query_param("offset", "0"))
+        .and(query_param("limit", "100"))
+        .and(header("x-api-key", "test-key"))
+        .and(header("x-api-secret-key", "test-secret"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "accountId": 456,
+            "subscription": {
+                "subscriptionId": 123,
+                "numberOfDatabases": 0,
+                "databases": []
+            }
+        })))
+        .mount(&mock_server)
+        .await;
+
+    let client = CloudClient::builder()
+        .api_key("test-key".to_string())
+        .api_secret("test-secret".to_string())
+        .base_url(mock_server.uri())
+        .build()
+        .unwrap();
+
+    let handler = DatabaseHandler::new(client);
+    let databases = handler.get_all_databases(123).await.unwrap();
+
+    assert!(databases.is_empty());
+}
+
+#[tokio::test]
+async fn test_stream_databases() {
+    let mock_server = MockServer::start().await;
+
+    Mock::given(method("GET"))
+        .and(path("/subscriptions/123/databases"))
+        .and(query_param("offset", "0"))
+        .and(query_param("limit", "100"))
+        .and(header("x-api-key", "test-key"))
+        .and(header("x-api-secret-key", "test-secret"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "accountId": 456,
+            "subscription": {
+                "subscriptionId": 123,
+                "numberOfDatabases": 2,
+                "databases": [
+                    { "databaseId": 1, "name": "db-one" },
+                    { "databaseId": 2, "name": "db-two" }
+                ]
+            }
+        })))
+        .mount(&mock_server)
+        .await;
+
+    let client = CloudClient::builder()
+        .api_key("test-key".to_string())
+        .api_secret("test-secret".to_string())
+        .base_url(mock_server.uri())
+        .build()
+        .unwrap();
+
+    let handler = DatabaseHandler::new(client);
+
+    use futures::StreamExt;
+    use std::pin::pin;
+    let mut stream = pin!(handler.stream_databases(123));
+    let mut count = 0;
+    while let Some(result) = stream.next().await {
+        let db = result.unwrap();
+        count += 1;
+        assert!(db.database_id == 1 || db.database_id == 2);
+    }
+    assert_eq!(count, 2);
+}

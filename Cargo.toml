@@ -28,6 +28,8 @@ chrono = { version = "0.4", features = ["serde"] }
 url = "2.5"
 typed-builder = "0.20"
 tower = { version = "0.5", optional = true }
+async-stream = "0.3"
+futures-core = "0.3"
 
 [features]
 tower-integration = ["tower"]
@@ -39,3 +41,4 @@ pretty_assertions = "1.4"
 serial_test = "3.1"
 tower = { version = "0.5", features = ["timeout", "limit", "retry", "buffer"] }
 tower-resilience = { version = "0.3.8", features = ["retry"] }
+futures = "0.3"

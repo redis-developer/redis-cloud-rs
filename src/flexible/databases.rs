@@ -53,6 +53,8 @@
 
 use crate::types::{Link, ProcessorResponse};
 use crate::{CloudClient, Result};
+use async_stream::try_stream;
+use futures_core::Stream;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
@@ -1611,5 +1613,169 @@ impl DatabaseHandler {
             )
             .await
             .and_then(|v| serde_json::from_value(v).map_err(Into::into))
+    }
+
+    // ========================================================================
+    // Pagination Helpers
+    // ========================================================================
+
+    /// Stream all databases in a Pro subscription
+    ///
+    /// Returns an async stream that automatically handles pagination, yielding
+    /// individual [`Database`] items. This is useful when you need to process
+    /// a large number of databases without loading them all into memory at once.
+    ///
+    /// # Arguments
+    ///
+    /// * `subscription_id` - The subscription ID
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use redis_cloud::CloudClient;
+    /// use futures::StreamExt;
+    /// use std::pin::pin;
+    ///
+    /// # async fn example() -> redis_cloud::Result<()> {
+    /// let client = CloudClient::builder()
+    ///     .api_key("your-api-key")
+    ///     .api_secret("your-api-secret")
+    ///     .build()?;
+    ///
+    /// let handler = client.databases();
+    /// let mut stream = pin!(handler.stream_databases(123));
+    /// while let Some(result) = stream.next().await {
+    ///     let database = result?;
+    ///     println!("Database: {} (ID: {})", database.name.unwrap_or_default(), database.database_id);
+    /// }
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub fn stream_databases(
+        &self,
+        subscription_id: i32,
+    ) -> impl Stream<Item = Result<Database>> + '_ {
+        self.stream_databases_with_page_size(subscription_id, 100)
+    }
+
+    /// Stream all databases with custom page size
+    ///
+    /// Like [`stream_databases`](Self::stream_databases), but allows specifying
+    /// the page size for API requests.
+    ///
+    /// # Arguments
+    ///
+    /// * `subscription_id` - The subscription ID
+    /// * `page_size` - Number of databases to fetch per API request
+    pub fn stream_databases_with_page_size(
+        &self,
+        subscription_id: i32,
+        page_size: i32,
+    ) -> impl Stream<Item = Result<Database>> + '_ {
+        try_stream! {
+            let mut offset = 0;
+
+            loop {
+                let response = self
+                    .get_subscription_databases(subscription_id, Some(offset), Some(page_size))
+                    .await?;
+
+                // Extract databases from the response
+                let databases = Self::extract_databases_from_response(&response);
+
+                if databases.is_empty() {
+                    break;
+                }
+
+                let count = databases.len() as i32;
+                for db in databases {
+                    yield db;
+                }
+
+                // If we got fewer than page_size, we've reached the end
+                if count < page_size {
+                    break;
+                }
+
+                offset += page_size;
+            }
+        }
+    }
+
+    /// Get all databases in a subscription (collected)
+    ///
+    /// Fetches all databases by automatically handling pagination and returns
+    /// them as a single vector. Use [`stream_databases`](Self::stream_databases)
+    /// if you prefer to process databases one at a time.
+    ///
+    /// # Arguments
+    ///
+    /// * `subscription_id` - The subscription ID
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use redis_cloud::CloudClient;
+    ///
+    /// # async fn example() -> redis_cloud::Result<()> {
+    /// let client = CloudClient::builder()
+    ///     .api_key("your-api-key")
+    ///     .api_secret("your-api-secret")
+    ///     .build()?;
+    ///
+    /// let all_databases = client.databases().get_all_databases(123).await?;
+    /// println!("Total databases: {}", all_databases.len());
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn get_all_databases(&self, subscription_id: i32) -> Result<Vec<Database>> {
+        let mut databases = Vec::new();
+        let mut offset = 0;
+        let page_size = 100;
+
+        loop {
+            let response = self
+                .get_subscription_databases(subscription_id, Some(offset), Some(page_size))
+                .await?;
+
+            let page = Self::extract_databases_from_response(&response);
+            let count = page.len() as i32;
+            databases.extend(page);
+
+            if count < page_size {
+                break;
+            }
+            offset += page_size;
+        }
+
+        Ok(databases)
+    }
+
+    /// Extract databases from an AccountSubscriptionDatabases response
+    fn extract_databases_from_response(response: &AccountSubscriptionDatabases) -> Vec<Database> {
+        // The subscription field contains: { "subscriptionId": X, "numberOfDatabases": Y, "databases": [...] }
+        // or it might be an array: [{ "subscriptionId": X, ... }]
+        let Some(subscription) = &response.subscription else {
+            return Vec::new();
+        };
+
+        // Handle both object and array formats
+        let databases_value = if subscription.is_array() {
+            // Array format: subscription[0].databases
+            subscription
+                .as_array()
+                .and_then(|arr| arr.first())
+                .and_then(|obj| obj.get("databases"))
+        } else {
+            // Object format: subscription.databases
+            subscription.get("databases")
+        };
+
+        let Some(databases_value) = databases_value else {
+            return Vec::new();
+        };
+
+        // Parse the databases array
+        serde_json::from_value::<Vec<Database>>(databases_value.clone()).unwrap_or_default()
     }
 }
