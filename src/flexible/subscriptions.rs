@@ -608,7 +608,7 @@ pub struct Subscription {
 
     /// Pricing details for the subscription
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub pricing: Option<Vec<Value>>,
+    pub pricing: Option<Vec<SubscriptionPricing>>,
 
     /// Redis version for databases created in this subscription (deprecated)
     #[serde(skip_serializing_if = "Option::is_none")]

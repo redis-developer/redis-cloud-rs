@@ -1,3 +1,7 @@
+use redis_cloud::connectivity::{
+    PrincipalType, PrivateLinkAddPrincipalRequest, PrivateLinkCreateRequest,
+    PrivateLinkRemovePrincipalRequest,
+};
 use redis_cloud::{CloudClient, PrivateLinkHandler};
 use serde_json::json;
 use wiremock::matchers::{header, method, path};
@@ -70,14 +74,15 @@ async fn test_create_private_link() {
 
     let handler = PrivateLinkHandler::new(client);
 
-    let request = json!({
-        "shareName": "my-redis-share",
-        "principal": "123456789012",
-        "type": "aws_account",
-        "alias": "Production Account"
-    });
+    let request = PrivateLinkCreateRequest {
+        share_name: "my-redis-share".to_string(),
+        principal: "123456789012".to_string(),
+        principal_type: PrincipalType::AwsAccount,
+        alias: Some("Production Account".to_string()),
+        extra: serde_json::Value::Object(serde_json::Map::new()),
+    };
 
-    let result = handler.create(123, request).await.unwrap();
+    let result = handler.create(123, &request).await.unwrap();
 
     assert_eq!(result["resourceId"], 123456);
     assert_eq!(result["status"], "pending");
@@ -116,13 +121,14 @@ async fn test_add_principals() {
 
     let handler = PrivateLinkHandler::new(client);
 
-    let request = json!({
-        "principal": "987654321098",
-        "type": "iam_role",
-        "alias": "Dev Role"
-    });
+    let request = PrivateLinkAddPrincipalRequest {
+        principal: "987654321098".to_string(),
+        principal_type: Some(PrincipalType::IamRole),
+        alias: Some("Dev Role".to_string()),
+        extra: serde_json::Value::Object(serde_json::Map::new()),
+    };
 
-    let result = handler.add_principals(123, request).await.unwrap();
+    let result = handler.add_principals(123, &request).await.unwrap();
 
     assert_eq!(result["resourceId"], 123456);
     assert!(result["principals"].is_array());
@@ -153,13 +159,14 @@ async fn test_remove_principals() {
 
     let handler = PrivateLinkHandler::new(client);
 
-    let request = json!({
-        "principal": "987654321098",
-        "type": "iam_role",
-        "alias": "Dev Role"
-    });
+    let request = PrivateLinkRemovePrincipalRequest {
+        principal: "987654321098".to_string(),
+        principal_type: Some(PrincipalType::IamRole),
+        alias: Some("Dev Role".to_string()),
+        extra: serde_json::Value::Object(serde_json::Map::new()),
+    };
 
-    let result = handler.remove_principals(123, request).await.unwrap();
+    let result = handler.remove_principals(123, &request).await.unwrap();
 
     assert_eq!(result["status"], "deleted");
 }
@@ -258,13 +265,18 @@ async fn test_create_active_active_private_link() {
 
     let handler = PrivateLinkHandler::new(client);
 
-    let request = json!({
-        "shareName": "my-crdb-share",
-        "principal": "111222333444",
-        "type": "aws_account"
-    });
+    let request = PrivateLinkCreateRequest {
+        share_name: "my-crdb-share".to_string(),
+        principal: "111222333444".to_string(),
+        principal_type: PrincipalType::AwsAccount,
+        alias: None,
+        extra: serde_json::Value::Object(serde_json::Map::new()),
+    };
 
-    let result = handler.create_active_active(123, 1, request).await.unwrap();
+    let result = handler
+        .create_active_active(123, 1, &request)
+        .await
+        .unwrap();
 
     assert_eq!(result["resourceId"], 123456);
     assert_eq!(result["regionId"], 1);
@@ -303,13 +315,15 @@ async fn test_add_principals_active_active() {
 
     let handler = PrivateLinkHandler::new(client);
 
-    let request = json!({
-        "principal": "555666777888",
-        "type": "aws_account"
-    });
+    let request = PrivateLinkAddPrincipalRequest {
+        principal: "555666777888".to_string(),
+        principal_type: Some(PrincipalType::AwsAccount),
+        alias: None,
+        extra: serde_json::Value::Object(serde_json::Map::new()),
+    };
 
     let result = handler
-        .add_principals_active_active(123, 1, request)
+        .add_principals_active_active(123, 1, &request)
         .await
         .unwrap();
 
@@ -342,13 +356,15 @@ async fn test_remove_principals_active_active() {
 
     let handler = PrivateLinkHandler::new(client);
 
-    let request = json!({
-        "principal": "555666777888",
-        "type": "aws_account"
-    });
+    let request = PrivateLinkRemovePrincipalRequest {
+        principal: "555666777888".to_string(),
+        principal_type: Some(PrincipalType::AwsAccount),
+        alias: None,
+        extra: serde_json::Value::Object(serde_json::Map::new()),
+    };
 
     let result = handler
-        .remove_principals_active_active(123, 1, request)
+        .remove_principals_active_active(123, 1, &request)
         .await
         .unwrap();
 
@@ -457,12 +473,14 @@ async fn test_error_handling_500() {
         .unwrap();
 
     let handler = PrivateLinkHandler::new(client);
-    let request = json!({
-        "shareName": "test",
-        "principal": "123",
-        "type": "aws_account"
-    });
-    let result = handler.create(123, request).await;
+    let request = PrivateLinkCreateRequest {
+        share_name: "test".to_string(),
+        principal: "123".to_string(),
+        principal_type: PrincipalType::AwsAccount,
+        alias: None,
+        extra: serde_json::Value::Object(serde_json::Map::new()),
+    };
+    let result = handler.create(123, &request).await;
 
     assert!(result.is_err());
 }
