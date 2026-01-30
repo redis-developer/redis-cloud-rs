@@ -49,11 +49,10 @@
 //! # }
 //! ```
 
-use crate::types::ProcessorResponse;
+use crate::types::{Link, ProcessorResponse};
 use crate::{CloudClient, Result};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::collections::HashMap;
 
 // ============================================================================
 // Models
@@ -137,7 +136,7 @@ pub struct TaskStateUpdate {
 
     /// HATEOAS links
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub links: Option<Vec<HashMap<String, Value>>>,
+    pub links: Option<Vec<Link>>,
 
     /// Additional fields from the API
     #[serde(flatten)]

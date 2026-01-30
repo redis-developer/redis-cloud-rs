@@ -43,10 +43,10 @@
 //! # }
 //! ```
 
+use crate::types::Link;
 use crate::{CloudClient, Result};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::collections::HashMap;
 
 // ============================================================================
 // Models
@@ -60,7 +60,7 @@ pub struct ModulesData {
 
     /// HATEOAS links
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub links: Option<Vec<HashMap<String, Value>>>,
+    pub links: Option<Vec<Link>>,
 
     /// Additional fields from the API
     #[serde(flatten)]
@@ -72,7 +72,7 @@ pub struct ModulesData {
 pub struct RootAccount {
     /// HATEOAS links
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub links: Option<Vec<HashMap<String, Value>>>,
+    pub links: Option<Vec<Link>>,
 
     /// Additional fields from the API
     #[serde(flatten)]
@@ -117,7 +117,7 @@ pub struct Regions {
 
     /// HATEOAS links
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub links: Option<Vec<HashMap<String, Value>>>,
+    pub links: Option<Vec<Link>>,
 
     /// Additional fields from the API
     #[serde(flatten)]
@@ -147,7 +147,7 @@ pub struct PaymentMethods {
 
     /// HATEOAS links
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub links: Option<Vec<HashMap<String, Value>>>,
+    pub links: Option<Vec<Link>>,
 
     /// Additional fields from the API
     #[serde(flatten)]
@@ -180,7 +180,7 @@ pub struct AccountSystemLogEntries {
 
     /// HATEOAS links
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub links: Option<Vec<HashMap<String, Value>>>,
+    pub links: Option<Vec<Link>>,
 
     /// Additional fields from the API
     #[serde(flatten)]
@@ -196,7 +196,7 @@ pub struct SearchScalingFactorsData {
 
     /// HATEOAS links
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub links: Option<Vec<HashMap<String, Value>>>,
+    pub links: Option<Vec<Link>>,
 
     /// Additional fields from the API
     #[serde(flatten)]
@@ -259,7 +259,7 @@ pub struct DataPersistenceOptions {
 
     /// HATEOAS links
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub links: Option<Vec<HashMap<String, Value>>>,
+    pub links: Option<Vec<Link>>,
 
     /// Additional fields from the API
     #[serde(flatten)]
@@ -274,7 +274,7 @@ pub struct AccountSessionLogEntries {
 
     /// HATEOAS links
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub links: Option<Vec<HashMap<String, Value>>>,
+    pub links: Option<Vec<Link>>,
 
     /// Additional fields from the API
     #[serde(flatten)]
