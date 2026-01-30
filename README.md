@@ -4,8 +4,9 @@
 [![Documentation](https://docs.rs/redis-cloud/badge.svg)](https://docs.rs/redis-cloud)
 [![CI](https://github.com/redis-developer/redis-cloud-rs/actions/workflows/ci.yml/badge.svg)](https://github.com/redis-developer/redis-cloud-rs/actions/workflows/ci.yml)
 [![License](https://img.shields.io/crates/l/redis-cloud.svg)](https://github.com/redis-developer/redis-cloud-rs)
+[![PyPI](https://img.shields.io/pypi/v/redis-cloud.svg)](https://pypi.org/project/redis-cloud/)
 
-A comprehensive Rust client library for the Redis Cloud REST API.
+A comprehensive Rust client library for the Redis Cloud REST API, with Python bindings.
 
 ## Features
 
@@ -91,6 +92,60 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 ```
 
 This enables composition with Tower middleware like circuit breakers, retry, rate limiting, and more.
+
+## Python Bindings
+
+This library also provides Python bindings via PyO3:
+
+```bash
+pip install redis-cloud
+```
+
+```python
+from redis_cloud import CloudClient
+
+# Create client
+client = CloudClient(
+    api_key="your-api-key",
+    api_secret="your-api-secret"
+)
+
+# Or from environment variables
+client = CloudClient.from_env()
+
+# Async usage
+async def main():
+    subs = await client.subscriptions()
+    for sub in subs:
+        print(sub["name"], sub["id"])
+
+# Sync usage
+subs = client.subscriptions_sync()
+```
+
+### Python API
+
+- `CloudClient(api_key, api_secret, base_url=None, timeout_secs=None)`
+- `CloudClient.from_env()` - Create from environment variables
+
+#### Subscriptions
+- `subscriptions()` / `subscriptions_sync()` - List all subscriptions
+- `subscription(id)` / `subscription_sync(id)` - Get subscription by ID
+
+#### Databases
+- `databases(subscription_id)` / `databases_sync(subscription_id)` - List databases
+- `database(subscription_id, database_id)` / `database_sync(subscription_id, database_id)` - Get database
+
+#### Raw API
+- `get(path)` / `get_sync(path)` - Raw GET request
+- `post(path, body)` / `post_sync(path, body)` - Raw POST request
+- `delete(path)` / `delete_sync(path)` - Raw DELETE request
+
+### Environment Variables
+
+- `REDIS_CLOUD_API_KEY` - API key
+- `REDIS_CLOUD_API_SECRET` - API secret
+- `REDIS_CLOUD_BASE_URL` - Base URL (optional)
 
 ## API Coverage
 
