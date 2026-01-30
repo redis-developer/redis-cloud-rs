@@ -610,7 +610,7 @@ pub struct Database {
 
     /// Remote backup configuration
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub remote_backup: Option<Value>,
+    pub remote_backup: Option<DatabaseBackupConfig>,
 
     /// List of source IP addresses or subnet masks allowed to connect
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -622,7 +622,7 @@ pub struct Database {
 
     /// List of client TLS/SSL certificates for mTLS authentication
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub client_tls_certificates: Option<Vec<Value>>,
+    pub client_tls_certificates: Option<Vec<DatabaseCertificateSpec>>,
 
     /// Database password (masked in responses for security)
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -638,11 +638,11 @@ pub struct Database {
 
     /// Database alert configurations
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub alerts: Option<Vec<Value>>,
+    pub alerts: Option<Vec<DatabaseAlertSpec>>,
 
     /// Redis modules/capabilities enabled on this database
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub modules: Option<Vec<Value>>,
+    pub modules: Option<Vec<DatabaseModuleSpec>>,
 
     /// Database hashing policy for clustering
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -658,7 +658,7 @@ pub struct Database {
 
     /// Replica configuration
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub replica: Option<Value>,
+    pub replica: Option<ReplicaOfSpec>,
 
     /// Whether default Redis user is enabled
     #[serde(skip_serializing_if = "Option::is_none")]

@@ -46,7 +46,93 @@
 //! ```
 
 use crate::{CloudClient, Result};
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
+
+// ============================================================================
+// Request/Response Types
+// ============================================================================
+
+/// Principal type for PrivateLink access control
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum PrincipalType {
+    /// AWS account ID
+    AwsAccount,
+    /// AWS Organization
+    Organization,
+    /// AWS Organization Unit
+    OrganizationUnit,
+    /// AWS IAM Role
+    IamRole,
+    /// AWS IAM User
+    IamUser,
+    /// Service Principal
+    ServicePrincipal,
+}
+
+/// Request to create a PrivateLink configuration
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PrivateLinkCreateRequest {
+    /// Share name for the PrivateLink service (max 64 characters)
+    pub share_name: String,
+
+    /// AWS principal (account ID, role ARN, etc.)
+    pub principal: String,
+
+    /// Type of principal
+    #[serde(rename = "type")]
+    pub principal_type: PrincipalType,
+
+    /// Optional alias for the PrivateLink
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub alias: Option<String>,
+
+    /// Additional fields from the API
+    #[serde(flatten)]
+    pub extra: Value,
+}
+
+/// Request to add a principal to PrivateLink access list
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PrivateLinkAddPrincipalRequest {
+    /// AWS principal (account ID, role ARN, etc.)
+    pub principal: String,
+
+    /// Type of principal
+    #[serde(rename = "type", skip_serializing_if = "Option::is_none")]
+    pub principal_type: Option<PrincipalType>,
+
+    /// Optional alias for the principal
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub alias: Option<String>,
+
+    /// Additional fields from the API
+    #[serde(flatten)]
+    pub extra: Value,
+}
+
+/// Request to remove a principal from PrivateLink access list
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PrivateLinkRemovePrincipalRequest {
+    /// AWS principal to remove
+    pub principal: String,
+
+    /// Type of principal
+    #[serde(rename = "type", skip_serializing_if = "Option::is_none")]
+    pub principal_type: Option<PrincipalType>,
+
+    /// Alias of the principal
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub alias: Option<String>,
+
+    /// Additional fields from the API
+    #[serde(flatten)]
+    pub extra: Value,
+}
 
 /// AWS PrivateLink handler
 ///
@@ -89,16 +175,20 @@ impl PrivateLinkHandler {
     /// # Arguments
     ///
     /// * `subscription_id` - The subscription ID
-    /// * `request` - PrivateLink creation request (shareName, principal, type required)
+    /// * `request` - PrivateLink creation request
     ///
     /// # Returns
     ///
     /// Returns a task response that can be tracked for completion
-    pub async fn create(&self, subscription_id: i32, request: Value) -> Result<Value> {
+    pub async fn create(
+        &self,
+        subscription_id: i32,
+        request: &PrivateLinkCreateRequest,
+    ) -> Result<Value> {
         self.client
             .post(
                 &format!("/subscriptions/{}/private-link", subscription_id),
-                &request,
+                request,
             )
             .await
     }
@@ -112,16 +202,20 @@ impl PrivateLinkHandler {
     /// # Arguments
     ///
     /// * `subscription_id` - The subscription ID
-    /// * `request` - Principal to add (principal required, type/alias optional)
+    /// * `request` - Principal to add
     ///
     /// # Returns
     ///
     /// Returns the updated principal configuration
-    pub async fn add_principals(&self, subscription_id: i32, request: Value) -> Result<Value> {
+    pub async fn add_principals(
+        &self,
+        subscription_id: i32,
+        request: &PrivateLinkAddPrincipalRequest,
+    ) -> Result<Value> {
         self.client
             .post(
                 &format!("/subscriptions/{}/private-link/principals", subscription_id),
-                &request,
+                request,
             )
             .await
     }
@@ -135,16 +229,20 @@ impl PrivateLinkHandler {
     /// # Arguments
     ///
     /// * `subscription_id` - The subscription ID
-    /// * `request` - Principal to remove (principal, type, alias)
+    /// * `request` - Principal to remove
     ///
     /// # Returns
     ///
     /// Returns confirmation of deletion
-    pub async fn remove_principals(&self, subscription_id: i32, request: Value) -> Result<Value> {
+    pub async fn remove_principals(
+        &self,
+        subscription_id: i32,
+        request: &PrivateLinkRemovePrincipalRequest,
+    ) -> Result<Value> {
         self.client
             .delete_with_body(
                 &format!("/subscriptions/{}/private-link/principals", subscription_id),
-                request,
+                serde_json::to_value(request).unwrap_or_default(),
             )
             .await
     }
@@ -232,7 +330,7 @@ impl PrivateLinkHandler {
         &self,
         subscription_id: i32,
         region_id: i32,
-        request: Value,
+        request: &PrivateLinkCreateRequest,
     ) -> Result<Value> {
         self.client
             .post(
@@ -240,7 +338,7 @@ impl PrivateLinkHandler {
                     "/subscriptions/{}/regions/{}/private-link",
                     subscription_id, region_id
                 ),
-                &request,
+                request,
             )
             .await
     }
@@ -264,7 +362,7 @@ impl PrivateLinkHandler {
         &self,
         subscription_id: i32,
         region_id: i32,
-        request: Value,
+        request: &PrivateLinkAddPrincipalRequest,
     ) -> Result<Value> {
         self.client
             .post(
@@ -272,7 +370,7 @@ impl PrivateLinkHandler {
                     "/subscriptions/{}/regions/{}/private-link/principals",
                     subscription_id, region_id
                 ),
-                &request,
+                request,
             )
             .await
     }
@@ -296,7 +394,7 @@ impl PrivateLinkHandler {
         &self,
         subscription_id: i32,
         region_id: i32,
-        request: Value,
+        request: &PrivateLinkRemovePrincipalRequest,
     ) -> Result<Value> {
         self.client
             .delete_with_body(
@@ -304,7 +402,7 @@ impl PrivateLinkHandler {
                     "/subscriptions/{}/regions/{}/private-link/principals",
                     subscription_id, region_id
                 ),
-                request,
+                serde_json::to_value(request).unwrap_or_default(),
             )
             .await
     }

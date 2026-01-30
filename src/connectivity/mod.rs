@@ -26,6 +26,12 @@ pub mod vpc_peering;
 
 // Re-export handlers for convenience
 pub use private_link::PrivateLinkHandler;
+
+// Re-export PrivateLink types
+pub use private_link::{
+    PrincipalType, PrivateLinkAddPrincipalRequest, PrivateLinkCreateRequest,
+    PrivateLinkRemovePrincipalRequest,
+};
 pub use psc::PscHandler;
 pub use transit_gateway::TransitGatewayHandler;
 pub use vpc_peering::VpcPeeringHandler;
