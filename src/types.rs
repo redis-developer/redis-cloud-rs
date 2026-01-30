@@ -70,11 +70,19 @@ pub struct ProcessorResponse {
 
     /// The resource object itself
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub resource: Option<Value>,
+    pub resource: Option<std::collections::HashMap<String, Value>>,
 
-    /// Error code if the operation failed
+    /// Error message if the operation failed
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub error: Option<ProcessorError>,
+    pub error: Option<String>,
+
+    /// Additional information about the operation
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub additional_info: Option<String>,
+
+    /// Additional fields from the API
+    #[serde(flatten)]
+    pub extra: Value,
 }
 
 /// ProcessorError - Subset of massive error enum for common errors

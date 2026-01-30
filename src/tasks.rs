@@ -55,6 +55,7 @@
 //! # }
 //! ```
 
+use crate::types::ProcessorResponse;
 use crate::{CloudClient, Result};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -63,37 +64,6 @@ use std::collections::HashMap;
 // ============================================================================
 // Models
 // ============================================================================
-
-/// ProcessorResponse
-///
-/// Contains the result of an asynchronous operation
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct ProcessorResponse {
-    /// ID of the created/modified resource
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub resource_id: Option<i32>,
-
-    /// Additional resource ID (for operations creating multiple resources)
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub additional_resource_id: Option<i32>,
-
-    /// Full resource object for the created/modified resource
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub resource: Option<HashMap<String, Value>>,
-
-    /// Error message if the operation failed
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub error: Option<String>,
-
-    /// Additional information about the operation
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub additional_info: Option<String>,
-
-    /// Only for truly unknown/future API fields
-    #[serde(flatten)]
-    pub extra: Value,
-}
 
 /// TaskStateUpdate
 ///
