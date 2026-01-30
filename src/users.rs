@@ -52,7 +52,6 @@
 use crate::types::{Link, ProcessorResponse};
 use crate::{CloudClient, Result};
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 
 // ============================================================================
 // Models
@@ -68,30 +67,30 @@ pub struct AccountUserUpdateRequest {
     /// The account user's name.
     pub name: String,
 
-    /// Changes the account user's role. See [Team management roles](https://redis.io/docs/latest/operate/rc/security/access-control/access-management/#team-management-roles) to learn about available account roles.
+    /// Changes the account user's role.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub role: Option<String>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub command_type: Option<String>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
-/// RedisLabs list of users in current account
+/// Account users response
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AccountUsers {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub account: Option<i32>,
 
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
+    /// List of users
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub users: Option<Vec<AccountUser>>,
+
+    /// HATEOAS links
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub links: Option<Vec<Link>>,
 }
 
-/// RedisLabs User options information
+/// User options information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AccountUserOptions {
@@ -106,13 +105,9 @@ pub struct AccountUserOptions {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub mfa_enabled: Option<bool>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
-/// TaskStateUpdate
+/// Task state update response
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TaskStateUpdate {
@@ -137,13 +132,9 @@ pub struct TaskStateUpdate {
     /// HATEOAS links
     #[serde(skip_serializing_if = "Option::is_none")]
     pub links: Option<Vec<Link>>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
-/// RedisLabs User information
+/// User information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AccountUser {
@@ -171,9 +162,9 @@ pub struct AccountUser {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub options: Option<AccountUserOptions>,
 
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
+    /// HATEOAS links
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub links: Option<Vec<Link>>,
 }
 
 // ============================================================================

@@ -663,7 +663,7 @@ async fn test_error_handling_500() {
 }
 
 #[tokio::test]
-async fn test_current_account_with_extra_fields() {
+async fn test_current_account_with_full_response() {
     let mock_server = MockServer::start().await;
 
     Mock::given(method("GET"))
@@ -671,16 +671,32 @@ async fn test_current_account_with_extra_fields() {
         .and(header("x-api-key", "test-key"))
         .and(header("x-api-secret-key", "test-secret"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "account": {
+                "id": 12345,
+                "name": "Test Account",
+                "createdTimestamp": "2024-01-01T00:00:00Z",
+                "updatedTimestamp": "2024-06-01T00:00:00Z",
+                "marketplaceStatus": "active",
+                "key": {
+                    "name": "test-api-key",
+                    "accountId": 12345,
+                    "accountName": "Test Account",
+                    "allowedSourceIps": ["0.0.0.0/0"],
+                    "owner": {
+                        "name": "Test User",
+                        "email": "test@example.com"
+                    },
+                    "userAccountId": 999,
+                    "httpSourceIp": "192.168.1.1"
+                }
+            },
             "links": [
                 {
                     "rel": "self",
                     "href": "https://api.redislabs.com/v1/",
                     "type": "GET"
                 }
-            ],
-            "accountId": 12345,
-            "accountName": "Test Account",
-            "customField": "custom value"
+            ]
         })))
         .mount(&mock_server)
         .await;
@@ -696,16 +712,18 @@ async fn test_current_account_with_extra_fields() {
     let result = handler.get_current_account().await.unwrap();
 
     assert!(result.links.is_some());
-    // Test that extra fields are captured in the flattened extra field
-    assert!(result.extra.get("accountId").is_some());
-    assert!(result.extra.get("accountName").is_some());
-    assert!(result.extra.get("customField").is_some());
+    assert!(result.account.is_some());
 
-    if let Some(account_id) = result.extra.get("accountId") {
-        assert_eq!(account_id.as_i64().unwrap(), 12345);
-    }
+    let account = result.account.unwrap();
+    assert_eq!(account.id, Some(12345));
+    assert_eq!(account.name, Some("Test Account".to_string()));
+    assert_eq!(account.marketplace_status, Some("active".to_string()));
 
-    if let Some(account_name) = result.extra.get("accountName") {
-        assert_eq!(account_name.as_str().unwrap(), "Test Account");
-    }
+    let key = account.key.unwrap();
+    assert_eq!(key.name, Some("test-api-key".to_string()));
+    assert_eq!(key.account_id, Some(12345));
+    assert_eq!(key.allowed_source_ips, Some(vec!["0.0.0.0/0".to_string()]));
+
+    let owner = key.owner.unwrap();
+    assert_eq!(owner.email, Some("test@example.com".to_string()));
 }

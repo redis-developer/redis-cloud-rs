@@ -118,7 +118,6 @@ async fn test_create_cloud_account() {
         console_password: "password".to_string(),
         sign_in_login_url: "https://console.aws.amazon.com".to_string(),
         command_type: None,
-        extra: serde_json::Value::Null,
     };
 
     let result = handler.create_cloud_account(&request).await.unwrap();
@@ -164,7 +163,6 @@ async fn test_update_cloud_account() {
         console_password: "password-updated".to_string(),
         sign_in_login_url: Some("https://console.aws.amazon.com/updated".to_string()),
         command_type: None,
-        extra: serde_json::Value::Null,
     };
 
     let result = handler.update_cloud_account(456, &request).await.unwrap();
@@ -243,7 +241,6 @@ async fn test_create_cloud_account_without_provider() {
         console_password: "password".to_string(),
         sign_in_login_url: "https://console.aws.amazon.com".to_string(),
         command_type: None,
-        extra: serde_json::Value::Null,
     };
 
     let result = handler.create_cloud_account(&request).await.unwrap();
@@ -293,9 +290,6 @@ async fn test_create_gcp_cloud_account() {
         console_password: "gcp-password".to_string(),
         sign_in_login_url: "https://console.cloud.google.com".to_string(),
         command_type: Some("CREATE_CLOUD_ACCOUNT".to_string()),
-        extra: json!({
-            "project_id": "my-gcp-project"
-        }),
     };
 
     let result = handler.create_cloud_account(&request).await.unwrap();
@@ -349,7 +343,6 @@ async fn test_create_azure_cloud_account() {
         console_password: "azure-password".to_string(),
         sign_in_login_url: "https://portal.azure.com".to_string(),
         command_type: None,
-        extra: serde_json::Value::Null,
     };
 
     let result = handler.create_cloud_account(&request).await.unwrap();
@@ -506,7 +499,7 @@ async fn test_get_cloud_account_by_id_gcp() {
 }
 
 #[tokio::test]
-async fn test_get_cloud_account_by_id_with_extra_fields() {
+async fn test_get_cloud_account_by_id_with_full_response() {
     let mock_server = MockServer::start().await;
 
     Mock::given(method("GET"))
@@ -520,14 +513,8 @@ async fn test_get_cloud_account_by_id_with_extra_fields() {
             "accessKeyId": "AKIAIOSFODNN7EXAMPLE",
             "signInLoginUrl": "https://console.aws.amazon.com",
             "provider": "AWS",
-            "region": "us-west-2",
-            "accountNumber": "123456789012",
-            "roleName": "RedisLabsRole",
-            "externalId": "external-123",
-            "customMetadata": {
-                "environment": "production",
-                "team": "platform"
-            }
+            "awsConsoleRoleArn": "arn:aws:iam::123456789012:role/RedisLabsRole",
+            "awsUserArn": "arn:aws:iam::123456789012:user/redislabs"
         })))
         .mount(&mock_server)
         .await;
@@ -546,20 +533,22 @@ async fn test_get_cloud_account_by_id_with_extra_fields() {
     assert_eq!(result.name, Some("Test Cloud Account".to_string()));
     assert_eq!(result.status, Some("active".to_string()));
     assert_eq!(result.provider, Some("AWS".to_string()));
-
-    // Test that extra fields are captured
-    assert!(result.extra.get("region").is_some());
-    assert!(result.extra.get("accountNumber").is_some());
-    assert!(result.extra.get("roleName").is_some());
-    assert!(result.extra.get("customMetadata").is_some());
-
-    if let Some(region) = result.extra.get("region") {
-        assert_eq!(region.as_str().unwrap(), "us-west-2");
-    }
-
-    if let Some(account_number) = result.extra.get("accountNumber") {
-        assert_eq!(account_number.as_str().unwrap(), "123456789012");
-    }
+    assert_eq!(
+        result.access_key_id,
+        Some("AKIAIOSFODNN7EXAMPLE".to_string())
+    );
+    assert_eq!(
+        result.sign_in_login_url,
+        Some("https://console.aws.amazon.com".to_string())
+    );
+    assert_eq!(
+        result.aws_console_role_arn,
+        Some("arn:aws:iam::123456789012:role/RedisLabsRole".to_string())
+    );
+    assert_eq!(
+        result.aws_user_arn,
+        Some("arn:aws:iam::123456789012:user/redislabs".to_string())
+    );
 }
 
 #[tokio::test]
@@ -596,7 +585,6 @@ async fn test_update_cloud_account_minimal() {
         console_password: "updated-password".to_string(),
         sign_in_login_url: None, // Not updating URL
         command_type: None,
-        extra: serde_json::Value::Null,
     };
 
     let result = handler.update_cloud_account(456, &request).await.unwrap();
@@ -650,7 +638,6 @@ async fn test_task_state_update_with_failed_status() {
         console_password: "password".to_string(),
         sign_in_login_url: "https://console.aws.amazon.com".to_string(),
         command_type: None,
-        extra: serde_json::Value::Null,
     };
 
     let result = handler.create_cloud_account(&request).await.unwrap();
@@ -795,7 +782,6 @@ async fn test_error_handling_500() {
         console_password: "password".to_string(),
         sign_in_login_url: None,
         command_type: None,
-        extra: serde_json::Value::Null,
     };
 
     let result = handler.update_cloud_account(456, &request).await;

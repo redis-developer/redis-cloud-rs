@@ -46,13 +46,12 @@
 use crate::types::Link;
 use crate::{CloudClient, Result};
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 
 // ============================================================================
 // Models
 // ============================================================================
 
-/// ModulesData
+/// Database modules/capabilities response
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ModulesData {
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -61,22 +60,98 @@ pub struct ModulesData {
     /// HATEOAS links
     #[serde(skip_serializing_if = "Option::is_none")]
     pub links: Option<Vec<Link>>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
-/// RootAccount
+/// Root account response from GET /
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct RootAccount {
+    /// Account information
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub account: Option<Account>,
+
     /// HATEOAS links
     #[serde(skip_serializing_if = "Option::is_none")]
     pub links: Option<Vec<Link>>,
+}
 
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
+/// Account information
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Account {
+    /// Account ID
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub id: Option<i32>,
+
+    /// Account name
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub name: Option<String>,
+
+    /// Timestamp when the account was created
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub created_timestamp: Option<String>,
+
+    /// Timestamp when the account was last updated
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub updated_timestamp: Option<String>,
+
+    /// Marketplace status (e.g., "active", "deleted")
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub marketplace_status: Option<String>,
+
+    /// API key information used for this request
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub key: Option<AccountApiKeyInfo>,
+}
+
+/// API key information returned in account response
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AccountApiKeyInfo {
+    /// API key name
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub name: Option<String>,
+
+    /// Account ID this key belongs to
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub account_id: Option<i32>,
+
+    /// Account name
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub account_name: Option<String>,
+
+    /// Allowed source IP addresses/CIDRs
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub allowed_source_ips: Option<Vec<String>>,
+
+    /// Owner information
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub owner: Option<AccountApiKeyOwner>,
+
+    /// User account ID
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub user_account_id: Option<i32>,
+
+    /// HTTP source IP of the current request
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub http_source_ip: Option<String>,
+
+    /// Account marketplace ID
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub account_marketplace_id: Option<String>,
+}
+
+/// API key owner information
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AccountApiKeyOwner {
+    /// Owner's name
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub name: Option<String>,
+
+    /// Owner's email
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub email: Option<String>,
 }
 
 /// Account system log entry
@@ -98,18 +173,18 @@ pub struct AccountSystemLogEntry {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub resource: Option<String>,
 
+    /// Resource ID associated with this log entry
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub resource_id: Option<i32>,
+
     #[serde(skip_serializing_if = "Option::is_none")]
     pub r#type: Option<String>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
-/// Regions
+/// Available regions response
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Regions {
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -118,61 +193,120 @@ pub struct Regions {
     /// HATEOAS links
     #[serde(skip_serializing_if = "Option::is_none")]
     pub links: Option<Vec<Link>>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
-/// RedisLabs region information
+/// Region information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Region {
+    /// Region ID
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub id: Option<i32>,
+
+    /// Region name (e.g., "us-east-1")
     #[serde(skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
 
+    /// Cloud provider (e.g., "AWS", "GCP", "Azure")
     #[serde(skip_serializing_if = "Option::is_none")]
     pub provider: Option<String>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
-/// RedisLabs Account payment methods
+/// Account payment methods response
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PaymentMethods {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub account_id: Option<i32>,
 
+    /// List of payment methods
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub payment_methods: Option<Vec<PaymentMethod>>,
+
     /// HATEOAS links
     #[serde(skip_serializing_if = "Option::is_none")]
     pub links: Option<Vec<Link>>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
-/// RedisLabs database module information
+/// Payment method information
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PaymentMethod {
+    /// Payment method ID
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub id: Option<i32>,
+
+    /// Card type (e.g., "Mastercard", "Visa")
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub r#type: Option<String>,
+
+    /// Last 4 digits of the credit card
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub credit_card_ends_with: Option<i32>,
+
+    /// Name on the card
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub name_on_card: Option<String>,
+
+    /// Expiration month (1-12)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub expiration_month: Option<i32>,
+
+    /// Expiration year
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub expiration_year: Option<i32>,
+
+    /// HATEOAS links
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub links: Option<Vec<Link>>,
+}
+
+/// Database module/capability information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Module {
+    /// Module name (e.g., "RedisJSON", "RediSearch")
     #[serde(skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
 
+    /// Capability name (e.g., "JSON", "Search and query")
     #[serde(skip_serializing_if = "Option::is_none")]
     pub capability_name: Option<String>,
 
+    /// Module description
     #[serde(skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
 
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
+    /// Module parameters configuration
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub parameters: Option<Vec<ModuleParameter>>,
 }
 
-/// AccountSystemLogEntries
+/// Module parameter configuration
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ModuleParameter {
+    /// Parameter name
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub name: Option<String>,
+
+    /// Parameter description
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub description: Option<String>,
+
+    /// Parameter type (e.g., "integer")
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub r#type: Option<String>,
+
+    /// Default value for the parameter
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub default_value: Option<i64>,
+
+    /// Whether this parameter is required
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub required: Option<bool>,
+}
+
+/// Account system log entries response
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AccountSystemLogEntries {
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -181,92 +315,84 @@ pub struct AccountSystemLogEntries {
     /// HATEOAS links
     #[serde(skip_serializing_if = "Option::is_none")]
     pub links: Option<Vec<Link>>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
-/// SearchScalingFactorsData
+/// Query performance factors (search scaling) response
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SearchScalingFactorsData {
+    /// Available query performance factors (e.g., "Standard", "2x", "4x")
     #[serde(skip_serializing_if = "Option::is_none")]
     pub query_performance_factors: Option<Vec<String>>,
 
     /// HATEOAS links
     #[serde(skip_serializing_if = "Option::is_none")]
     pub links: Option<Vec<Link>>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// Account session log entry
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AccountSessionLogEntry {
+    /// Session log entry ID (UUID)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub id: Option<String>,
 
+    /// Timestamp of the session event
     #[serde(skip_serializing_if = "Option::is_none")]
     pub time: Option<String>,
 
+    /// User who performed the action
     #[serde(skip_serializing_if = "Option::is_none")]
     pub user: Option<String>,
 
+    /// User agent string
     #[serde(skip_serializing_if = "Option::is_none")]
     pub user_agent: Option<String>,
 
+    /// IP address of the session
     #[serde(skip_serializing_if = "Option::is_none")]
     pub ip_address: Option<String>,
 
+    /// User role (e.g., "owner")
     #[serde(skip_serializing_if = "Option::is_none")]
     pub user_role: Option<String>,
 
+    /// Session type (e.g., "sso")
     #[serde(skip_serializing_if = "Option::is_none")]
     pub r#type: Option<String>,
 
+    /// Action performed (e.g., "Successful login", "Successful logout")
     #[serde(skip_serializing_if = "Option::is_none")]
     pub action: Option<String>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
-/// RedisLabs data persistence information
+/// Data persistence option entry
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DataPersistenceEntry {
+    /// Persistence option name (e.g., "none", "aof-every-1-second")
     #[serde(skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
 
+    /// Human-readable description
     #[serde(skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
-/// DataPersistenceOptions
+/// Data persistence options response
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DataPersistenceOptions {
+    /// Available data persistence options
     #[serde(skip_serializing_if = "Option::is_none")]
     pub data_persistence: Option<Vec<DataPersistenceEntry>>,
 
     /// HATEOAS links
     #[serde(skip_serializing_if = "Option::is_none")]
     pub links: Option<Vec<Link>>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
-/// AccountSessionLogEntries
+/// Account session log entries response
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AccountSessionLogEntries {
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -275,10 +401,6 @@ pub struct AccountSessionLogEntries {
     /// HATEOAS links
     #[serde(skip_serializing_if = "Option::is_none")]
     pub links: Option<Vec<Link>>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 // ============================================================================
@@ -316,8 +438,10 @@ impl AccountHandler {
     ///     .api_secret("your-api-secret")
     ///     .build()?;
     ///
-    /// let account = client.account().get_current_account().await?;
-    /// println!("Account ID: {}", account.id);
+    /// let root = client.account().get_current_account().await?;
+    /// if let Some(account) = &root.account {
+    ///     println!("Account ID: {:?}", account.id);
+    /// }
     /// # Ok(())
     /// # }
     /// ```

@@ -34,6 +34,129 @@ pub struct PscEndpointUpdateRequest {
 /// Task state update response
 pub use crate::types::TaskStateUpdate;
 
+/// Private Service Connect service information
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PrivateServiceConnectService {
+    /// PSC service ID
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub id: Option<i32>,
+
+    /// Connection host name for the PSC service
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub connection_host_name: Option<String>,
+
+    /// GCP service attachment name
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub service_attachment_name: Option<String>,
+
+    /// PSC service status
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub status: Option<String>,
+}
+
+/// Private Service Connect endpoint information
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PrivateServiceConnectEndpoint {
+    /// Endpoint ID
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub id: Option<i32>,
+
+    /// GCP project ID
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub gcp_project_id: Option<String>,
+
+    /// GCP VPC name
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub gcp_vpc_name: Option<String>,
+
+    /// GCP VPC subnet name
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub gcp_vpc_subnet_name: Option<String>,
+
+    /// Endpoint connection name
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub endpoint_connection_name: Option<String>,
+
+    /// Endpoint status
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub status: Option<String>,
+}
+
+/// Private Service Connect endpoints response
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PrivateServiceConnectEndpoints {
+    /// PSC service ID
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub psc_service_id: Option<i32>,
+
+    /// List of PSC endpoints
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub endpoints: Option<Vec<PrivateServiceConnectEndpoint>>,
+}
+
+/// GCP creation script for PSC endpoint
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GcpCreationScript {
+    /// Bash script for endpoint creation
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub bash: Option<String>,
+
+    /// PowerShell script for endpoint creation
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub powershell: Option<String>,
+
+    /// Terraform GCP configuration
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub terraform_gcp: Option<TerraformGcp>,
+}
+
+/// Terraform GCP configuration
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TerraformGcp {
+    /// Service attachment configurations
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub service_attachments: Option<Vec<TerraformGcpServiceAttachment>>,
+}
+
+/// Terraform GCP service attachment configuration
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TerraformGcpServiceAttachment {
+    /// Service attachment name
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub name: Option<String>,
+
+    /// DNS record
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub dns_record: Option<String>,
+
+    /// IP address name
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ip_address_name: Option<String>,
+
+    /// Forwarding rule name
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub forwarding_rule_name: Option<String>,
+}
+
+/// GCP deletion script for PSC endpoint
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GcpDeletionScript {
+    /// Bash script for endpoint deletion
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub bash: Option<String>,
+
+    /// PowerShell script for endpoint deletion
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub powershell: Option<String>,
+}
+
 /// Private Service Connect handler
 pub struct PscHandler {
     client: CloudClient,

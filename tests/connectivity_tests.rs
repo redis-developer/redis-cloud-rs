@@ -62,7 +62,7 @@ async fn test_create_vpc_peering() {
     let request = redis_cloud::connectivity::VpcPeeringCreateBaseRequest {
         provider: Some("AWS".to_string()),
         command_type: None,
-        extra: serde_json::Value::Null,
+        ..Default::default()
     };
 
     let result = handler.create_vpc_peering(123, &request).await.unwrap();
@@ -225,7 +225,6 @@ async fn test_update_vpc_peering() {
         vpc_cidr: Some("10.0.0.0/16".to_string()),
         vpc_cidrs: Some(vec!["10.0.0.0/16".to_string()]),
         command_type: None,
-        extra: serde_json::Value::Null,
     };
 
     let result = handler
@@ -269,10 +268,9 @@ async fn test_create_vpc_peering_gcp() {
     let request = redis_cloud::connectivity::VpcPeeringCreateBaseRequest {
         provider: Some("GCP".to_string()),
         command_type: Some("CREATE_VPC_PEERING".to_string()),
-        extra: json!({
-            "gcp_project_id": "my-gcp-project",
-            "gcp_network_name": "default"
-        }),
+        gcp_project_id: Some("my-gcp-project".to_string()),
+        network_name: Some("default".to_string()),
+        ..Default::default()
     };
 
     let result = handler.create_vpc_peering(123, &request).await.unwrap();
@@ -310,14 +308,14 @@ async fn test_create_vpc_peering_azure() {
         .unwrap();
 
     let handler = ConnectivityHandler::new(client);
+    // Note: Azure VNet peering uses VPC peering API with Azure-specific fields
+    // that would be passed in the request body via VpcPeeringCreateRequest
     let request = redis_cloud::connectivity::VpcPeeringCreateBaseRequest {
         provider: Some("Azure".to_string()),
         command_type: None,
-        extra: json!({
-            "azure_subscription_id": "12345678-1234-1234-1234-123456789012",
-            "azure_vnet_name": "my-vnet",
-            "azure_resource_group": "my-resource-group"
-        }),
+        // Azure-specific fields would need to be added to VpcPeeringCreateRequest
+        // if Azure VNet peering is supported
+        ..Default::default()
     };
 
     let result = handler.create_vpc_peering(456, &request).await.unwrap();
@@ -473,15 +471,12 @@ async fn test_update_tgw() {
         cidrs: Some(vec![
             redis_cloud::connectivity::Cidr {
                 cidr_address: Some("10.0.0.0/16".to_string()),
-                extra: serde_json::Value::Null,
             },
             redis_cloud::connectivity::Cidr {
                 cidr_address: Some("192.168.0.0/16".to_string()),
-                extra: serde_json::Value::Null,
             },
         ]),
         command_type: None,
-        extra: serde_json::Value::Null,
     };
 
     let result = handler
@@ -557,7 +552,7 @@ async fn test_task_response_with_error() {
     let request = redis_cloud::connectivity::VpcPeeringCreateBaseRequest {
         provider: Some("AWS".to_string()),
         command_type: None,
-        extra: serde_json::Value::Null,
+        ..Default::default()
     };
 
     let result = handler.create_vpc_peering(123, &request).await.unwrap();

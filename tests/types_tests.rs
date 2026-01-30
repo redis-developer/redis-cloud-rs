@@ -47,7 +47,6 @@ fn test_processor_response_with_error() {
         resource: None,
         error: Some("UNAUTHORIZED".to_string()),
         additional_info: None,
-        extra: serde_json::Value::Null,
     };
 
     let json_str = serde_json::to_string(&response).unwrap();
@@ -72,7 +71,6 @@ fn test_processor_response_with_resource() {
         resource: Some(resource_data.clone()),
         error: None,
         additional_info: None,
-        extra: serde_json::Value::Null,
     };
 
     let json_str = serde_json::to_string(&response).unwrap();
@@ -98,7 +96,6 @@ fn test_cloud_tags() {
                 value: "platform".to_string(),
             },
         ],
-        extra: json!({}),
     };
 
     let json_str = serde_json::to_string(&tags).unwrap();
@@ -245,9 +242,9 @@ fn test_deserialize_real_task_response() {
     assert!(response.resource.is_some());
 }
 
-// Test that unknown fields are handled gracefully
+// Test that unknown fields are handled gracefully (ignored)
 #[test]
-fn test_extra_fields_preserved() {
+fn test_extra_fields_ignored() {
     let json = json!({
         "tags": [
             {"key": "env", "value": "prod"}
@@ -256,11 +253,9 @@ fn test_extra_fields_preserved() {
         "anotherField": 123
     });
 
-    let tags: CloudTags = serde_json::from_value(json.clone()).unwrap();
+    // Unknown fields should be ignored without causing errors
+    let tags: CloudTags = serde_json::from_value(json).unwrap();
     assert_eq!(tags.tags.len(), 1);
-
-    // Extra fields should be preserved in the `extra` field
-    let extra = tags.extra;
-    assert_eq!(extra["unknownField"], "someValue");
-    assert_eq!(extra["anotherField"], 123);
+    assert_eq!(tags.tags[0].key, "env");
+    assert_eq!(tags.tags[0].value, "prod");
 }

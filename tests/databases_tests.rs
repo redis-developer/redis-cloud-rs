@@ -12,10 +12,12 @@ async fn test_get_subscription_databases() {
         .and(header("x-api-key", "test-key"))
         .and(header("x-api-secret-key", "test-secret"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
-            "subscription": {
+            "subscription": [{
                 "subscriptionId": 123,
-                "numberOfDatabases": 2
-            },
+                "numberOfDatabases": 2,
+                "databases": [],
+                "links": []
+            }],
             "links": [
                 {
                     "href": "https://api.redislabs.com/v1/subscriptions/123/databases/1",
@@ -43,6 +45,10 @@ async fn test_get_subscription_databases() {
 
     assert_eq!(result.account_id, Some(456));
     assert!(result.links.is_some());
+    // Verify typed subscription field
+    assert_eq!(result.subscription.len(), 1);
+    assert_eq!(result.subscription[0].subscription_id, 123);
+    assert_eq!(result.subscription[0].number_of_databases, Some(2));
 }
 
 #[tokio::test]
@@ -108,7 +114,6 @@ async fn test_create_database() {
         sharding_type: None,
         query_performance_factor: None,
         command_type: None,
-        extra: serde_json::Value::Null,
     };
 
     let result = handler.create_database(123, &request).await.unwrap();
@@ -229,7 +234,6 @@ async fn test_update_database() {
         alerts: None,
         command_type: None,
         query_performance_factor: None,
-        extra: serde_json::Value::Null,
     };
 
     let result = handler.update_database(123, 456, &request).await.unwrap();
@@ -299,7 +303,6 @@ async fn test_backup_database() {
         region_name: None,
         adhoc_backup_path: None,
         command_type: None,
-        extra: serde_json::Value::Null,
     };
     let result = handler.backup_database(123, 456, &request).await.unwrap();
 
@@ -342,7 +345,6 @@ async fn test_import_into_database() {
         subscription_id: None,
         database_id: None,
         command_type: None,
-        extra: serde_json::Value::Null,
     };
 
     let result = handler.import_database(123, 456, &request).await.unwrap();
@@ -524,18 +526,15 @@ async fn test_create_database_with_modules() {
             redis_cloud::databases::DatabaseModuleSpec {
                 name: "RediSearch".to_string(),
                 parameters: None,
-                extra: serde_json::Value::Null,
             },
             redis_cloud::databases::DatabaseModuleSpec {
                 name: "RedisJSON".to_string(),
                 parameters: None,
-                extra: serde_json::Value::Null,
             },
         ]),
         sharding_type: None,
         query_performance_factor: None,
         command_type: None,
-        extra: serde_json::Value::Null,
     };
 
     let result = handler.create_database(123, &request).await.unwrap();
@@ -602,13 +601,11 @@ async fn test_create_database_with_alerts() {
         alerts: Some(vec![redis_cloud::databases::DatabaseAlertSpec {
             name: "dataset-size".to_string(),
             value: 80,
-            extra: serde_json::Value::Null,
         }]),
         modules: None,
         sharding_type: None,
         query_performance_factor: None,
         command_type: None,
-        extra: serde_json::Value::Null,
     };
 
     let result = handler.create_database(123, &request).await.unwrap();
@@ -673,7 +670,6 @@ async fn test_database_with_clustering() {
         sharding_type: Some("standard".to_string()),
         query_performance_factor: None,
         command_type: None,
-        extra: serde_json::Value::Null,
     };
 
     let result = handler.create_database(123, &request).await.unwrap();
@@ -743,7 +739,6 @@ async fn test_task_response_with_error() {
         sharding_type: None,
         query_performance_factor: None,
         command_type: None,
-        extra: serde_json::Value::Null,
     };
 
     let result = handler.create_database(123, &request).await.unwrap();
@@ -902,7 +897,6 @@ async fn test_error_handling_500() {
         sharding_type: None,
         query_performance_factor: None,
         command_type: None,
-        extra: serde_json::Value::Null,
     };
     let result = handler.create_database(123, &request).await;
 
@@ -929,7 +923,7 @@ async fn test_get_all_databases_single_page() {
         .and(header("x-api-secret-key", "test-secret"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "accountId": 456,
-            "subscription": {
+            "subscription": [{
                 "subscriptionId": 123,
                 "numberOfDatabases": 2,
                 "databases": [
@@ -944,7 +938,7 @@ async fn test_get_all_databases_single_page() {
                         "status": "active"
                     }
                 ]
-            }
+            }]
         })))
         .mount(&mock_server)
         .await;
@@ -979,14 +973,14 @@ async fn test_get_all_databases_multiple_pages() {
         .and(header("x-api-secret-key", "test-secret"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "accountId": 456,
-            "subscription": {
+            "subscription": [{
                 "subscriptionId": 123,
                 "numberOfDatabases": 3,
                 "databases": [
                     { "databaseId": 1, "name": "db-one" },
                     { "databaseId": 2, "name": "db-two" }
                 ]
-            }
+            }]
         })))
         .mount(&mock_server)
         .await;
@@ -1000,13 +994,13 @@ async fn test_get_all_databases_multiple_pages() {
         .and(header("x-api-secret-key", "test-secret"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "accountId": 456,
-            "subscription": {
+            "subscription": [{
                 "subscriptionId": 123,
                 "numberOfDatabases": 3,
                 "databases": [
                     { "databaseId": 3, "name": "db-three" }
                 ]
-            }
+            }]
         })))
         .mount(&mock_server)
         .await;
@@ -1047,11 +1041,11 @@ async fn test_get_all_databases_empty() {
         .and(header("x-api-secret-key", "test-secret"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "accountId": 456,
-            "subscription": {
+            "subscription": [{
                 "subscriptionId": 123,
                 "numberOfDatabases": 0,
                 "databases": []
-            }
+            }]
         })))
         .mount(&mock_server)
         .await;
@@ -1081,14 +1075,14 @@ async fn test_stream_databases() {
         .and(header("x-api-secret-key", "test-secret"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "accountId": 456,
-            "subscription": {
+            "subscription": [{
                 "subscriptionId": 123,
                 "numberOfDatabases": 2,
                 "databases": [
                     { "databaseId": 1, "name": "db-one" },
                     { "databaseId": 2, "name": "db-two" }
                 ]
-            }
+            }]
         })))
         .mount(&mock_server)
         .await;

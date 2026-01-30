@@ -274,7 +274,7 @@ impl CloudClient {
     ///     .api_secret("secret")
     ///     .build()?;
     ///
-    /// let users = client.acl().get_all_users().await?;
+    /// let users = client.acl().get_all_acl_users().await?;
     /// # Ok(())
     /// # }
     /// ```

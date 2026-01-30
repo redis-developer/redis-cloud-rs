@@ -65,10 +65,6 @@ pub struct AccountFixedSubscriptionDatabases {
     /// HATEOAS links
     #[serde(skip_serializing_if = "Option::is_none")]
     pub links: Option<Vec<Link>>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// Database import request
@@ -89,10 +85,6 @@ pub struct FixedDatabaseImportRequest {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub command_type: Option<String>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// Database tag update request message
@@ -113,10 +105,6 @@ pub struct DatabaseTagUpdateRequest {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub command_type: Option<String>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// DynamicEndpoints
@@ -127,10 +115,6 @@ pub struct DynamicEndpoints {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub private: Option<String>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// Database tag
@@ -145,10 +129,6 @@ pub struct Tag {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub command_type: Option<String>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// Database tags update request message
@@ -166,10 +146,6 @@ pub struct DatabaseTagsUpdateRequest {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub command_type: Option<String>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// Optional. This database will be a replica of the specified Redis databases, provided as a list of objects with endpoint and certificate details.
@@ -186,10 +162,6 @@ pub struct DatabaseSyncSourceSpec {
     /// TLS/SSL certificate chain of the sync source. If not set and the source is a Redis Cloud database, it will automatically detect the certificate to use.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub server_cert: Option<String>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// Optional. A list of client TLS/SSL certificates. If specified, mTLS authentication will be required to authenticate user connections. If set to an empty list, TLS client certificates will be removed and mTLS will not be required. TLS connection may still apply, depending on the value of 'enableTls'.
@@ -198,10 +170,6 @@ pub struct DatabaseSyncSourceSpec {
 pub struct DatabaseCertificateSpec {
     /// Client certificate public key in PEM format, with new line characters replaced with '\n'.
     pub public_certificate_pem_string: String,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// Database tag
@@ -223,10 +191,6 @@ pub struct CloudTag {
     /// HATEOAS links
     #[serde(skip_serializing_if = "Option::is_none")]
     pub links: Option<Vec<Link>>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// Database slowlog entry
@@ -244,10 +208,6 @@ pub struct DatabaseSlowLogEntry {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub arguments: Option<String>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// Database tag
@@ -268,10 +228,6 @@ pub struct DatabaseTagCreateRequest {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub command_type: Option<String>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// Essentials database backup request message
@@ -290,10 +246,6 @@ pub struct FixedDatabaseBackupRequest {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub command_type: Option<String>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// Optional. Redis advanced capabilities (also known as modules) to be provisioned in the database. Use GET /database-modules to get a list of available advanced capabilities.
@@ -305,22 +257,40 @@ pub struct DatabaseModuleSpec {
     /// Optional. Redis advanced capability parameters. Use GET /database-modules to get the available capabilities and their parameters.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub parameters: Option<HashMap<String, Value>>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// Optional. Changes Replica Of (also known as Active-Passive) configuration details.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ReplicaOfSpec {
-    /// Optional. This database will be a replica of the specified Redis databases, provided as a list of objects with endpoint and certificate details.
-    pub sync_sources: Vec<DatabaseSyncSourceSpec>,
+    /// Description of the replica configuration
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub description: Option<String>,
 
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
+    /// Optional. This database will be a replica of the specified Redis databases, provided as a list of objects with endpoint and certificate details.
+    #[serde(default)]
+    pub sync_sources: Vec<DatabaseSyncSourceSpec>,
+}
+
+/// Database backup status and configuration
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DatabaseBackupStatus {
+    /// Whether backup is enabled
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub enabled: Option<bool>,
+
+    /// Current backup status
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub status: Option<String>,
+
+    /// Backup interval (e.g., "every-24-hours")
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub interval: Option<String>,
+
+    /// Backup destination path
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub destination: Option<String>,
 }
 
 /// Optional. Changes Redis database alert details.
@@ -331,10 +301,6 @@ pub struct DatabaseAlertSpec {
 
     /// Value over which an alert will be sent. Default values and range depend on the alert type. See [Configure alerts](https://redis.io/docs/latest/operate/rc/databases/monitor-performance/#configure-metric-alerts) for more information.
     pub value: i32,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// Redis list of database tags
@@ -347,10 +313,6 @@ pub struct CloudTags {
     /// HATEOAS links
     #[serde(skip_serializing_if = "Option::is_none")]
     pub links: Option<Vec<Link>>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// FixedDatabase
@@ -441,13 +403,61 @@ pub struct FixedDatabase {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub dynamic_endpoints: Option<DynamicEndpoints>,
 
+    /// Whether default Redis user is enabled
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub enable_default_user: Option<bool>,
+
+    /// Whether TLS is enabled for connections
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub enable_tls: Option<bool>,
+
+    /// Database password (masked in responses)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub password: Option<String>,
+
+    /// List of source IP addresses or subnet masks allowed to connect
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub source_ips: Option<Vec<String>>,
+
+    /// Whether SSL client authentication is enabled
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ssl_client_authentication: Option<bool>,
+
+    /// Whether TLS client authentication is enabled
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tls_client_authentication: Option<bool>,
+
+    /// Replica of configuration
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub replica: Option<ReplicaOfSpec>,
+
+    /// Whether database clustering is enabled
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub clustering_enabled: Option<bool>,
+
+    /// Regex rules for custom hashing policy
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub regex_rules: Option<Vec<String>>,
+
+    /// Hashing policy for clustering
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub hashing_policy: Option<String>,
+
+    /// Redis modules/capabilities enabled on this database
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub modules: Option<Vec<DatabaseModuleSpec>>,
+
+    /// Database alert configurations
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub alerts: Option<Vec<DatabaseAlertSpec>>,
+
+    /// Backup configuration and status
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub backup: Option<DatabaseBackupStatus>,
+
     /// HATEOAS links
     #[serde(skip_serializing_if = "Option::is_none")]
     pub links: Option<Vec<Link>>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// DatabaseSlowLogEntries
@@ -459,10 +469,6 @@ pub struct DatabaseSlowLogEntries {
     /// HATEOAS links
     #[serde(skip_serializing_if = "Option::is_none")]
     pub links: Option<Vec<Link>>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// TaskStateUpdate
@@ -490,10 +496,6 @@ pub struct TaskStateUpdate {
     /// HATEOAS links
     #[serde(skip_serializing_if = "Option::is_none")]
     pub links: Option<Vec<Link>>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// Essentials database definition
@@ -599,10 +601,6 @@ pub struct FixedDatabaseCreateRequest {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub command_type: Option<String>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// Essentials database update request
@@ -704,10 +702,6 @@ pub struct FixedDatabaseUpdateRequest {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub command_type: Option<String>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 // ============================================================================

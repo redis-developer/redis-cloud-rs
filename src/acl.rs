@@ -43,7 +43,6 @@
 use crate::types::{Link, ProcessorResponse};
 use crate::{CloudClient, Result};
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 
 // ============================================================================
 // Models
@@ -61,10 +60,6 @@ pub struct AclRoleCreateRequest {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub command_type: Option<String>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// ACL user update request
@@ -84,13 +79,9 @@ pub struct AclUserUpdateRequest {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub command_type: Option<String>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
-/// Redis list of ACL users in current account
+/// ACL users response
 ///
 /// Response from GET /acl/users
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -100,20 +91,16 @@ pub struct AccountACLUsers {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub account_id: Option<i32>,
 
-    /// List of ACL users (typically in extra as 'users' array)
+    /// List of ACL users
     #[serde(skip_serializing_if = "Option::is_none")]
     pub users: Option<Vec<ACLUser>>,
 
     /// HATEOAS links for API navigation
     #[serde(skip_serializing_if = "Option::is_none")]
     pub links: Option<Vec<Link>>,
-
-    /// Only for truly unknown/future API fields
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
-/// Redis list of ACL redis rules in current account
+/// ACL Redis rules response
 ///
 /// Response from GET /acl/redisRules
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -123,20 +110,41 @@ pub struct AccountACLRedisRules {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub account_id: Option<i32>,
 
-    /// List of Redis ACL rules (typically in extra as 'redisRules' array)
+    /// List of Redis ACL rules
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub redis_rules: Option<Vec<Value>>,
+    pub redis_rules: Option<Vec<ACLRedisRule>>,
 
     /// HATEOAS links for API navigation
     #[serde(skip_serializing_if = "Option::is_none")]
     pub links: Option<Vec<Link>>,
-
-    /// Only for truly unknown/future API fields
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
-/// ACL redis rule create request
+/// ACL Redis rule
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ACLRedisRule {
+    /// Rule ID
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub id: Option<i32>,
+
+    /// Rule name
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub name: Option<String>,
+
+    /// ACL pattern (e.g., "+@all ~lcm:*")
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub acl: Option<String>,
+
+    /// Whether this is a default rule
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub is_default: Option<bool>,
+
+    /// Rule status (e.g., "active")
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub status: Option<String>,
+}
+
+/// ACL Redis rule create request
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AclRedisRuleCreateRequest {
@@ -148,13 +156,9 @@ pub struct AclRedisRuleCreateRequest {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub command_type: Option<String>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
-/// Redis list of ACL roles in current account
+/// ACL roles response
 ///
 /// Response from GET /acl/roles
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -164,20 +168,97 @@ pub struct AccountACLRoles {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub account_id: Option<i32>,
 
-    /// List of ACL roles (typically in extra as 'roles' array)
+    /// List of ACL roles
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub roles: Option<Vec<Value>>,
+    pub roles: Option<Vec<ACLRole>>,
 
     /// HATEOAS links for API navigation
     #[serde(skip_serializing_if = "Option::is_none")]
     pub links: Option<Vec<Link>>,
-
-    /// Only for truly unknown/future API fields
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
-/// ACL redis rule update request
+/// ACL role
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ACLRole {
+    /// Role ID
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub id: Option<i32>,
+
+    /// Role name
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub name: Option<String>,
+
+    /// Redis rules associated with this role
+    ///
+    /// Note: These use different field names (ruleId, ruleName) than standalone redis rules
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub redis_rules: Option<Vec<ACLRoleRedisRule>>,
+
+    /// Users assigned to this role
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub users: Option<Vec<ACLRoleUser>>,
+
+    /// Role status (e.g., "active")
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub status: Option<String>,
+}
+
+/// User reference in an ACL role
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ACLRoleUser {
+    /// User ID
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub id: Option<i32>,
+
+    /// User name
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub name: Option<String>,
+}
+
+/// Redis rule as embedded in an ACL role response
+///
+/// This has different field names than ACLRedisRule because the API
+/// uses different JSON keys when rules are embedded in role responses.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ACLRoleRedisRule {
+    /// Rule ID
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub rule_id: Option<i32>,
+
+    /// Rule name
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub rule_name: Option<String>,
+
+    /// Databases this rule applies to within the role
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub databases: Option<Vec<ACLRoleDatabase>>,
+}
+
+/// Database reference in an ACL role's redis rule
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ACLRoleDatabase {
+    /// Subscription ID
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub subscription_id: Option<i32>,
+
+    /// Database ID
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub database_id: Option<i32>,
+
+    /// Database name
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub database_name: Option<String>,
+
+    /// Regions (for Active-Active databases)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub regions: Option<Vec<String>>,
+}
+
+/// ACL Redis rule update request
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AclRedisRuleUpdateRequest {
@@ -192,13 +273,9 @@ pub struct AclRedisRuleUpdateRequest {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub command_type: Option<String>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
-/// A list of databases where the specified rule applies for this role.
+/// Database specification for ACL role assignment
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AclRoleDatabaseSpec {
@@ -211,10 +288,6 @@ pub struct AclRoleDatabaseSpec {
     /// (Active-Active databases only) Optional. A list of regions where this rule applies for this role.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub regions: Option<Vec<String>>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// ACL user create request
@@ -232,34 +305,30 @@ pub struct AclUserCreateRequest {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub command_type: Option<String>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
-/// Redis ACL user information
+/// ACL user information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ACLUser {
+    /// User ID
     #[serde(skip_serializing_if = "Option::is_none")]
     pub id: Option<i32>,
 
+    /// User name
     #[serde(skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
 
+    /// Assigned role name
     #[serde(skip_serializing_if = "Option::is_none")]
     pub role: Option<String>,
 
+    /// User status (e.g., "active", "error")
     #[serde(skip_serializing_if = "Option::is_none")]
     pub status: Option<String>,
 
     /// HATEOAS links
     #[serde(skip_serializing_if = "Option::is_none")]
     pub links: Option<Vec<Link>>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// ACL role update request
@@ -279,13 +348,9 @@ pub struct AclRoleUpdateRequest {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub command_type: Option<String>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
-/// Optional. Changes the Redis ACL rules to assign to this database access role.
+/// Redis rule specification for role assignment
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AclRoleRedisRuleSpec {
@@ -294,41 +359,39 @@ pub struct AclRoleRedisRuleSpec {
 
     /// A list of databases where the specified rule applies for this role.
     pub databases: Vec<AclRoleDatabaseSpec>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
-/// TaskStateUpdate
+/// Task state update response
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TaskStateUpdate {
+    /// Task ID (UUID)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub task_id: Option<String>,
 
+    /// Command type (e.g., "subscriptionDeleteRequest")
     #[serde(skip_serializing_if = "Option::is_none")]
     pub command_type: Option<String>,
 
+    /// Task status (e.g., "processing-completed")
     #[serde(skip_serializing_if = "Option::is_none")]
     pub status: Option<String>,
 
+    /// Task description
     #[serde(skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
 
+    /// Timestamp of the task
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timestamp: Option<String>,
 
+    /// Task response with resource info
     #[serde(skip_serializing_if = "Option::is_none")]
     pub response: Option<ProcessorResponse>,
 
     /// HATEOAS links
     #[serde(skip_serializing_if = "Option::is_none")]
     pub links: Option<Vec<Link>>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 // ============================================================================

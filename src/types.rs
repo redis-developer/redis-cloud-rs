@@ -78,10 +78,6 @@ pub struct ProcessorResponse {
     /// Additional information about the operation
     #[serde(skip_serializing_if = "Option::is_none")]
     pub additional_info: Option<String>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 /// ProcessorError - Subset of massive error enum for common errors
@@ -104,10 +100,6 @@ pub enum ProcessorError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TasksStateUpdate {
     pub tasks: Vec<TaskStateUpdate>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 // ============================================================================
@@ -125,10 +117,6 @@ pub struct CloudTag {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CloudTags {
     pub tags: Vec<CloudTag>,
-
-    /// Additional fields from the API
-    #[serde(flatten)]
-    pub extra: Value,
 }
 
 // ============================================================================

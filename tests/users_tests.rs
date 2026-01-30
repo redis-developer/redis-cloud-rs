@@ -103,7 +103,6 @@ async fn test_update_user() {
         name: "Jane Doe".to_string(),
         role: Some("admin".to_string()),
         command_type: None,
-        extra: serde_json::Value::Null,
     };
 
     let result = handler.update_user(456, &request).await.unwrap();
