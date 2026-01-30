@@ -140,7 +140,6 @@ pub struct CloudClient {
     pub(crate) api_key: String,
     pub(crate) api_secret: String,
     pub(crate) base_url: String,
-    #[allow(dead_code)]
     pub(crate) timeout: std::time::Duration,
     pub(crate) client: Arc<Client>,
 }
@@ -149,6 +148,14 @@ impl CloudClient {
     /// Create a new builder for the client
     pub fn builder() -> CloudClientBuilder {
         CloudClientBuilder::new()
+    }
+
+    /// Get the configured request timeout
+    ///
+    /// Returns the timeout duration that was set when building the client.
+    /// This timeout is applied to all HTTP requests made by this client.
+    pub fn timeout(&self) -> std::time::Duration {
+        self.timeout
     }
 
     /// Normalize URL path concatenation to avoid double slashes
@@ -247,7 +254,10 @@ impl CloudClient {
             Ok(())
         } else {
             let status = response.status();
-            let text = response.text().await.unwrap_or_default();
+            let text = response
+                .text()
+                .await
+                .unwrap_or_else(|e| format!("(failed to read response body: {})", e));
 
             match status.as_u16() {
                 400 => Err(RestError::BadRequest { message: text }),
@@ -298,7 +308,10 @@ impl CloudClient {
                 .map(|b| b.to_vec())
                 .map_err(|e| RestError::ConnectionError(format!("Failed to read response: {}", e)))
         } else {
-            let text = response.text().await.unwrap_or_default();
+            let text = response
+                .text()
+                .await
+                .unwrap_or_else(|e| format!("(failed to read response body: {})", e));
 
             match status.as_u16() {
                 400 => Err(RestError::BadRequest { message: text }),
@@ -378,7 +391,10 @@ impl CloudClient {
             }
         } else {
             let status = response.status();
-            let text = response.text().await.unwrap_or_default();
+            let text = response
+                .text()
+                .await
+                .unwrap_or_else(|e| format!("(failed to read response body: {})", e));
 
             match status.as_u16() {
                 400 => Err(RestError::BadRequest { message: text }),
@@ -421,6 +437,51 @@ impl CloudClient {
         self.handle_response(response).await
     }
 
+    /// Handle HTTP response and return both status code and body as JSON
+    ///
+    /// This is used internally by the Tower service implementation to preserve
+    /// the actual HTTP status code in responses.
+    #[cfg(feature = "tower-integration")]
+    async fn handle_response_with_status(
+        &self,
+        response: reqwest::Response,
+    ) -> Result<(u16, serde_json::Value)> {
+        let status = response.status();
+        let status_code = status.as_u16();
+
+        if status.is_success() {
+            let bytes = response.bytes().await.map_err(|e| {
+                RestError::ConnectionError(format!("Failed to read response: {}", e))
+            })?;
+
+            let value: serde_json::Value = serde_json::from_slice(&bytes).map_err(|e| {
+                RestError::ConnectionError(format!("Failed to parse JSON response: {}", e))
+            })?;
+
+            Ok((status_code, value))
+        } else {
+            let text = response
+                .text()
+                .await
+                .unwrap_or_else(|e| format!("(failed to read response body: {})", e));
+
+            match status_code {
+                400 => Err(RestError::BadRequest { message: text }),
+                401 => Err(RestError::AuthenticationFailed { message: text }),
+                403 => Err(RestError::Forbidden { message: text }),
+                404 => Err(RestError::NotFound { message: text }),
+                412 => Err(RestError::PreconditionFailed),
+                429 => Err(RestError::RateLimited { message: text }),
+                500 => Err(RestError::InternalServerError { message: text }),
+                503 => Err(RestError::ServiceUnavailable { message: text }),
+                _ => Err(RestError::ApiError {
+                    code: status_code,
+                    message: text,
+                }),
+            }
+        }
+    }
+
     /// Handle HTTP response
     async fn handle_response<T: serde::de::DeserializeOwned>(
         &self,
@@ -446,7 +507,10 @@ impl CloudClient {
                 ))
             })
         } else {
-            let text = response.text().await.unwrap_or_default();
+            let text = response
+                .text()
+                .await
+                .unwrap_or_else(|e| format!("(failed to read response body: {})", e));
 
             match status.as_u16() {
                 400 => Err(RestError::BadRequest { message: text }),
@@ -637,33 +701,40 @@ pub mod tower_support {
         fn call(&mut self, req: ApiRequest) -> Self::Future {
             let client = self.clone();
             Box::pin(async move {
-                let response: serde_json::Value = match req.method {
-                    Method::Get => client.get_raw(&req.path).await?,
+                let url = client.normalize_url(&req.path);
+
+                let request_builder = match req.method {
+                    Method::Get => client.client.get(&url),
                     Method::Post => {
                         let body = req.body.ok_or_else(|| RestError::BadRequest {
                             message: "POST request requires a body".to_string(),
                         })?;
-                        client.post_raw(&req.path, body).await?
+                        client.client.post(&url).json(&body)
                     }
                     Method::Put => {
                         let body = req.body.ok_or_else(|| RestError::BadRequest {
                             message: "PUT request requires a body".to_string(),
                         })?;
-                        client.put_raw(&req.path, body).await?
+                        client.client.put(&url).json(&body)
                     }
                     Method::Patch => {
                         let body = req.body.ok_or_else(|| RestError::BadRequest {
                             message: "PATCH request requires a body".to_string(),
                         })?;
-                        client.patch_raw(&req.path, body).await?
+                        client.client.patch(&url).json(&body)
                     }
-                    Method::Delete => client.delete_raw(&req.path).await?,
+                    Method::Delete => client.client.delete(&url),
                 };
 
-                Ok(ApiResponse {
-                    status: 200,
-                    body: response,
-                })
+                let response = request_builder
+                    .header("x-api-key", &client.api_key)
+                    .header("x-api-secret-key", &client.api_secret)
+                    .send()
+                    .await?;
+
+                let (status, body) = client.handle_response_with_status(response).await?;
+
+                Ok(ApiResponse { status, body })
             })
         }
     }

@@ -43,7 +43,7 @@
 //!     .start_date("2025-01-01")
 //!     .end_date("2025-01-31")
 //!     .format(CostReportFormat::Csv)
-//!     .build();
+//!     .build()?;
 //!
 //! let task = handler.generate_cost_report(request).await?;
 //! println!("Task ID: {:?}", task.task_id);
@@ -265,12 +265,22 @@ impl CostReportCreateRequestBuilder {
 
     /// Build the request
     ///
-    /// # Panics
-    /// Panics if start_date or end_date is not set
-    pub fn build(self) -> CostReportCreateRequest {
-        CostReportCreateRequest {
-            start_date: self.start_date.expect("start_date is required"),
-            end_date: self.end_date.expect("end_date is required"),
+    /// # Errors
+    ///
+    /// Returns an error if `start_date` or `end_date` is not set.
+    pub fn build(self) -> Result<CostReportCreateRequest> {
+        let start_date = self
+            .start_date
+            .ok_or_else(|| crate::CloudError::BadRequest {
+                message: "start_date is required".to_string(),
+            })?;
+        let end_date = self.end_date.ok_or_else(|| crate::CloudError::BadRequest {
+            message: "end_date is required".to_string(),
+        })?;
+
+        Ok(CostReportCreateRequest {
+            start_date,
+            end_date,
             format: self.format,
             subscription_ids: self.subscription_ids,
             database_ids: self.database_ids,
@@ -278,7 +288,7 @@ impl CostReportCreateRequestBuilder {
             regions: self.regions,
             tags: self.tags,
             extra: Value::Null,
-        }
+        })
     }
 }
 
@@ -390,7 +400,8 @@ mod tests {
             .subscription_ids(vec![123, 456])
             .regions(vec!["us-east-1".to_string()])
             .tag("env", "prod")
-            .build();
+            .build()
+            .expect("should build with all required fields");
 
         assert_eq!(request.start_date, "2025-01-01");
         assert_eq!(request.end_date, "2025-01-31");
@@ -438,12 +449,31 @@ mod tests {
             .end_date("2025-01-31")
             .format(CostReportFormat::Json)
             .subscription_type(SubscriptionType::Pro)
-            .build();
+            .build()
+            .expect("should build with all required fields");
 
         let json = serde_json::to_value(&request).unwrap();
         assert_eq!(json["startDate"], "2025-01-01");
         assert_eq!(json["endDate"], "2025-01-31");
         assert_eq!(json["format"], "json");
         assert_eq!(json["subscriptionType"], "pro");
+    }
+
+    #[test]
+    fn test_builder_missing_start_date() {
+        let result = CostReportCreateRequest::builder()
+            .end_date("2025-01-31")
+            .build();
+
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_builder_missing_end_date() {
+        let result = CostReportCreateRequest::builder()
+            .start_date("2025-01-01")
+            .build();
+
+        assert!(result.is_err());
     }
 }
