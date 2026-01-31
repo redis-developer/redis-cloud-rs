@@ -180,14 +180,30 @@ impl MockCloudServer {
     // =========================================================================
 
     /// Mock the databases list endpoint (GET /subscriptions/{id}/databases)
+    ///
+    /// Returns the correct nested structure expected by `get_subscription_databases()`:
+    /// ```json
+    /// {
+    ///   "accountId": 12345,
+    ///   "subscription": [{
+    ///     "subscriptionId": 123,
+    ///     "numberOfDatabases": 2,
+    ///     "databases": [...]
+    ///   }]
+    /// }
+    /// ```
     pub async fn mock_databases_list(&self, subscription_id: i32, databases: Vec<Value>) {
         Mock::given(method("GET"))
             .and(path(format!("/subscriptions/{subscription_id}/databases")))
             .and(header("x-api-key", "test-key"))
             .and(header("x-api-secret-key", "test-secret"))
             .respond_with(ResponseTemplate::new(200).set_body_json(json!({
-                "subscriptionId": subscription_id,
-                "databases": databases
+                "accountId": 12345,
+                "subscription": [{
+                    "subscriptionId": subscription_id,
+                    "numberOfDatabases": databases.len(),
+                    "databases": databases
+                }]
             })))
             .mount(&self.server)
             .await;
@@ -256,14 +272,14 @@ impl MockCloudServer {
     // =========================================================================
 
     /// Mock the tasks list endpoint (GET /tasks)
+    ///
+    /// Returns a direct array since `get_all_tasks()` returns `Result<Vec<TaskStateUpdate>>`.
     pub async fn mock_tasks_list(&self, tasks: Vec<Value>) {
         Mock::given(method("GET"))
             .and(path("/tasks"))
             .and(header("x-api-key", "test-key"))
             .and(header("x-api-secret-key", "test-secret"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(json!({
-                "tasks": tasks
-            })))
+            .respond_with(ResponseTemplate::new(200).set_body_json(tasks))
             .mount(&self.server)
             .await;
     }
@@ -373,7 +389,8 @@ impl MockCloudServer {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::AccountHandler;
+    use crate::testing::fixtures::{DatabaseFixture, SubscriptionFixture, TaskFixture};
+    use crate::{AccountHandler, DatabaseHandler, SubscriptionHandler, TaskHandler};
 
     #[tokio::test]
     async fn test_mock_server_start() {
@@ -419,5 +436,79 @@ mod tests {
         let result = client.get::<serde_json::Value>("/subscriptions/999").await;
 
         assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn test_mock_subscriptions_list_with_handler() {
+        let server = MockCloudServer::start().await;
+
+        server
+            .mock_subscriptions_list(vec![
+                SubscriptionFixture::new(123, "Production").build(),
+                SubscriptionFixture::new(456, "Staging").build(),
+            ])
+            .await;
+
+        let client = server.client();
+        let handler = SubscriptionHandler::new(client);
+        let result = handler.get_all_subscriptions().await.unwrap();
+
+        assert!(result.subscriptions.is_some());
+        let subs = result.subscriptions.unwrap();
+        assert_eq!(subs.len(), 2);
+        assert_eq!(subs[0].id, Some(123));
+        assert_eq!(subs[1].id, Some(456));
+    }
+
+    #[tokio::test]
+    async fn test_mock_databases_list_with_handler() {
+        let server = MockCloudServer::start().await;
+
+        server
+            .mock_databases_list(
+                123,
+                vec![
+                    DatabaseFixture::new(1, "cache-db").build(),
+                    DatabaseFixture::new(2, "session-db").build(),
+                ],
+            )
+            .await;
+
+        let client = server.client();
+        let handler = DatabaseHandler::new(client);
+        let result = handler
+            .get_subscription_databases(123, None, None)
+            .await
+            .unwrap();
+
+        assert!(!result.subscription.is_empty());
+        let sub_info = &result.subscription[0];
+        assert_eq!(sub_info.subscription_id, 123);
+        assert_eq!(sub_info.databases.len(), 2);
+        assert_eq!(sub_info.databases[0].name, Some("cache-db".to_string()));
+    }
+
+    #[tokio::test]
+    async fn test_mock_tasks_list_with_handler() {
+        let server = MockCloudServer::start().await;
+
+        server
+            .mock_tasks_list(vec![
+                TaskFixture::new("task-1")
+                    .status("processing-completed")
+                    .build(),
+                TaskFixture::new("task-2")
+                    .status("processing-in-progress")
+                    .build(),
+            ])
+            .await;
+
+        let client = server.client();
+        let handler = TaskHandler::new(client);
+        let result = handler.get_all_tasks().await.unwrap();
+
+        assert_eq!(result.len(), 2);
+        assert_eq!(result[0].task_id, Some("task-1".to_string()));
+        assert_eq!(result[1].task_id, Some("task-2".to_string()));
     }
 }
