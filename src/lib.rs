@@ -295,6 +295,10 @@ pub use error::{CloudError, Result};
 #[cfg(feature = "tower-integration")]
 pub use client::tower_support;
 
+// Test support module - only available with test-support feature
+#[cfg(feature = "test-support")]
+pub mod testing;
+
 // Types module for shared models
 pub mod types;
 

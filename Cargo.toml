@@ -33,6 +33,11 @@ futures-core = "0.3"
 
 [features]
 tower-integration = ["tower"]
+test-support = ["wiremock"]
+
+[dependencies.wiremock]
+version = "0.6"
+optional = true
 
 [dev-dependencies]
 wiremock = "0.6"
