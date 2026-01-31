@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.1](https://github.com/redis-developer/redis-cloud-rs/compare/v0.9.0...v0.9.1) - 2026-01-31
+
+### Added
+
+- add test-support feature for consumer testing ([#43](https://github.com/redis-developer/redis-cloud-rs/pull/43))
+
+### Fixed
+
+- correct mock response formats for tasks and databases ([#45](https://github.com/redis-developer/redis-cloud-rs/pull/45))
+
 ## [0.9.0](https://github.com/redis-developer/redis-cloud-rs/compare/v0.8.0...v0.9.0) - 2026-01-30
 
 ### Added
