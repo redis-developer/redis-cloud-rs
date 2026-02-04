@@ -50,6 +50,7 @@ use crate::{CloudClient, Result};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
+use typed_builder::TypedBuilder;
 
 // ============================================================================
 // Models
@@ -499,208 +500,280 @@ pub struct TaskStateUpdate {
 }
 
 /// Essentials database definition
-#[derive(Debug, Clone, Serialize, Deserialize)]
+///
+/// # Example
+///
+/// ```
+/// use redis_cloud::fixed::databases::FixedDatabaseCreateRequest;
+///
+/// let request = FixedDatabaseCreateRequest::builder()
+///     .name("my-database")
+///     .replication(true)
+///     .build();
+/// ```
+#[derive(Debug, Clone, Serialize, Deserialize, TypedBuilder)]
 #[serde(rename_all = "camelCase")]
 pub struct FixedDatabaseCreateRequest {
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option))]
     pub subscription_id: Option<i32>,
 
     /// Name of the database. Database name is limited to 40 characters or less and must include only letters, digits, and hyphens ('-'). It must start with a letter and end with a letter or digit.
+    #[builder(setter(into))]
     pub name: String,
 
     /// Optional. Database protocol. Use 'stack' to get all of Redis' advanced capabilities. Only use 'redis' for Pay-as-you-go or Redis Flex subscriptions. Default: 'stack' for most subscriptions, 'redis' for Redis Flex subscriptions.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option, into))]
     pub protocol: Option<String>,
 
     /// (Pay-as-you-go subscriptions only) Optional. Total memory in GB, including replication and other overhead. You cannot set both datasetSizeInGb and totalMemoryInGb.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option))]
     pub memory_limit_in_gb: Option<f64>,
 
-    /// (Pay-as-you-go subscriptions only) Optional. The maximum amount of data in the dataset for this database in GB. You cannot set both datasetSizeInGb and totalMemoryInGb. If ‘replication’ is 'true', the database’s total memory will be twice as large as the datasetSizeInGb. If ‘replication’ is false, the database’s total memory will be the datasetSizeInGb value.
+    /// (Pay-as-you-go subscriptions only) Optional. The maximum amount of data in the dataset for this database in GB. You cannot set both datasetSizeInGb and totalMemoryInGb. If 'replication' is 'true', the database's total memory will be twice as large as the datasetSizeInGb. If 'replication' is false, the database's total memory will be the datasetSizeInGb value.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option))]
     pub dataset_size_in_gb: Option<f64>,
 
     /// (Pay-as-you-go subscriptions only) Optional. Support Redis [OSS Cluster API](https://redis.io/docs/latest/operate/rc/databases/configuration/clustering/#oss-cluster-api). Default: 'false'
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option))]
     pub support_oss_cluster_api: Option<bool>,
 
     /// Optional. If specified, redisVersion defines the Redis database version. If omitted, the Redis version will be set to the default version.  (available in 'GET /fixed/redis-versions')
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option, into))]
     pub redis_version: Option<String>,
 
     /// Optional. Redis Serialization Protocol version. Must be compatible with Redis version.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option, into))]
     pub resp_version: Option<String>,
 
     /// (Pay-as-you-go subscriptions only) Optional. If set to 'true', the database will use the external endpoint for OSS Cluster API. This setting blocks the database's private endpoint. Can only be set if 'supportOSSClusterAPI' is 'true'. Default: 'false'
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option))]
     pub use_external_endpoint_for_oss_cluster_api: Option<bool>,
 
     /// (Pay-as-you-go subscriptions only) Optional. Distributes database data to different cloud instances. Default: 'false'
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option))]
     pub enable_database_clustering: Option<bool>,
 
     /// (Pay-as-you-go subscriptions only) Optional. Specifies the number of master shards.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option))]
     pub number_of_shards: Option<i32>,
 
     /// Optional. Type and rate of data persistence in persistent storage. Use GET /fixed/plans/{planId} to see if your plan supports data persistence.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option, into))]
     pub data_persistence: Option<String>,
 
     /// Optional. Data eviction policy.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option, into))]
     pub data_eviction_policy: Option<String>,
 
     /// Optional. Sets database replication. Use GET /fixed/plans/{planId} to see if your plan supports database replication.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option))]
     pub replication: Option<bool>,
 
     /// Optional. The path to a backup storage location. If specified, the database will back up every 24 hours to this location, and you can manually back up the database to this location at any time. Use GET /fixed/plans/{planId} to see if your plan supports database backups.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option, into))]
     pub periodic_backup_path: Option<String>,
 
     /// Optional. List of source IP addresses or subnet masks to allow. If specified, Redis clients will be able to connect to this database only from within the specified source IP addresses ranges. Use GET /fixed/plans/{planId} to see how many CIDR allow rules your plan supports. Example: '['192.168.10.0/32', '192.168.12.0/24']'
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option))]
     pub source_ips: Option<Vec<String>>,
 
     /// (Pay-as-you-go subscriptions only) Optional. Hashing policy Regex rules. Used only if 'enableDatabaseClustering' is set to 'true' and .
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option))]
     pub regex_rules: Option<Vec<String>>,
 
     /// Optional. This database will be a replica of the specified Redis databases provided as one or more URI(s). Example: 'redis://user:password@host:port'. If the URI provided is a Redis Cloud database, only host and port should be provided. Example: ['<redis://endpoint1:6379>', '<redis://endpoint2:6380>'].
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option))]
     pub replica_of: Option<Vec<String>>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option))]
     pub replica: Option<ReplicaOfSpec>,
 
     /// Optional. A public key client TLS/SSL certificate with new line characters replaced with '\n'. If specified, mTLS authentication will be required to authenticate user connections. Default: 'null'
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option, into))]
     pub client_ssl_certificate: Option<String>,
 
     /// Optional. A list of client TLS/SSL certificates. If specified, mTLS authentication will be required to authenticate user connections.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option))]
     pub client_tls_certificates: Option<Vec<DatabaseCertificateSpec>>,
 
     /// Optional. When 'true', requires TLS authentication for all connections - mTLS with valid clientTlsCertificates, regular TLS when clientTlsCertificates is not provided. Default: 'false'
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option))]
     pub enable_tls: Option<bool>,
 
     /// Optional. Password to access the database. If not set, a random 32-character alphanumeric password will be automatically generated.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option, into))]
     pub password: Option<String>,
 
     /// Optional. Redis database alert details.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option))]
     pub alerts: Option<Vec<DatabaseAlertSpec>>,
 
     /// Optional. Redis advanced capabilities (also known as modules) to be provisioned in the database. Use GET /database-modules to get a list of available advanced capabilities. Can only be set if 'protocol' is 'redis'.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option))]
     pub modules: Option<Vec<DatabaseModuleSpec>>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option, into))]
     pub command_type: Option<String>,
 }
 
 /// Essentials database update request
-#[derive(Debug, Clone, Serialize, Deserialize)]
+///
+/// # Example
+///
+/// ```
+/// use redis_cloud::fixed::databases::FixedDatabaseUpdateRequest;
+///
+/// let request = FixedDatabaseUpdateRequest::builder()
+///     .name("updated-name")
+///     .build();
+/// ```
+#[derive(Debug, Clone, Serialize, Deserialize, TypedBuilder)]
 #[serde(rename_all = "camelCase")]
 pub struct FixedDatabaseUpdateRequest {
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option))]
     pub subscription_id: Option<i32>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option))]
     pub database_id: Option<i32>,
 
     /// Optional. Updated database name.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option, into))]
     pub name: Option<String>,
 
     /// (Pay-as-you-go subscriptions only) Optional. Total memory in GB, including replication and other overhead. You cannot set both datasetSizeInGb and totalMemoryInGb.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option))]
     pub memory_limit_in_gb: Option<f64>,
 
-    /// (Pay-as-you-go subscriptions only) Optional. The maximum amount of data in the dataset for this database in GB. You cannot set both datasetSizeInGb and totalMemoryInGb. If ‘replication’ is 'true', the database’s total memory will be twice as large as the datasetSizeInGb. If ‘replication’ is false, the database’s total memory will be the datasetSizeInGb value.
+    /// (Pay-as-you-go subscriptions only) Optional. The maximum amount of data in the dataset for this database in GB. You cannot set both datasetSizeInGb and totalMemoryInGb. If 'replication' is 'true', the database's total memory will be twice as large as the datasetSizeInGb. If 'replication' is false, the database's total memory will be the datasetSizeInGb value.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option))]
     pub dataset_size_in_gb: Option<f64>,
 
     /// (Pay-as-you-go subscriptions only) Optional. Support Redis [OSS Cluster API](https://redis.io/docs/latest/operate/rc/databases/configuration/clustering/#oss-cluster-api).
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option))]
     pub support_oss_cluster_api: Option<bool>,
 
     /// Optional. Redis Serialization Protocol version. Must be compatible with Redis version.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option, into))]
     pub resp_version: Option<String>,
 
     /// (Pay-as-you-go subscriptions only) Optional. If set to 'true', the database will use the external endpoint for OSS Cluster API. This setting blocks the database's private endpoint. Can only be set if 'supportOSSClusterAPI' is 'true'. Default: 'false'
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option))]
     pub use_external_endpoint_for_oss_cluster_api: Option<bool>,
 
     /// (Pay-as-you-go subscriptions only) Optional. Distributes database data to different cloud instances.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option))]
     pub enable_database_clustering: Option<bool>,
 
     /// (Pay-as-you-go subscriptions only) Optional. Changes the number of master shards.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option))]
     pub number_of_shards: Option<i32>,
 
     /// Optional. Type and rate of data persistence in persistent storage. Use GET /fixed/plans/{planId} to see if your plan supports data persistence.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option, into))]
     pub data_persistence: Option<String>,
 
     /// Optional. Turns database replication on or off.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option, into))]
     pub data_eviction_policy: Option<String>,
 
     /// Optional. Sets database replication. Use GET /fixed/plans/{planId} to see if your plan supports database replication.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option))]
     pub replication: Option<bool>,
 
     /// Optional. Changes the backup location path. If specified, the database will back up every 24 hours to this location, and you can manually back up the database to this location at any time. Use GET /fixed/plans/{planId} to see if your plan supports database backups. If set to an empty string, the backup path will be removed.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option, into))]
     pub periodic_backup_path: Option<String>,
 
     /// Optional. List of source IP addresses or subnet masks to allow. If specified, Redis clients will be able to connect to this database only from within the specified source IP addresses ranges. Example: '['192.168.10.0/32', '192.168.12.0/24']'
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option))]
     pub source_ips: Option<Vec<String>>,
 
     /// Optional. This database will be a replica of the specified Redis databases provided as one or more URI (sample format: 'redis://user:password@host:port)'. If the URI provided is Redis Cloud instance, only host and port should be provided (using the format: ['<redis://endpoint1:6379>', '<redis://endpoint2:6380>'] ).
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option))]
     pub replica_of: Option<Vec<String>>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option))]
     pub replica: Option<ReplicaOfSpec>,
 
     /// (Pay-as-you-go subscriptions only) Optional. Hashing policy Regex rules. Used only if 'shardingType' is 'custom-regex-rules'.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option))]
     pub regex_rules: Option<Vec<String>>,
 
     /// Optional. A public key client TLS/SSL certificate with new line characters replaced with '\n'. If specified, mTLS authentication will be required to authenticate user connections if it is not already required. If set to an empty string, TLS client certificates will be removed and mTLS will not be required. TLS connection may still apply, depending on the value of 'enableTls'.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option, into))]
     pub client_ssl_certificate: Option<String>,
 
     /// Optional. A list of client TLS/SSL certificates. If specified, mTLS authentication will be required to authenticate user connections. If set to an empty list, TLS client certificates will be removed and mTLS will not be required. TLS connection may still apply, depending on the value of 'enableTls'.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option))]
     pub client_tls_certificates: Option<Vec<DatabaseCertificateSpec>>,
 
     /// Optional. When 'true', requires TLS authentication for all connections - mTLS with valid clientTlsCertificates, regular TLS when clientTlsCertificates is not provided. If enableTls is set to 'false' while mTLS is required, it will remove the mTLS requirement and erase previously provided clientTlsCertificates.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option))]
     pub enable_tls: Option<bool>,
 
     /// Optional. Changes the password used to access the database with the 'default' user.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option, into))]
     pub password: Option<String>,
 
     /// Optional. When 'true', allows connecting to the database with the 'default' user. When 'false', only defined access control users can connect to the database.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option))]
     pub enable_default_user: Option<bool>,
 
     /// Optional. Changes Redis database alert details.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option))]
     pub alerts: Option<Vec<DatabaseAlertSpec>>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option, into))]
     pub command_type: Option<String>,
 }
 

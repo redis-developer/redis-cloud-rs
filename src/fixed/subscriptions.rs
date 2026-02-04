@@ -52,6 +52,7 @@
 use crate::types::{Link, ProcessorResponse};
 use crate::{CloudClient, Result};
 use serde::{Deserialize, Serialize};
+use typed_builder::TypedBuilder;
 
 // ============================================================================
 // Models
@@ -74,29 +75,45 @@ pub struct FixedSubscriptionsPlans {
 }
 
 /// Essentials subscription update request
-#[derive(Debug, Clone, Serialize, Deserialize)]
+///
+/// # Example
+///
+/// ```
+/// use redis_cloud::fixed::subscriptions::FixedSubscriptionUpdateRequest;
+///
+/// let request = FixedSubscriptionUpdateRequest::builder()
+///     .name("updated-subscription")
+///     .build();
+/// ```
+#[derive(Debug, Clone, Serialize, Deserialize, TypedBuilder)]
 #[serde(rename_all = "camelCase")]
 pub struct FixedSubscriptionUpdateRequest {
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option))]
     pub subscription_id: Option<i32>,
 
     /// Optional. Updated subscription name.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option, into))]
     pub name: Option<String>,
 
     /// Optional. An Essentials plan ID. The plan describes the dataset size, cloud provider and region, and available database configuration options. Use GET /fixed/plans/subscriptions/{subscriptionId} to get a list of compatible options for the specified subscription.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option))]
     pub plan_id: Option<i32>,
 
-    /// Optional. The payment method for the subscription. If set to ‘credit-card’ , ‘paymentMethodId’ must be defined.
+    /// Optional. The payment method for the subscription. If set to 'credit-card' , 'paymentMethodId' must be defined.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option, into))]
     pub payment_method: Option<String>,
 
-    /// Optional. The payment method ID you'd like to use for this subscription. Must be a valid payment method ID for this account. Use GET /payment-methods to get a list of payment methods for your account. This value is optional if ‘paymentMethod’ is ‘marketplace’, but required if 'paymentMethod' is 'credit-card'.
+    /// Optional. The payment method ID you'd like to use for this subscription. Must be a valid payment method ID for this account. Use GET /payment-methods to get a list of payment methods for your account. This value is optional if 'paymentMethod' is 'marketplace', but required if 'paymentMethod' is 'credit-card'.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option))]
     pub payment_method_id: Option<i32>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option, into))]
     pub command_type: Option<String>,
 }
 
@@ -186,24 +203,39 @@ pub struct FixedSubscriptionsPlan {
 }
 
 /// Essentials subscription create request
-#[derive(Debug, Clone, Serialize, Deserialize)]
+///
+/// # Example
+///
+/// ```
+/// use redis_cloud::fixed::subscriptions::FixedSubscriptionCreateRequest;
+///
+/// let request = FixedSubscriptionCreateRequest::builder()
+///     .name("my-subscription")
+///     .plan_id(123)
+///     .build();
+/// ```
+#[derive(Debug, Clone, Serialize, Deserialize, TypedBuilder)]
 #[serde(rename_all = "camelCase")]
 pub struct FixedSubscriptionCreateRequest {
     /// New Essentials subscription name.
+    #[builder(setter(into))]
     pub name: String,
 
     /// An Essentials plan ID. The plan describes the dataset size, cloud provider and region, and available database configuration options. Use GET /fixed/plans to get a list of available options.
     pub plan_id: i32,
 
-    /// Optional. The payment method for the subscription. If set to ‘credit-card’, ‘paymentMethodId’ must be defined. Default: 'credit-card'
+    /// Optional. The payment method for the subscription. If set to 'credit-card', 'paymentMethodId' must be defined. Default: 'credit-card'
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option, into))]
     pub payment_method: Option<String>,
 
-    /// Optional. A valid payment method ID for this account. Use GET /payment-methods to get a list of all payment methods for your account. This value is optional if ‘paymentMethod’ is ‘marketplace’, but required for all other account types.
+    /// Optional. A valid payment method ID for this account. Use GET /payment-methods to get a list of all payment methods for your account. This value is optional if 'paymentMethod' is 'marketplace', but required for all other account types.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option))]
     pub payment_method_id: Option<i32>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option, into))]
     pub command_type: Option<String>,
 }
 

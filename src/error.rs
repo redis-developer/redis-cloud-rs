@@ -131,6 +131,146 @@ impl CloudError {
                 | CloudError::ConnectionError(_)
         )
     }
+
+    /// Returns true if this error indicates a resource was not found.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use redis_cloud::CloudError;
+    ///
+    /// let error = CloudError::NotFound { message: "Database not found".to_string() };
+    /// assert!(error.is_not_found());
+    ///
+    /// let error = CloudError::BadRequest { message: "Invalid request".to_string() };
+    /// assert!(!error.is_not_found());
+    /// ```
+    #[must_use]
+    pub fn is_not_found(&self) -> bool {
+        matches!(self, CloudError::NotFound { .. })
+    }
+
+    /// Returns true if this error indicates an authentication or authorization failure.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use redis_cloud::CloudError;
+    ///
+    /// let error = CloudError::AuthenticationFailed { message: "Invalid credentials".to_string() };
+    /// assert!(error.is_unauthorized());
+    ///
+    /// let error = CloudError::Forbidden { message: "Access denied".to_string() };
+    /// assert!(error.is_unauthorized());
+    /// ```
+    #[must_use]
+    pub fn is_unauthorized(&self) -> bool {
+        matches!(
+            self,
+            CloudError::AuthenticationFailed { .. } | CloudError::Forbidden { .. }
+        )
+    }
+
+    /// Returns true if this error indicates a server-side error.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use redis_cloud::CloudError;
+    ///
+    /// let error = CloudError::InternalServerError { message: "Server error".to_string() };
+    /// assert!(error.is_server_error());
+    ///
+    /// let error = CloudError::ServiceUnavailable { message: "Service down".to_string() };
+    /// assert!(error.is_server_error());
+    /// ```
+    #[must_use]
+    pub fn is_server_error(&self) -> bool {
+        matches!(
+            self,
+            CloudError::InternalServerError { .. } | CloudError::ServiceUnavailable { .. }
+        )
+    }
+
+    /// Returns true if this error indicates a timeout.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use redis_cloud::CloudError;
+    ///
+    /// let error = CloudError::ConnectionError("connection timeout".to_string());
+    /// assert!(error.is_timeout());
+    ///
+    /// let error = CloudError::Request("request timeout occurred".to_string());
+    /// assert!(error.is_timeout());
+    ///
+    /// let error = CloudError::NotFound { message: "Not found".to_string() };
+    /// assert!(!error.is_timeout());
+    /// ```
+    #[must_use]
+    pub fn is_timeout(&self) -> bool {
+        match self {
+            CloudError::ConnectionError(msg) | CloudError::Request(msg) => {
+                msg.to_lowercase().contains("timeout")
+            }
+            _ => false,
+        }
+    }
+
+    /// Returns true if this error indicates rate limiting.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use redis_cloud::CloudError;
+    ///
+    /// let error = CloudError::RateLimited { message: "Too many requests".to_string() };
+    /// assert!(error.is_rate_limited());
+    ///
+    /// let error = CloudError::BadRequest { message: "Invalid request".to_string() };
+    /// assert!(!error.is_rate_limited());
+    /// ```
+    #[must_use]
+    pub fn is_rate_limited(&self) -> bool {
+        matches!(self, CloudError::RateLimited { .. })
+    }
+
+    /// Returns true if this error indicates a conflict (precondition failed).
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use redis_cloud::CloudError;
+    ///
+    /// let error = CloudError::PreconditionFailed;
+    /// assert!(error.is_conflict());
+    ///
+    /// let error = CloudError::BadRequest { message: "Invalid request".to_string() };
+    /// assert!(!error.is_conflict());
+    /// ```
+    #[must_use]
+    pub fn is_conflict(&self) -> bool {
+        matches!(self, CloudError::PreconditionFailed)
+    }
+
+    /// Returns true if this error indicates a bad request.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use redis_cloud::CloudError;
+    ///
+    /// let error = CloudError::BadRequest { message: "Invalid parameters".to_string() };
+    /// assert!(error.is_bad_request());
+    ///
+    /// let error = CloudError::NotFound { message: "Not found".to_string() };
+    /// assert!(!error.is_bad_request());
+    /// ```
+    #[must_use]
+    pub fn is_bad_request(&self) -> bool {
+        matches!(self, CloudError::BadRequest { .. })
+    }
 }
 
 impl From<reqwest::Error> for CloudError {

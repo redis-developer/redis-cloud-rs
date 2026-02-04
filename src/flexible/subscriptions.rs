@@ -56,6 +56,7 @@ use crate::{CloudClient, Result};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
+use typed_builder::TypedBuilder;
 
 // ============================================================================
 // Models
@@ -73,25 +74,40 @@ pub struct BaseSubscriptionUpdateRequest {
 }
 
 /// Subscription update request message
-#[derive(Debug, Clone, Serialize, Deserialize)]
+///
+/// # Example
+///
+/// ```
+/// use redis_cloud::flexible::subscriptions::SubscriptionUpdateRequest;
+///
+/// let request = SubscriptionUpdateRequest::builder()
+///     .name("updated-subscription")
+///     .build();
+/// ```
+#[derive(Debug, Clone, Serialize, Deserialize, TypedBuilder)]
 #[serde(rename_all = "camelCase")]
 pub struct SubscriptionUpdateRequest {
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option))]
     pub subscription_id: Option<i32>,
 
     /// Optional. Updated subscription name.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option, into))]
     pub name: Option<String>,
 
-    /// Optional. The payment method ID you'd like to use for this subscription. Must be a valid payment method ID for this account. Use GET /payment-methods to get all payment methods for your account. This value is optional if ‘paymentMethod’ is ‘marketplace’, but required if 'paymentMethod' is 'credit-card'.
+    /// Optional. The payment method ID you'd like to use for this subscription. Must be a valid payment method ID for this account. Use GET /payment-methods to get all payment methods for your account. This value is optional if 'paymentMethod' is 'marketplace', but required if 'paymentMethod' is 'credit-card'.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option))]
     pub payment_method_id: Option<i32>,
 
-    /// Optional. The payment method for the subscription. If set to ‘credit-card’ , ‘paymentMethodId’ must be defined.
+    /// Optional. The payment method for the subscription. If set to 'credit-card' , 'paymentMethodId' must be defined.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option, into))]
     pub payment_method: Option<String>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option, into))]
     pub command_type: Option<String>,
 }
 
@@ -288,35 +304,84 @@ pub struct SubscriptionPricing {
 ///
 /// Defines configuration for flexible subscriptions including cloud providers,
 /// regions, deployment type, and initial database specifications.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+///
+/// # Example
+///
+/// ```
+/// use redis_cloud::flexible::subscriptions::{SubscriptionCreateRequest, SubscriptionSpec, SubscriptionDatabaseSpec, SubscriptionRegionSpec};
+///
+/// let request = SubscriptionCreateRequest::builder()
+///     .name("my-subscription")
+///     .cloud_providers(vec![
+///         SubscriptionSpec {
+///             provider: Some("AWS".to_string()),
+///             cloud_account_id: Some(1),
+///             regions: vec![SubscriptionRegionSpec {
+///                 region: "us-east-1".to_string(),
+///                 multiple_availability_zones: None,
+///                 preferred_availability_zones: None,
+///                 networking: None,
+///             }],
+///         }
+///     ])
+///     .databases(vec![
+///         SubscriptionDatabaseSpec {
+///             name: "my-database".to_string(),
+///             protocol: "redis".to_string(),
+///             memory_limit_in_gb: Some(1.0),
+///             dataset_size_in_gb: None,
+///             support_oss_cluster_api: None,
+///             data_persistence: None,
+///             replication: None,
+///             throughput_measurement: None,
+///             local_throughput_measurement: None,
+///             modules: None,
+///             quantity: None,
+///             average_item_size_in_bytes: None,
+///             resp_version: None,
+///             redis_version: None,
+///             sharding_type: None,
+///             query_performance_factor: None,
+///         }
+///     ])
+///     .build();
+/// ```
+#[derive(Debug, Clone, Serialize, Deserialize, TypedBuilder)]
 #[serde(rename_all = "camelCase")]
 pub struct SubscriptionCreateRequest {
     /// Optional. New subscription name.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option, into))]
     pub name: Option<String>,
 
     /// Optional. When 'false': Creates a deployment plan and deploys it, creating any resources required by the plan. When 'true': creates a read-only deployment plan and does not create any resources. Default: 'false'
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option))]
     pub dry_run: Option<bool>,
 
     /// Optional. When 'single-region' or not set: Creates a single region subscription. When 'active-active': creates an Active-Active (multi-region) subscription.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option, into))]
     pub deployment_type: Option<String>,
 
-    /// Optional. The payment method for the subscription. If set to ‘credit-card’, ‘paymentMethodId’ must be defined. Default: 'credit-card'
+    /// Optional. The payment method for the subscription. If set to 'credit-card', 'paymentMethodId' must be defined. Default: 'credit-card'
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option, into))]
     pub payment_method: Option<String>,
 
-    /// Optional. A valid payment method ID for this account. Use GET /payment-methods to get a list of all payment methods for your account. This value is optional if ‘paymentMethod’ is ‘marketplace’, but required for all other account types.
+    /// Optional. A valid payment method ID for this account. Use GET /payment-methods to get a list of all payment methods for your account. This value is optional if 'paymentMethod' is 'marketplace', but required for all other account types.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option))]
     pub payment_method_id: Option<i32>,
 
     /// Optional. Memory storage preference: either 'ram' or a combination of 'ram-and-flash' (also known as Auto Tiering). Default: 'ram'
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option, into))]
     pub memory_storage: Option<String>,
 
     /// Optional. Persistent storage encryption secures data-at-rest for database persistence. You can use 'cloud-provider-managed-key' or 'customer-managed-key'.  Default: 'cloud-provider-managed-key'
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option, into))]
     pub persistent_storage_encryption_type: Option<String>,
 
     /// Cloud provider, region, and networking details.
@@ -327,9 +392,11 @@ pub struct SubscriptionCreateRequest {
 
     /// Optional. Defines the Redis version of the databases created in this specific request. It doesn't determine future databases associated with this subscription. If not set, databases will use the default Redis version. This field is deprecated and will be removed in a future API version - use the database-level redisVersion property instead.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option, into))]
     pub redis_version: Option<String>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option, into))]
     pub command_type: Option<String>,
 }
 
