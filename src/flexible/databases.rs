@@ -58,6 +58,7 @@ use futures_core::Stream;
 use serde::{Deserialize, Deserializer, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
+use typed_builder::TypedBuilder;
 
 // ============================================================================
 // Models
@@ -696,24 +697,39 @@ pub struct CrdbDatabase {
 }
 
 /// Database backup request message
-#[derive(Debug, Clone, Serialize, Deserialize)]
+///
+/// # Example
+///
+/// ```
+/// use redis_cloud::flexible::databases::DatabaseBackupRequest;
+///
+/// let request = DatabaseBackupRequest::builder()
+///     .region_name("us-east-1")
+///     .build();
+/// ```
+#[derive(Debug, Clone, Serialize, Deserialize, TypedBuilder)]
 #[serde(rename_all = "camelCase")]
 pub struct DatabaseBackupRequest {
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option))]
     pub subscription_id: Option<i32>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option))]
     pub database_id: Option<i32>,
 
     /// Required for Active-Active databases. Name of the cloud provider region to back up. When backing up an Active-Active database, you must back up each region separately.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option, into))]
     pub region_name: Option<String>,
 
     /// Optional. Manually backs up data to this location, instead of the set 'remoteBackup' location.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option, into))]
     pub adhoc_backup_path: Option<String>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option, into))]
     pub command_type: Option<String>,
 }
 
@@ -934,153 +950,213 @@ pub struct DatabaseAlertSpec {
 ///
 /// Contains all configuration options for creating a database in a Pro subscription,
 /// including memory settings, replication, persistence, modules, and networking.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+///
+/// # Example
+///
+/// ```
+/// use redis_cloud::flexible::databases::DatabaseCreateRequest;
+///
+/// let request = DatabaseCreateRequest::builder()
+///     .name("my-database")
+///     .memory_limit_in_gb(1.0)
+///     .replication(true)
+///     .build();
+/// ```
+#[derive(Debug, Clone, Serialize, Deserialize, TypedBuilder)]
 #[serde(rename_all = "camelCase")]
 pub struct DatabaseCreateRequest {
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option))]
     pub subscription_id: Option<i32>,
 
     /// Optional. When 'false': Creates a deployment plan and deploys it, creating any resources required by the plan. When 'true': creates a read-only deployment plan and does not create any resources. Default: 'false'
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option))]
     pub dry_run: Option<bool>,
 
     /// Name of the database. Database name is limited to 40 characters or less and must include only letters, digits, and hyphens ('-'). It must start with a letter and end with a letter or digit.
+    #[builder(setter(into))]
     pub name: String,
 
     /// Optional. Database protocol. Only set to 'memcached' if you have a legacy application. Default: 'redis'
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option, into))]
     pub protocol: Option<String>,
 
     /// Optional. TCP port on which the database is available (10000-19999). Generated automatically if not set.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option))]
     pub port: Option<i32>,
 
     /// Optional. Total memory in GB, including replication and other overhead. You cannot set both datasetSizeInGb and totalMemoryInGb.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option))]
     pub memory_limit_in_gb: Option<f64>,
 
-    /// Optional. The maximum amount of data in the dataset for this database in GB. You cannot set both datasetSizeInGb and totalMemoryInGb. If ‘replication’ is 'true', the database’s total memory will be twice as large as the datasetSizeInGb. If ‘replication’ is false, the database’s total memory will be the datasetSizeInGb value.
+    /// Optional. The maximum amount of data in the dataset for this database in GB. You cannot set both datasetSizeInGb and totalMemoryInGb. If 'replication' is 'true', the database's total memory will be twice as large as the datasetSizeInGb. If 'replication' is false, the database's total memory will be the datasetSizeInGb value.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option))]
     pub dataset_size_in_gb: Option<f64>,
 
     /// Optional. If specified, redisVersion defines the Redis database version. If omitted, the Redis version will be set to the default version (available in 'GET /subscriptions/redis-versions')
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option, into))]
     pub redis_version: Option<String>,
 
     /// Optional. Redis Serialization Protocol version. Must be compatible with Redis version.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option, into))]
     pub resp_version: Option<String>,
 
     /// Optional. Support [OSS Cluster API](https://redis.io/docs/latest/operate/rc/databases/configuration/clustering/#oss-cluster-api). Default: 'false'
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option))]
     pub support_oss_cluster_api: Option<bool>,
 
     /// Optional. If set to 'true', the database will use the external endpoint for OSS Cluster API. This setting blocks the database's private endpoint. Can only be set if 'supportOSSClusterAPI' is 'true'. Default: 'false'
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option))]
     pub use_external_endpoint_for_oss_cluster_api: Option<bool>,
 
     /// Optional. Type and rate of data persistence in persistent storage. Default: 'none'
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option, into))]
     pub data_persistence: Option<String>,
 
     /// Optional. Data eviction policy. Default: 'volatile-lru'
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option, into))]
     pub data_eviction_policy: Option<String>,
 
     /// Optional. Sets database replication. Default: 'true'
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option))]
     pub replication: Option<bool>,
 
     /// Optional. This database will be a replica of the specified Redis databases provided as one or more URI(s). Example: 'redis://user:password@host:port'. If the URI provided is a Redis Cloud database, only host and port should be provided. Example: ['<redis://endpoint1:6379>', '<redis://endpoint2:6380>'].
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option))]
     pub replica_of: Option<Vec<String>>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option))]
     pub replica: Option<ReplicaOfSpec>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option))]
     pub throughput_measurement: Option<DatabaseThroughputSpec>,
 
     /// Optional. Expected throughput per region for an Active-Active database. Default: 1000 read and write ops/sec for each region
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option))]
     pub local_throughput_measurement: Option<Vec<LocalThroughput>>,
 
     /// Optional. Relevant only to ram-and-flash (also known as Auto Tiering) subscriptions. Estimated average size in bytes of the items stored in the database. Default: 1000
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option))]
     pub average_item_size_in_bytes: Option<i64>,
 
     /// Optional. The path to a backup storage location. If specified, the database will back up every 24 hours to this location, and you can manually back up the database to this location at any time.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option, into))]
     pub periodic_backup_path: Option<String>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option))]
     pub remote_backup: Option<DatabaseBackupConfig>,
 
     /// Optional. List of source IP addresses or subnet masks to allow. If specified, Redis clients will be able to connect to this database only from within the specified source IP addresses ranges. Example: '['192.168.10.0/32', '192.168.12.0/24']'
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option))]
     pub source_ip: Option<Vec<String>>,
 
     /// Optional. A public key client TLS/SSL certificate with new line characters replaced with '\n'. If specified, mTLS authentication will be required to authenticate user connections. Default: 'null'
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option, into))]
     pub client_ssl_certificate: Option<String>,
 
     /// Optional. A list of client TLS/SSL certificates. If specified, mTLS authentication will be required to authenticate user connections.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option))]
     pub client_tls_certificates: Option<Vec<DatabaseCertificateSpec>>,
 
     /// Optional. When 'true', requires TLS authentication for all connections - mTLS with valid clientTlsCertificates, regular TLS when clientTlsCertificates is not provided. Default: 'false'
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option))]
     pub enable_tls: Option<bool>,
 
     /// Optional. Password to access the database. If not set, a random 32-character alphanumeric password will be automatically generated. Can only be set if 'protocol' is 'redis'.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option, into))]
     pub password: Option<String>,
 
     /// Optional. Memcached (SASL) Username to access the database. If not set, the username will be set to a 'mc-' prefix followed by a random 5 character long alphanumeric. Can only be set if 'protocol' is 'memcached'.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option, into))]
     pub sasl_username: Option<String>,
 
     /// Optional. Memcached (SASL) Password to access the database. If not set, a random 32 character long alphanumeric password will be automatically generated. Can only be set if 'protocol' is 'memcached'.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option, into))]
     pub sasl_password: Option<String>,
 
     /// Optional. Redis database alert details.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option))]
     pub alerts: Option<Vec<DatabaseAlertSpec>>,
 
     /// Optional. Redis advanced capabilities (also known as modules) to be provisioned in the database. Use GET /database-modules to get a list of available advanced capabilities.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option))]
     pub modules: Option<Vec<DatabaseModuleSpec>>,
 
     /// Optional. Database [Hashing policy](https://redis.io/docs/latest/operate/rc/databases/configuration/clustering/#manage-the-hashing-policy).
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option, into))]
     pub sharding_type: Option<String>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option, into))]
     pub command_type: Option<String>,
 
     /// Optional. The query performance factor adds extra compute power specifically for search and query databases. You can increase your queries per second by the selected factor.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option, into))]
     pub query_performance_factor: Option<String>,
 }
 
 /// Database import request
-#[derive(Debug, Clone, Serialize, Deserialize)]
+///
+/// # Example
+///
+/// ```
+/// use redis_cloud::flexible::databases::DatabaseImportRequest;
+///
+/// let request = DatabaseImportRequest::builder()
+///     .source_type("aws-s3")
+///     .import_from_uri(vec!["s3://bucket/backup.rdb".to_string()])
+///     .build();
+/// ```
+#[derive(Debug, Clone, Serialize, Deserialize, TypedBuilder)]
 #[serde(rename_all = "camelCase")]
 pub struct DatabaseImportRequest {
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option))]
     pub subscription_id: Option<i32>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option))]
     pub database_id: Option<i32>,
 
     /// Type of storage from which to import the database RDB file or Redis data.
+    #[builder(setter(into))]
     pub source_type: String,
 
     /// One or more paths to source data files or Redis databases, as appropriate to specified source type.
     pub import_from_uri: Vec<String>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option, into))]
     pub command_type: Option<String>,
 }
 
@@ -1187,117 +1263,157 @@ pub struct TaskStateUpdate {
 }
 
 /// Database update request
-#[derive(Debug, Clone, Serialize, Deserialize)]
+///
+/// # Example
+///
+/// ```
+/// use redis_cloud::flexible::databases::DatabaseUpdateRequest;
+///
+/// let request = DatabaseUpdateRequest::builder()
+///     .name("updated-name")
+///     .memory_limit_in_gb(2.0)
+///     .build();
+/// ```
+#[derive(Debug, Clone, Serialize, Deserialize, TypedBuilder)]
 #[serde(rename_all = "camelCase")]
 pub struct DatabaseUpdateRequest {
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option))]
     pub subscription_id: Option<i32>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option))]
     pub database_id: Option<i32>,
 
     /// Optional. When 'false': Creates a deployment plan and deploys it, updating any resources required by the plan. When 'true': creates a read-only deployment plan and does not update any resources. Default: 'false'
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option))]
     pub dry_run: Option<bool>,
 
     /// Optional. Updated database name.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option, into))]
     pub name: Option<String>,
 
     /// Optional. Total memory in GB, including replication and other overhead. You cannot set both datasetSizeInGb and totalMemoryInGb.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option))]
     pub memory_limit_in_gb: Option<f64>,
 
-    /// Optional. The maximum amount of data in the dataset for this database in GB. You cannot set both datasetSizeInGb and totalMemoryInGb. If ‘replication’ is 'true', the database’s total memory will be twice as large as the datasetSizeInGb.If ‘replication’ is false, the database’s total memory will be the datasetSizeInGb value.
+    /// Optional. The maximum amount of data in the dataset for this database in GB. You cannot set both datasetSizeInGb and totalMemoryInGb. If 'replication' is 'true', the database's total memory will be twice as large as the datasetSizeInGb.If 'replication' is false, the database's total memory will be the datasetSizeInGb value.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option))]
     pub dataset_size_in_gb: Option<f64>,
 
     /// Optional. Redis Serialization Protocol version. Must be compatible with Redis version.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option, into))]
     pub resp_version: Option<String>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option))]
     pub throughput_measurement: Option<DatabaseThroughputSpec>,
 
     /// Optional. Type and rate of data persistence in persistent storage.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option, into))]
     pub data_persistence: Option<String>,
 
     /// Optional. Data eviction policy.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option, into))]
     pub data_eviction_policy: Option<String>,
 
     /// Optional. Turns database replication on or off.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option))]
     pub replication: Option<bool>,
 
     /// Optional. Hashing policy Regex rules. Used only if 'shardingType' is 'custom-regex-rules'.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option))]
     pub regex_rules: Option<Vec<String>>,
 
     /// Optional. This database will be a replica of the specified Redis databases provided as one or more URI(s). Example: 'redis://user:password@host:port'. If the URI provided is a Redis Cloud database, only host and port should be provided. Example: ['<redis://endpoint1:6379>', '<redis://endpoint2:6380>'].
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option))]
     pub replica_of: Option<Vec<String>>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option))]
     pub replica: Option<ReplicaOfSpec>,
 
     /// Optional. Support Redis [OSS Cluster API](https://redis.io/docs/latest/operate/rc/databases/configuration/clustering/#oss-cluster-api).
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option))]
     pub support_oss_cluster_api: Option<bool>,
 
     /// Optional. If set to 'true', the database will use the external endpoint for OSS Cluster API. This setting blocks the database's private endpoint. Can only be set if 'supportOSSClusterAPI' is 'true'.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option))]
     pub use_external_endpoint_for_oss_cluster_api: Option<bool>,
 
     /// Optional. Changes the password used to access the database with the 'default' user. Can only be set if 'protocol' is 'redis'.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option, into))]
     pub password: Option<String>,
 
     /// Optional. Changes the Memcached (SASL) username to access the database. Can only be set if 'protocol' is 'memcached'.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option, into))]
     pub sasl_username: Option<String>,
 
     /// Optional. Changes the Memcached (SASL) password to access the database. Can only be set if 'protocol' is 'memcached'.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option, into))]
     pub sasl_password: Option<String>,
 
     /// Optional. List of source IP addresses or subnet masks to allow. If specified, Redis clients will be able to connect to this database only from within the specified source IP addresses ranges. Example: '['192.168.10.0/32', '192.168.12.0/24']'
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option))]
     pub source_ip: Option<Vec<String>>,
 
     /// Optional. A public key client TLS/SSL certificate with new line characters replaced with '\n'. If specified, mTLS authentication will be required to authenticate user connections if it is not already required. If set to an empty string, TLS client certificates will be removed and mTLS will not be required. TLS connection may still apply, depending on the value of 'enableTls'.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option, into))]
     pub client_ssl_certificate: Option<String>,
 
     /// Optional. A list of client TLS/SSL certificates. If specified, mTLS authentication will be required to authenticate user connections. If set to an empty list, TLS client certificates will be removed and mTLS will not be required. TLS connection may still apply, depending on the value of 'enableTls'.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option))]
     pub client_tls_certificates: Option<Vec<DatabaseCertificateSpec>>,
 
     /// Optional. When 'true', requires TLS authentication for all connections - mTLS with valid clientTlsCertificates, regular TLS when clientTlsCertificates is not provided. If enableTls is set to 'false' while mTLS is required, it will remove the mTLS requirement and erase previously provided clientTlsCertificates.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option))]
     pub enable_tls: Option<bool>,
 
     /// Optional. When 'true', allows connecting to the database with the 'default' user. When 'false', only defined access control users can connect to the database. Can only be set if 'protocol' is 'redis'.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option))]
     pub enable_default_user: Option<bool>,
 
     /// Optional. Changes the backup location path. If specified, the database will back up every 24 hours to this location, and you can manually back up the database to this location at any time. If set to an empty string, the backup path will be removed.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option, into))]
     pub periodic_backup_path: Option<String>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option))]
     pub remote_backup: Option<DatabaseBackupConfig>,
 
     /// Optional. Changes Redis database alert details.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option))]
     pub alerts: Option<Vec<DatabaseAlertSpec>>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option, into))]
     pub command_type: Option<String>,
 
     /// Optional. Changes the query performance factor. The query performance factor adds extra compute power specifically for search and query databases. You can increase your queries per second by the selected factor.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option, into))]
     pub query_performance_factor: Option<String>,
 }
 
@@ -1921,5 +2037,183 @@ impl DatabaseHandler {
             .first()
             .map(|sub| sub.databases.clone())
             .unwrap_or_default()
+    }
+
+    // ========================================================================
+    // Simplified API Methods
+    // ========================================================================
+
+    /// List databases in a subscription (simplified)
+    ///
+    /// Returns a flat list of databases, unwrapping the nested API response.
+    /// This is a convenience method that wraps [`get_subscription_databases`](Self::get_subscription_databases).
+    ///
+    /// # Arguments
+    ///
+    /// * `subscription_id` - The subscription ID
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use redis_cloud::CloudClient;
+    ///
+    /// # async fn example() -> redis_cloud::Result<()> {
+    /// let client = CloudClient::builder()
+    ///     .api_key("your-api-key")
+    ///     .api_secret("your-api-secret")
+    ///     .build()?;
+    ///
+    /// let databases = client.databases().list(123).await?;
+    /// for db in databases {
+    ///     println!("Database: {} (ID: {})", db.name.unwrap_or_default(), db.database_id);
+    /// }
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn list(&self, subscription_id: i32) -> Result<Vec<Database>> {
+        let response = self
+            .get_subscription_databases(subscription_id, None, None)
+            .await?;
+        Ok(Self::extract_databases_from_response(&response))
+    }
+
+    /// Get a database by ID (simplified)
+    ///
+    /// Alias for [`get_subscription_database_by_id`](Self::get_subscription_database_by_id).
+    ///
+    /// # Arguments
+    ///
+    /// * `subscription_id` - The subscription ID
+    /// * `database_id` - The database ID
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use redis_cloud::CloudClient;
+    ///
+    /// # async fn example() -> redis_cloud::Result<()> {
+    /// let client = CloudClient::builder()
+    ///     .api_key("your-api-key")
+    ///     .api_secret("your-api-secret")
+    ///     .build()?;
+    ///
+    /// let database = client.databases().get(123, 456).await?;
+    /// println!("Database: {} (status: {:?})", database.name.unwrap_or_default(), database.status);
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn get(&self, subscription_id: i32, database_id: i32) -> Result<Database> {
+        self.get_subscription_database_by_id(subscription_id, database_id)
+            .await
+    }
+
+    /// Create a database (simplified)
+    ///
+    /// Alias for [`create_database`](Self::create_database).
+    ///
+    /// # Arguments
+    ///
+    /// * `subscription_id` - The subscription ID
+    /// * `request` - The database creation request
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use redis_cloud::CloudClient;
+    /// use redis_cloud::flexible::databases::DatabaseCreateRequest;
+    ///
+    /// # async fn example() -> redis_cloud::Result<()> {
+    /// let client = CloudClient::builder()
+    ///     .api_key("your-api-key")
+    ///     .api_secret("your-api-secret")
+    ///     .build()?;
+    ///
+    /// let request = DatabaseCreateRequest::builder()
+    ///     .name("my-database")
+    ///     .memory_limit_in_gb(1.0)
+    ///     .build();
+    ///
+    /// let task = client.databases().create(123, &request).await?;
+    /// println!("Task ID: {:?}", task.task_id);
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn create(
+        &self,
+        subscription_id: i32,
+        request: &DatabaseCreateRequest,
+    ) -> Result<TaskStateUpdate> {
+        self.create_database(subscription_id, request).await
+    }
+
+    /// Update a database (simplified)
+    ///
+    /// Alias for [`update_database`](Self::update_database).
+    ///
+    /// # Arguments
+    ///
+    /// * `subscription_id` - The subscription ID
+    /// * `database_id` - The database ID
+    /// * `request` - The database update request
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use redis_cloud::CloudClient;
+    /// use redis_cloud::flexible::databases::DatabaseUpdateRequest;
+    ///
+    /// # async fn example() -> redis_cloud::Result<()> {
+    /// let client = CloudClient::builder()
+    ///     .api_key("your-api-key")
+    ///     .api_secret("your-api-secret")
+    ///     .build()?;
+    ///
+    /// let request = DatabaseUpdateRequest::builder()
+    ///     .name("updated-name")
+    ///     .build();
+    ///
+    /// let task = client.databases().update(123, 456, &request).await?;
+    /// println!("Task ID: {:?}", task.task_id);
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn update(
+        &self,
+        subscription_id: i32,
+        database_id: i32,
+        request: &DatabaseUpdateRequest,
+    ) -> Result<TaskStateUpdate> {
+        self.update_database(subscription_id, database_id, request)
+            .await
+    }
+
+    /// Delete a database (simplified)
+    ///
+    /// Alias for [`delete_database_by_id`](Self::delete_database_by_id).
+    ///
+    /// # Arguments
+    ///
+    /// * `subscription_id` - The subscription ID
+    /// * `database_id` - The database ID
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use redis_cloud::CloudClient;
+    ///
+    /// # async fn example() -> redis_cloud::Result<()> {
+    /// let client = CloudClient::builder()
+    ///     .api_key("your-api-key")
+    ///     .api_secret("your-api-secret")
+    ///     .build()?;
+    ///
+    /// let task = client.databases().delete(123, 456).await?;
+    /// println!("Task ID: {:?}", task.task_id);
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn delete(&self, subscription_id: i32, database_id: i32) -> Result<TaskStateUpdate> {
+        self.delete_database_by_id(subscription_id, database_id)
+            .await
     }
 }
