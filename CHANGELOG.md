@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.3](https://github.com/redis-developer/redis-cloud-rs/compare/v0.9.2...v0.9.3) - 2026-02-04
+
+### Added
+
+- harmonize API patterns with redis-enterprise ([#49](https://github.com/redis-developer/redis-cloud-rs/pull/49))
+
 ## [0.9.2](https://github.com/redis-developer/redis-cloud-rs/compare/v0.9.1...v0.9.2) - 2026-02-03
 
 ### Other
