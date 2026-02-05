@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.4](https://github.com/redis-developer/redis-cloud-rs/compare/v0.9.3...v0.9.4) - 2026-02-05
+
+### Other
+
+- update rust-version to 1.89 and author email ([#52](https://github.com/redis-developer/redis-cloud-rs/pull/52))
+
 ## [0.9.3](https://github.com/redis-developer/redis-cloud-rs/compare/v0.9.2...v0.9.3) - 2026-02-04
 
 ### Added
