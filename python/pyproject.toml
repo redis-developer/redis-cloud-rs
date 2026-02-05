@@ -4,12 +4,12 @@ build-backend = "maturin"
 
 [project]
 name = "redis-cloud"
-version = "0.1.0"
+dynamic = ["version"]
 description = "Python bindings for Redis Cloud REST API client"
 readme = { file = "../README.md", content-type = "text/markdown" }
 license = { text = "MIT OR Apache-2.0" }
 authors = [
-    { name = "Josh Rotenberg", email = "joshrotenberg@gmail.com" }
+    { name = "Josh Rotenberg", email = "josh.rotenberg@redis.com" }
 ]
 keywords = ["redis", "cloud", "api", "rest", "client"]
 classifiers = [
