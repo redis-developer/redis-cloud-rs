@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.5](https://github.com/redis-developer/redis-cloud-rs/compare/v0.9.4...v0.9.5) - 2026-02-06
+
+### Fixed
+
+- handle empty object response from /tasks endpoint ([#56](https://github.com/redis-developer/redis-cloud-rs/pull/56))
+- sync Python package version with Rust crate ([#54](https://github.com/redis-developer/redis-cloud-rs/pull/54))
+
 ## [0.9.4](https://github.com/redis-developer/redis-cloud-rs/compare/v0.9.3...v0.9.4) - 2026-02-05
 
 ### Other
