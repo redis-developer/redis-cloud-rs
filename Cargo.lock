@@ -1028,7 +1028,7 @@ dependencies = [
 
 [[package]]
 name = "redis-cloud"
-version = "0.9.4"
+version = "0.9.5"
 dependencies = [
  "anyhow",
  "async-stream",
