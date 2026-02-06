@@ -124,9 +124,18 @@ impl TasksHandler {
     /// Get tasks
     /// Gets a list of all currently running tasks for this account.
     ///
+    /// The API returns an array when tasks exist but an empty object `{}` when
+    /// there are no tasks, so we handle both cases.
+    ///
     /// GET /tasks
     pub async fn get_all_tasks(&self) -> Result<Vec<TaskStateUpdate>> {
-        self.client.get("/tasks").await
+        let value: serde_json::Value = self.client.get_raw("/tasks").await?;
+        match value {
+            serde_json::Value::Array(arr) => {
+                Ok(serde_json::from_value(serde_json::Value::Array(arr))?)
+            }
+            _ => Ok(Vec::new()),
+        }
     }
 
     /// Get tasks (raw JSON)
