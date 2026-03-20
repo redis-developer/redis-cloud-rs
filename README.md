@@ -188,6 +188,9 @@ subs = client.subscriptions_sync()
 - `REDIS_CLOUD_API_SECRET` - API secret
 - `REDIS_CLOUD_BASE_URL` - Base URL (optional)
 
+Python `CloudClient.from_env()` also accepts the legacy aliases
+`REDIS_CLOUD_ACCOUNT_KEY`, `REDIS_CLOUD_SECRET_KEY`, and `REDIS_CLOUD_USER_KEY`.
+
 ## API Coverage
 
 This library provides comprehensive coverage of the Redis Cloud REST API:
