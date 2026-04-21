@@ -63,7 +63,10 @@ class TestClientCreation:
             os.environ.pop(var, None)
 
         try:
-            with pytest.raises(ValueError, match="API secret not found"):
+            with pytest.raises(
+                ValueError,
+                match="REDIS_CLOUD_API_SECRET, REDIS_CLOUD_SECRET_KEY, or REDIS_CLOUD_USER_KEY",
+            ):
                 CloudClient.from_env()
         finally:
             os.environ.pop("REDIS_CLOUD_API_KEY", None)

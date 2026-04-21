@@ -1072,13 +1072,12 @@ impl SubscriptionHandler {
         subscription_id: i32,
         request: &ActiveActiveRegionDeleteRequest,
     ) -> Result<TaskStateUpdate> {
-        // TODO: DELETE with body not yet supported by client
-        let _ = request; // Suppress unused variable warning
-        let response = self
-            .client
-            .delete_raw(&format!("/subscriptions/{subscription_id}/regions"))
-            .await?;
-        serde_json::from_value(response).map_err(Into::into)
+        self.client
+            .delete_with_body(
+                &format!("/subscriptions/{subscription_id}/regions"),
+                serde_json::to_value(request).map_err(crate::CloudError::from)?,
+            )
+            .await
     }
 
     /// Get regions in an Active-Active subscription

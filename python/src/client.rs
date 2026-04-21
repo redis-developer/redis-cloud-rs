@@ -59,7 +59,7 @@ impl PyCloudClient {
             .or_else(|_| std::env::var("REDIS_CLOUD_USER_KEY"))
             .map_err(|_| {
                 pyo3::exceptions::PyValueError::new_err(
-                    "API secret not found. Set REDIS_CLOUD_API_SECRET",
+                    "API secret not found. Set REDIS_CLOUD_API_SECRET, REDIS_CLOUD_SECRET_KEY, or REDIS_CLOUD_USER_KEY",
                 )
             })?;
 
