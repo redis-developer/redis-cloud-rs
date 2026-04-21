@@ -36,11 +36,12 @@ fn test_all_endpoints_documented() {
         }
     }
 
-    // The OpenAPI spec in our repo has 130 endpoints
-    // (Note: The spec we analyzed from redis.io had 140, but this is the version we have)
+    // The refreshed OpenAPI fixture currently exposes 151 HTTP operations.
+    // Keep this as a lower bound so small upstream additions do not require
+    // an immediate test rewrite, while still catching accidental regressions.
     assert!(
-        endpoint_count >= 130,
-        "Expected at least 130 endpoints in OpenAPI spec, found {}",
+        endpoint_count >= 150,
+        "Expected at least 150 endpoints in OpenAPI spec, found {}",
         endpoint_count
     );
 }
