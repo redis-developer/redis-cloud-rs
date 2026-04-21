@@ -29,7 +29,9 @@ pub use private_link::PrivateLinkHandler;
 
 // Re-export PrivateLink types
 pub use private_link::{
-    PrincipalType, PrivateLinkAddPrincipalRequest, PrivateLinkCreateRequest,
+    PrincipalType, PrivateLinkActiveActiveConnectionsDisassociateRequest,
+    PrivateLinkAddPrincipalRequest, PrivateLinkConnectionDisassociate,
+    PrivateLinkConnectionsDisassociateRequest, PrivateLinkCreateRequest,
     PrivateLinkRemovePrincipalRequest,
 };
 pub use psc::PscHandler;

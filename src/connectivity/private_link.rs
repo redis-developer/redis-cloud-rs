@@ -122,6 +122,54 @@ pub struct PrivateLinkRemovePrincipalRequest {
     pub alias: Option<String>,
 }
 
+/// PrivateLink connection to disassociate
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PrivateLinkConnectionDisassociate {
+    /// Resource share association ID
+    pub association_id: String,
+
+    /// Optional VPC endpoint connection ID
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub connection_id: Option<String>,
+
+    /// Connection type
+    #[serde(rename = "type")]
+    pub connection_type: String,
+
+    /// Principal that owns the connection
+    pub principal_id: String,
+}
+
+/// Request to disassociate one or more PrivateLink connections
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PrivateLinkConnectionsDisassociateRequest {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub subscription_id: Option<i32>,
+
+    pub connections: Vec<PrivateLinkConnectionDisassociate>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub command_type: Option<String>,
+}
+
+/// Request to disassociate connections from an Active-Active PrivateLink region
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PrivateLinkActiveActiveConnectionsDisassociateRequest {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub subscription_id: Option<i32>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub region_id: Option<i32>,
+
+    pub connections: Vec<PrivateLinkConnectionDisassociate>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub command_type: Option<String>,
+}
+
 /// `PrivateLink` configuration response
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -356,7 +404,23 @@ impl PrivateLinkHandler {
         self.client
             .delete_with_body(
                 &format!("/subscriptions/{subscription_id}/private-link/principals"),
-                serde_json::to_value(request).unwrap_or_default(),
+                serde_json::to_value(request).map_err(crate::CloudError::from)?,
+            )
+            .await
+    }
+
+    /// Disassociate connections from `PrivateLink`
+    ///
+    /// POST /subscriptions/{subscriptionId}/private-link/connections/disassociate
+    pub async fn disassociate_connections(
+        &self,
+        subscription_id: i32,
+        request: &PrivateLinkConnectionsDisassociateRequest,
+    ) -> Result<Value> {
+        self.client
+            .post(
+                &format!("/subscriptions/{subscription_id}/private-link/connections/disassociate"),
+                request,
             )
             .await
     }
@@ -509,7 +573,7 @@ impl PrivateLinkHandler {
                 &format!(
                     "/subscriptions/{subscription_id}/regions/{region_id}/private-link/principals"
                 ),
-                serde_json::to_value(request).unwrap_or_default(),
+                serde_json::to_value(request).map_err(crate::CloudError::from)?,
             )
             .await
     }
@@ -537,6 +601,40 @@ impl PrivateLinkHandler {
             .get(&format!(
                 "/subscriptions/{subscription_id}/regions/{region_id}/private-link/endpoint-script"
             ))
+            .await
+    }
+
+    /// Delete Active-Active `PrivateLink`
+    ///
+    /// DELETE /subscriptions/{subscriptionId}/regions/{regionId}/private-link
+    pub async fn delete_active_active(
+        &self,
+        subscription_id: i32,
+        region_id: i32,
+    ) -> Result<Value> {
+        self.client
+            .delete_raw(&format!(
+                "/subscriptions/{subscription_id}/regions/{region_id}/private-link"
+            ))
+            .await
+    }
+
+    /// Disassociate connections from Active-Active `PrivateLink`
+    ///
+    /// POST /subscriptions/{subscriptionId}/regions/{regionId}/private-link/connections/disassociate
+    pub async fn disassociate_connections_active_active(
+        &self,
+        subscription_id: i32,
+        region_id: i32,
+        request: &PrivateLinkActiveActiveConnectionsDisassociateRequest,
+    ) -> Result<Value> {
+        self.client
+            .post(
+                &format!(
+                    "/subscriptions/{subscription_id}/regions/{region_id}/private-link/connections/disassociate"
+                ),
+                request,
+            )
             .await
     }
 }

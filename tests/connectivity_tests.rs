@@ -327,6 +327,35 @@ async fn test_create_vpc_peering_azure() {
 }
 
 #[tokio::test]
+async fn test_get_active_active_vpc_peering() {
+    let mock_server = MockServer::start().await;
+
+    Mock::given(method("GET"))
+        .and(path("/subscriptions/123/regions/peerings"))
+        .and(header("x-api-key", "test-key"))
+        .and(header("x-api-secret-key", "test-secret"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "taskId": "task-get-aa-peering",
+            "commandType": "GET_ACTIVE_ACTIVE_VPC_PEERING",
+            "status": "processing-completed"
+        })))
+        .mount(&mock_server)
+        .await;
+
+    let client = CloudClient::builder()
+        .api_key("test-key".to_string())
+        .api_secret("test-secret".to_string())
+        .base_url(mock_server.uri())
+        .build()
+        .unwrap();
+
+    let handler = redis_cloud::VpcPeeringHandler::new(client);
+    let result = handler.get_active_active(123).await.unwrap();
+
+    assert_eq!(result.task_id, Some("task-get-aa-peering".to_string()));
+}
+
+#[tokio::test]
 async fn test_update_psc_service() {
     let mock_server = MockServer::start().await;
 
@@ -443,6 +472,69 @@ async fn test_create_tgw() {
 }
 
 #[tokio::test]
+async fn test_get_tgw_shared_invitations() {
+    let mock_server = MockServer::start().await;
+
+    Mock::given(method("GET"))
+        .and(path("/subscriptions/123/transitGateways/invitations"))
+        .and(header("x-api-key", "test-key"))
+        .and(header("x-api-secret-key", "test-secret"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "taskId": "task-get-tgw-invitations",
+            "commandType": "GET_TGW_SHARED_INVITATIONS",
+            "status": "processing-completed"
+        })))
+        .mount(&mock_server)
+        .await;
+
+    let client = CloudClient::builder()
+        .api_key("test-key".to_string())
+        .api_secret("test-secret".to_string())
+        .base_url(mock_server.uri())
+        .build()
+        .unwrap();
+
+    let handler = redis_cloud::TransitGatewayHandler::new(client);
+    let result = handler.get_shared_invitations(123).await.unwrap();
+
+    assert_eq!(result.task_id, Some("task-get-tgw-invitations".to_string()));
+}
+
+#[tokio::test]
+async fn test_accept_tgw_resource_share() {
+    let mock_server = MockServer::start().await;
+
+    Mock::given(method("PUT"))
+        .and(path(
+            "/subscriptions/123/transitGateways/invitations/invite-456/accept",
+        ))
+        .and(header("x-api-key", "test-key"))
+        .and(header("x-api-secret-key", "test-secret"))
+        .respond_with(ResponseTemplate::new(202).set_body_json(json!({
+            "taskId": "task-accept-tgw-share",
+            "commandType": "ACCEPT_TGW_RESOURCE_SHARE",
+            "status": "processing-in-progress"
+        })))
+        .mount(&mock_server)
+        .await;
+
+    let client = CloudClient::builder()
+        .api_key("test-key".to_string())
+        .api_secret("test-secret".to_string())
+        .base_url(mock_server.uri())
+        .build()
+        .unwrap();
+
+    let handler = redis_cloud::TransitGatewayHandler::new(client);
+    let result = handler
+        .accept_resource_share(123, "invite-456".to_string())
+        .await
+        .unwrap();
+
+    assert_eq!(result.task_id, Some("task-accept-tgw-share".to_string()));
+}
+
+#[tokio::test]
 async fn test_update_tgw() {
     let mock_server = MockServer::start().await;
 
@@ -487,6 +579,43 @@ async fn test_update_tgw() {
     assert_eq!(
         result.command_type,
         Some("UPDATE_TGW_ATTACHMENT_CIDRS".to_string())
+    );
+}
+
+#[tokio::test]
+async fn test_get_active_active_tgw_shared_invitations() {
+    let mock_server = MockServer::start().await;
+
+    Mock::given(method("GET"))
+        .and(path(
+            "/subscriptions/123/regions/7/transitGateways/invitations",
+        ))
+        .and(header("x-api-key", "test-key"))
+        .and(header("x-api-secret-key", "test-secret"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "taskId": "task-get-aa-tgw-invitations",
+            "commandType": "GET_ACTIVE_ACTIVE_TGW_SHARED_INVITATIONS",
+            "status": "processing-completed"
+        })))
+        .mount(&mock_server)
+        .await;
+
+    let client = CloudClient::builder()
+        .api_key("test-key".to_string())
+        .api_secret("test-secret".to_string())
+        .base_url(mock_server.uri())
+        .build()
+        .unwrap();
+
+    let handler = redis_cloud::TransitGatewayHandler::new(client);
+    let result = handler
+        .get_shared_invitations_active_active(123, 7)
+        .await
+        .unwrap();
+
+    assert_eq!(
+        result.task_id,
+        Some("task-get-aa-tgw-invitations".to_string())
     );
 }
 

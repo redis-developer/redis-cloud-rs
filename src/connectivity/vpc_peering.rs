@@ -316,48 +316,62 @@ impl VpcPeeringHandler {
     // Active-Active VPC Peering
     // ========================================================================
     //
-    // Note: Active-Active VPC peering uses the same API endpoints as standard
-    // VPC peering. These methods are provided for API consistency and to match
-    // the naming convention used by other connectivity handlers.
+    // Note: Active-Active VPC peering uses dedicated `/regions/peerings`
+    // endpoints in the current REST API.
 
     /// Get Active-Active VPC peerings
     ///
-    /// Note: Uses the same endpoint as standard VPC peering.
     pub async fn get_active_active(&self, subscription_id: i32) -> Result<TaskStateUpdate> {
-        self.get(subscription_id).await
+        self.client
+            .get(&format!(
+                "/subscriptions/{subscription_id}/regions/peerings"
+            ))
+            .await
     }
 
     /// Create Active-Active VPC peering
     ///
-    /// Note: Uses the same endpoint as standard VPC peering.
     pub async fn create_active_active(
         &self,
         subscription_id: i32,
         request: &VpcPeeringCreateRequest,
     ) -> Result<TaskStateUpdate> {
-        self.create(subscription_id, request).await
+        self.client
+            .post(
+                &format!("/subscriptions/{subscription_id}/regions/peerings"),
+                request,
+            )
+            .await
     }
 
     /// Delete Active-Active VPC peering
     ///
-    /// Note: Uses the same endpoint as standard VPC peering.
     pub async fn delete_active_active(
         &self,
         subscription_id: i32,
         peering_id: i32,
     ) -> Result<serde_json::Value> {
-        self.delete(subscription_id, peering_id).await
+        self.client
+            .delete(&format!(
+                "/subscriptions/{subscription_id}/regions/peerings/{peering_id}"
+            ))
+            .await?;
+        Ok(serde_json::Value::Null)
     }
 
     /// Update Active-Active VPC peering
     ///
-    /// Note: Uses the same endpoint as standard VPC peering.
     pub async fn update_active_active(
         &self,
         subscription_id: i32,
         peering_id: i32,
         request: &VpcPeeringCreateRequest,
     ) -> Result<TaskStateUpdate> {
-        self.update(subscription_id, peering_id, request).await
+        self.client
+            .put(
+                &format!("/subscriptions/{subscription_id}/regions/peerings/{peering_id}"),
+                request,
+            )
+            .await
     }
 }

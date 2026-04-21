@@ -330,7 +330,12 @@ pub use connectivity::psc::PscHandler;
 pub use connectivity::transit_gateway::TransitGatewayHandler;
 pub use connectivity::vpc_peering::VpcPeeringHandler;
 // Connectivity types
-pub use connectivity::{PrincipalType, PrivateLinkAddPrincipalRequest, PrivateLinkCreateRequest};
+pub use connectivity::{
+    PrincipalType, PrivateLinkActiveActiveConnectionsDisassociateRequest,
+    PrivateLinkAddPrincipalRequest, PrivateLinkConnectionDisassociate,
+    PrivateLinkConnectionsDisassociateRequest, PrivateLinkCreateRequest,
+    PrivateLinkRemovePrincipalRequest,
+};
 // Legacy connectivity export for backward compatibility
 pub use connectivity::ConnectivityHandler;
 

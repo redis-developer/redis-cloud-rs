@@ -1,5 +1,7 @@
 use redis_cloud::connectivity::{
-    PrincipalType, PrivateLinkAddPrincipalRequest, PrivateLinkCreateRequest,
+    PrincipalType, PrivateLinkActiveActiveConnectionsDisassociateRequest,
+    PrivateLinkAddPrincipalRequest, PrivateLinkConnectionDisassociate,
+    PrivateLinkConnectionsDisassociateRequest, PrivateLinkCreateRequest,
     PrivateLinkRemovePrincipalRequest,
 };
 use redis_cloud::{CloudClient, PrivateLinkHandler};
@@ -166,6 +168,52 @@ async fn test_remove_principals() {
     let result = handler.remove_principals(123, &request).await.unwrap();
 
     assert_eq!(result["status"], "deleted");
+}
+
+#[tokio::test]
+async fn test_disassociate_connections() {
+    let mock_server = MockServer::start().await;
+
+    let response_body = json!({
+        "taskId": "task-disassociate-private-link",
+        "status": "processing"
+    });
+
+    Mock::given(method("POST"))
+        .and(path(
+            "/subscriptions/123/private-link/connections/disassociate",
+        ))
+        .and(header("x-api-key", "test-key"))
+        .and(header("x-api-secret-key", "test-secret"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(&response_body))
+        .mount(&mock_server)
+        .await;
+
+    let client = CloudClient::builder()
+        .api_key("test-key")
+        .api_secret("test-secret")
+        .base_url(mock_server.uri())
+        .build()
+        .unwrap();
+
+    let handler = PrivateLinkHandler::new(client);
+    let request = PrivateLinkConnectionsDisassociateRequest {
+        subscription_id: None,
+        connections: vec![PrivateLinkConnectionDisassociate {
+            association_id: "rsa-12345678".to_string(),
+            connection_id: Some("vpce-con-12345678".to_string()),
+            connection_type: "vpc_endpoint".to_string(),
+            principal_id: "123456789012".to_string(),
+        }],
+        command_type: None,
+    };
+
+    let result = handler
+        .disassociate_connections(123, &request)
+        .await
+        .unwrap();
+
+    assert_eq!(result["taskId"], "task-disassociate-private-link");
 }
 
 #[tokio::test]
@@ -399,6 +447,83 @@ async fn test_get_endpoint_script_active_active() {
 
     assert!(result["script"].is_string());
     assert!(result["script"].as_str().unwrap().contains("aws ec2"));
+}
+
+#[tokio::test]
+async fn test_delete_active_active_private_link() {
+    let mock_server = MockServer::start().await;
+
+    let response_body = json!({
+        "taskId": "task-delete-aa-private-link",
+        "status": "processing"
+    });
+
+    Mock::given(method("DELETE"))
+        .and(path("/subscriptions/123/regions/1/private-link"))
+        .and(header("x-api-key", "test-key"))
+        .and(header("x-api-secret-key", "test-secret"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(&response_body))
+        .mount(&mock_server)
+        .await;
+
+    let client = CloudClient::builder()
+        .api_key("test-key")
+        .api_secret("test-secret")
+        .base_url(mock_server.uri())
+        .build()
+        .unwrap();
+
+    let handler = PrivateLinkHandler::new(client);
+    let result = handler.delete_active_active(123, 1).await.unwrap();
+
+    assert_eq!(result["taskId"], "task-delete-aa-private-link");
+}
+
+#[tokio::test]
+async fn test_disassociate_connections_active_active() {
+    let mock_server = MockServer::start().await;
+
+    let response_body = json!({
+        "taskId": "task-disassociate-aa-private-link",
+        "status": "processing"
+    });
+
+    Mock::given(method("POST"))
+        .and(path(
+            "/subscriptions/123/regions/1/private-link/connections/disassociate",
+        ))
+        .and(header("x-api-key", "test-key"))
+        .and(header("x-api-secret-key", "test-secret"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(&response_body))
+        .mount(&mock_server)
+        .await;
+
+    let client = CloudClient::builder()
+        .api_key("test-key")
+        .api_secret("test-secret")
+        .base_url(mock_server.uri())
+        .build()
+        .unwrap();
+
+    let handler = PrivateLinkHandler::new(client);
+    let request = PrivateLinkActiveActiveConnectionsDisassociateRequest {
+        subscription_id: None,
+        region_id: None,
+        connections: vec![PrivateLinkConnectionDisassociate {
+            association_id: "rsa-87654321".to_string(),
+            connection_id: Some("vpce-con-87654321".to_string()),
+            connection_type: "vpc_endpoint".to_string(),
+            principal_id: "210987654321".to_string(),
+        }],
+        command_type: None,
+    };
+
+    let result = handler
+        .disassociate_connections_active_active(123, 1, &request)
+        .await
+        .unwrap();
+
+    assert_eq!(result["taskId"], "task-disassociate-aa-private-link");
 }
 
 #[tokio::test]

@@ -383,6 +383,68 @@ async fn test_update_subscription_maintenance_windows() {
 }
 
 #[tokio::test]
+async fn test_update_subscription_resource_tags() {
+    let mock_server = MockServer::start().await;
+
+    Mock::given(method("PUT"))
+        .and(path("/subscriptions/123/resource-tags"))
+        .and(body_json(json!({
+            "resourceTags": [
+                {
+                    "key": "environment",
+                    "value": "production"
+                },
+                {
+                    "key": "team",
+                    "value": "platform"
+                }
+            ]
+        })))
+        .and(header("x-api-key", "test-key"))
+        .and(header("x-api-secret-key", "test-secret"))
+        .respond_with(ResponseTemplate::new(202).set_body_json(json!({
+            "taskId": "task-update-resource-tags",
+            "commandType": "UPDATE_RESOURCE_TAGS",
+            "status": "processing"
+        })))
+        .mount(&mock_server)
+        .await;
+
+    let client = CloudClient::builder()
+        .api_key("test-key".to_string())
+        .api_secret("test-secret".to_string())
+        .base_url(mock_server.uri())
+        .build()
+        .unwrap();
+
+    let handler = SubscriptionsHandler::new(client);
+    let request = redis_cloud::subscriptions::SubscriptionResourceTagsUpdateRequest {
+        subscription_id: None,
+        resource_tags: vec![
+            redis_cloud::subscriptions::ResourceTag {
+                key: "environment".to_string(),
+                value: "production".to_string(),
+            },
+            redis_cloud::subscriptions::ResourceTag {
+                key: "team".to_string(),
+                value: "platform".to_string(),
+            },
+        ],
+        command_type: None,
+    };
+
+    let result = handler
+        .update_subscription_resource_tags(123, &request)
+        .await
+        .unwrap();
+
+    assert_eq!(
+        result.task_id,
+        Some("task-update-resource-tags".to_string())
+    );
+}
+
+#[tokio::test]
 async fn test_get_subscription_pricing() {
     let mock_server = MockServer::start().await;
 

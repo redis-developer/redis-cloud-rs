@@ -58,6 +58,8 @@ use serde_json::Value;
 use std::collections::HashMap;
 use typed_builder::TypedBuilder;
 
+pub use crate::types::CloudTag as ResourceTag;
+
 // ============================================================================
 // Models
 // ============================================================================
@@ -228,6 +230,19 @@ pub struct CidrAllowlistUpdateRequest {
     /// List of AWS Security group IDs.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub security_group_ids: Option<Vec<String>>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub command_type: Option<String>,
+}
+
+/// Update subscription resource tags
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SubscriptionResourceTagsUpdateRequest {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub subscription_id: Option<i32>,
+
+    pub resource_tags: Vec<ResourceTag>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub command_type: Option<String>,
@@ -1045,6 +1060,23 @@ impl SubscriptionHandler {
         self.client
             .put(
                 &format!("/subscriptions/{subscription_id}/maintenance-windows"),
+                request,
+            )
+            .await
+    }
+
+    /// Update Pro subscription resource tags
+    /// Replaces all existing resource tags on the specified Pro subscription.
+    ///
+    /// PUT /subscriptions/{subscriptionId}/resource-tags
+    pub async fn update_subscription_resource_tags(
+        &self,
+        subscription_id: i32,
+        request: &SubscriptionResourceTagsUpdateRequest,
+    ) -> Result<TaskStateUpdate> {
+        self.client
+            .put(
+                &format!("/subscriptions/{subscription_id}/resource-tags"),
                 request,
             )
             .await
