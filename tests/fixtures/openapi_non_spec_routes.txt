@@ -1,14 +1,2 @@
 # Typed handler routes that do not match the current bundled OpenAPI spec.
 # Keep entries normalized as: METHOD /path/{}/segments
-
-DELETE /subscriptions/{}/private-service-connect/endpoints/{}
-DELETE /subscriptions/{}/regions/private-service-connect
-DELETE /subscriptions/{}/regions/{}/private-service-connect/endpoints/{}
-GET /subscriptions/{}/private-service-connect/endpoints
-GET /subscriptions/{}/private-service-connect/endpoints/{}/creationScripts
-GET /subscriptions/{}/private-service-connect/endpoints/{}/deletionScripts
-GET /subscriptions/{}/regions/private-service-connect
-GET /subscriptions/{}/regions/private-service-connect/endpoints
-POST /subscriptions/{}/private-service-connect/endpoints
-POST /subscriptions/{}/regions/private-service-connect
-POST /subscriptions/{}/regions/private-service-connect/endpoints

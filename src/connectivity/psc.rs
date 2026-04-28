@@ -6,14 +6,27 @@
 use crate::{CloudClient, Result};
 use serde::{Deserialize, Serialize};
 
+/// Private Service Connect endpoint create request
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PscEndpointCreateRequest {
+    /// Google Cloud project ID
+    pub gcp_project_id: String,
+
+    /// Name of the Google Cloud VPC that hosts your application
+    pub gcp_vpc_name: String,
+
+    /// Name of your VPC's subnet of IP address ranges
+    pub gcp_vpc_subnet_name: String,
+
+    /// Prefix used to create PSC endpoints in the consumer application VPC
+    pub endpoint_connection_name: String,
+}
+
 /// Private Service Connect endpoint update request
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PscEndpointUpdateRequest {
-    pub subscription_id: i32,
-    pub psc_service_id: i32,
-    pub endpoint_id: i32,
-
     /// Google Cloud project ID
     #[serde(skip_serializing_if = "Option::is_none")]
     pub gcp_project_id: Option<String>,
@@ -29,6 +42,10 @@ pub struct PscEndpointUpdateRequest {
     /// Prefix used to create PSC endpoints in the consumer application VPC
     #[serde(skip_serializing_if = "Option::is_none")]
     pub endpoint_connection_name: Option<String>,
+
+    /// Action to perform on the endpoint
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub action: Option<String>,
 }
 
 /// Task state update response
@@ -174,13 +191,14 @@ impl PscHandler {
     // ========================================================================
 
     /// Delete Private Service Connect service
-    pub async fn delete_service(&self, subscription_id: i32) -> Result<serde_json::Value> {
-        self.client
-            .delete(&format!(
+    pub async fn delete_service(&self, subscription_id: i32) -> Result<TaskStateUpdate> {
+        let response = self
+            .client
+            .delete_raw(&format!(
                 "/subscriptions/{subscription_id}/private-service-connect"
             ))
             .await?;
-        Ok(serde_json::Value::Null)
+        serde_json::from_value(response).map_err(crate::CloudError::from)
     }
 
     /// Get Private Service Connect service
@@ -203,10 +221,14 @@ impl PscHandler {
     }
 
     /// Get Private Service Connect endpoints
-    pub async fn get_endpoints(&self, subscription_id: i32) -> Result<TaskStateUpdate> {
+    pub async fn get_endpoints(
+        &self,
+        subscription_id: i32,
+        psc_service_id: i32,
+    ) -> Result<TaskStateUpdate> {
         self.client
             .get(&format!(
-                "/subscriptions/{subscription_id}/private-service-connect/endpoints"
+                "/subscriptions/{subscription_id}/private-service-connect/{psc_service_id}"
             ))
             .await
     }
@@ -215,11 +237,14 @@ impl PscHandler {
     pub async fn create_endpoint(
         &self,
         subscription_id: i32,
-        request: &PscEndpointUpdateRequest,
+        psc_service_id: i32,
+        request: &PscEndpointCreateRequest,
     ) -> Result<TaskStateUpdate> {
         self.client
             .post(
-                &format!("/subscriptions/{subscription_id}/private-service-connect/endpoints"),
+                &format!(
+                    "/subscriptions/{subscription_id}/private-service-connect/{psc_service_id}"
+                ),
                 request,
             )
             .await
@@ -229,25 +254,26 @@ impl PscHandler {
     pub async fn delete_endpoint(
         &self,
         subscription_id: i32,
+        psc_service_id: i32,
         endpoint_id: i32,
-    ) -> Result<serde_json::Value> {
-        self.client
-            .delete(&format!(
-                "/subscriptions/{subscription_id}/private-service-connect/endpoints/{endpoint_id}"
+    ) -> Result<TaskStateUpdate> {
+        let response = self
+            .client
+            .delete_raw(&format!(
+                "/subscriptions/{subscription_id}/private-service-connect/{psc_service_id}/endpoints/{endpoint_id}"
             ))
             .await?;
-        Ok(serde_json::Value::Null)
+        serde_json::from_value(response).map_err(crate::CloudError::from)
     }
 
     /// Update Private Service Connect endpoint
     pub async fn update_endpoint(
         &self,
         subscription_id: i32,
+        psc_service_id: i32,
         endpoint_id: i32,
         request: &PscEndpointUpdateRequest,
     ) -> Result<TaskStateUpdate> {
-        // Use psc_service_id from request
-        let psc_service_id = request.psc_service_id;
         self.client
             .put(
                 &format!(
@@ -262,11 +288,12 @@ impl PscHandler {
     pub async fn get_endpoint_creation_script(
         &self,
         subscription_id: i32,
+        psc_service_id: i32,
         endpoint_id: i32,
-    ) -> Result<String> {
+    ) -> Result<TaskStateUpdate> {
         self.client
             .get(&format!(
-                "/subscriptions/{subscription_id}/private-service-connect/endpoints/{endpoint_id}/creationScripts"
+                "/subscriptions/{subscription_id}/private-service-connect/{psc_service_id}/endpoints/{endpoint_id}/creationScripts"
             ))
             .await
     }
@@ -275,11 +302,12 @@ impl PscHandler {
     pub async fn get_endpoint_deletion_script(
         &self,
         subscription_id: i32,
+        psc_service_id: i32,
         endpoint_id: i32,
-    ) -> Result<String> {
+    ) -> Result<TaskStateUpdate> {
         self.client
             .get(&format!(
-                "/subscriptions/{subscription_id}/private-service-connect/endpoints/{endpoint_id}/deletionScripts"
+                "/subscriptions/{subscription_id}/private-service-connect/{psc_service_id}/endpoints/{endpoint_id}/deletionScripts"
             ))
             .await
     }
@@ -292,20 +320,26 @@ impl PscHandler {
     pub async fn delete_service_active_active(
         &self,
         subscription_id: i32,
-    ) -> Result<serde_json::Value> {
-        self.client
-            .delete(&format!(
-                "/subscriptions/{subscription_id}/regions/private-service-connect"
+        region_id: i32,
+    ) -> Result<TaskStateUpdate> {
+        let response = self
+            .client
+            .delete_raw(&format!(
+                "/subscriptions/{subscription_id}/regions/{region_id}/private-service-connect"
             ))
             .await?;
-        Ok(serde_json::Value::Null)
+        serde_json::from_value(response).map_err(crate::CloudError::from)
     }
 
     /// Get Active-Active PSC service
-    pub async fn get_service_active_active(&self, subscription_id: i32) -> Result<TaskStateUpdate> {
+    pub async fn get_service_active_active(
+        &self,
+        subscription_id: i32,
+        region_id: i32,
+    ) -> Result<TaskStateUpdate> {
         self.client
             .get(&format!(
-                "/subscriptions/{subscription_id}/regions/private-service-connect"
+                "/subscriptions/{subscription_id}/regions/{region_id}/private-service-connect"
             ))
             .await
     }
@@ -314,10 +348,13 @@ impl PscHandler {
     pub async fn create_service_active_active(
         &self,
         subscription_id: i32,
+        region_id: i32,
     ) -> Result<TaskStateUpdate> {
         self.client
             .post(
-                &format!("/subscriptions/{subscription_id}/regions/private-service-connect"),
+                &format!(
+                    "/subscriptions/{subscription_id}/regions/{region_id}/private-service-connect"
+                ),
                 &serde_json::json!({}),
             )
             .await
@@ -327,10 +364,12 @@ impl PscHandler {
     pub async fn get_endpoints_active_active(
         &self,
         subscription_id: i32,
+        region_id: i32,
+        psc_service_id: i32,
     ) -> Result<TaskStateUpdate> {
         self.client
             .get(&format!(
-                "/subscriptions/{subscription_id}/regions/private-service-connect/endpoints"
+                "/subscriptions/{subscription_id}/regions/{region_id}/private-service-connect/{psc_service_id}"
             ))
             .await
     }
@@ -339,12 +378,14 @@ impl PscHandler {
     pub async fn create_endpoint_active_active(
         &self,
         subscription_id: i32,
-        request: &PscEndpointUpdateRequest,
+        region_id: i32,
+        psc_service_id: i32,
+        request: &PscEndpointCreateRequest,
     ) -> Result<TaskStateUpdate> {
         self.client
             .post(
                 &format!(
-                    "/subscriptions/{subscription_id}/regions/private-service-connect/endpoints"
+                    "/subscriptions/{subscription_id}/regions/{region_id}/private-service-connect/{psc_service_id}"
                 ),
                 request,
             )
@@ -356,14 +397,16 @@ impl PscHandler {
         &self,
         subscription_id: i32,
         region_id: i32,
+        psc_service_id: i32,
         endpoint_id: i32,
-    ) -> Result<serde_json::Value> {
-        self.client
-            .delete(&format!(
-                "/subscriptions/{subscription_id}/regions/{region_id}/private-service-connect/endpoints/{endpoint_id}"
+    ) -> Result<TaskStateUpdate> {
+        let response = self
+            .client
+            .delete_raw(&format!(
+                "/subscriptions/{subscription_id}/regions/{region_id}/private-service-connect/{psc_service_id}/endpoints/{endpoint_id}"
             ))
             .await?;
-        Ok(serde_json::Value::Null)
+        serde_json::from_value(response).map_err(crate::CloudError::from)
     }
 
     /// Update Active-Active PSC endpoint
@@ -371,13 +414,14 @@ impl PscHandler {
         &self,
         subscription_id: i32,
         region_id: i32,
+        psc_service_id: i32,
         endpoint_id: i32,
         request: &PscEndpointUpdateRequest,
     ) -> Result<TaskStateUpdate> {
         self.client
             .put(
                 &format!(
-                    "/subscriptions/{subscription_id}/regions/{region_id}/private-service-connect/{subscription_id}/endpoints/{endpoint_id}"
+                    "/subscriptions/{subscription_id}/regions/{region_id}/private-service-connect/{psc_service_id}/endpoints/{endpoint_id}"
                 ),
                 request,
             )
@@ -391,7 +435,7 @@ impl PscHandler {
         region_id: i32,
         psc_service_id: i32,
         endpoint_id: i32,
-    ) -> Result<String> {
+    ) -> Result<TaskStateUpdate> {
         self.client
             .get(&format!(
                 "/subscriptions/{subscription_id}/regions/{region_id}/private-service-connect/{psc_service_id}/endpoints/{endpoint_id}/creationScripts"
@@ -406,7 +450,7 @@ impl PscHandler {
         region_id: i32,
         psc_service_id: i32,
         endpoint_id: i32,
-    ) -> Result<String> {
+    ) -> Result<TaskStateUpdate> {
         self.client
             .get(&format!(
                 "/subscriptions/{subscription_id}/regions/{region_id}/private-service-connect/{psc_service_id}/endpoints/{endpoint_id}/deletionScripts"

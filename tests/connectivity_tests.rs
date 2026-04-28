@@ -1,4 +1,4 @@
-use redis_cloud::{CloudClient, ConnectivityHandler};
+use redis_cloud::{CloudClient, ConnectivityHandler, PscHandler};
 use serde_json::json;
 use wiremock::matchers::{header, method, path};
 use wiremock::{Mock, MockServer, ResponseTemplate};
@@ -161,6 +161,74 @@ async fn test_create_psc_service() {
 
     assert_eq!(result.task_id, Some("task-create-psc".to_string()));
     assert_eq!(result.command_type, Some("CREATE_PSC_SERVICE".to_string()));
+}
+
+#[tokio::test]
+async fn test_get_psc_endpoints() {
+    let mock_server = MockServer::start().await;
+
+    Mock::given(method("GET"))
+        .and(path("/subscriptions/123/private-service-connect/789"))
+        .and(header("x-api-key", "test-key"))
+        .and(header("x-api-secret-key", "test-secret"))
+        .respond_with(ResponseTemplate::new(202).set_body_json(json!({
+            "taskId": "task-get-psc-endpoints",
+            "commandType": "GET_PSC_SERVICE_ENDPOINTS",
+            "status": "processing-in-progress"
+        })))
+        .mount(&mock_server)
+        .await;
+
+    let client = CloudClient::builder()
+        .api_key("test-key".to_string())
+        .api_secret("test-secret".to_string())
+        .base_url(mock_server.uri())
+        .build()
+        .unwrap();
+
+    let handler = PscHandler::new(client);
+    let result = handler.get_endpoints(123, 789).await.unwrap();
+
+    assert_eq!(result.task_id, Some("task-get-psc-endpoints".to_string()));
+}
+
+#[tokio::test]
+async fn test_create_psc_endpoint() {
+    let mock_server = MockServer::start().await;
+
+    Mock::given(method("POST"))
+        .and(path("/subscriptions/123/private-service-connect/789"))
+        .and(header("x-api-key", "test-key"))
+        .and(header("x-api-secret-key", "test-secret"))
+        .respond_with(ResponseTemplate::new(202).set_body_json(json!({
+            "taskId": "task-create-psc-endpoint",
+            "commandType": "CREATE_PSC_SERVICE_ENDPOINT",
+            "status": "processing-in-progress"
+        })))
+        .mount(&mock_server)
+        .await;
+
+    let client = CloudClient::builder()
+        .api_key("test-key".to_string())
+        .api_secret("test-secret".to_string())
+        .base_url(mock_server.uri())
+        .build()
+        .unwrap();
+
+    let handler = ConnectivityHandler::new(client);
+    let request = redis_cloud::connectivity::PscEndpointCreateRequest {
+        gcp_project_id: "project1".to_string(),
+        gcp_vpc_name: "vpc1".to_string(),
+        gcp_vpc_subnet_name: "subnet1".to_string(),
+        endpoint_connection_name: "psc-endpoint".to_string(),
+    };
+
+    let result = handler
+        .create_psc_endpoint(123, 789, &request)
+        .await
+        .unwrap();
+
+    assert_eq!(result.task_id, Some("task-create-psc-endpoint".to_string()));
 }
 
 #[tokio::test]
@@ -383,21 +451,124 @@ async fn test_update_psc_service() {
 
     let handler = ConnectivityHandler::new(client);
     let request = redis_cloud::connectivity::PscEndpointUpdateRequest {
-        subscription_id: 123,
-        psc_service_id: 789,
-        endpoint_id: 1,
         gcp_project_id: Some("project1".to_string()),
         gcp_vpc_name: Some("vpc1".to_string()),
         gcp_vpc_subnet_name: Some("subnet1".to_string()),
         endpoint_connection_name: Some("psc-endpoint".to_string()),
+        action: None,
     };
 
     let result = handler
-        .update_psc_service_endpoint(123, 1, &request)
+        .update_psc_service_endpoint(123, 789, 1, &request)
         .await
         .unwrap();
     assert_eq!(result.task_id, Some("task-update-psc".to_string()));
     assert_eq!(result.command_type, Some("UPDATE_PSC_SERVICE".to_string()));
+}
+
+#[tokio::test]
+async fn test_get_psc_endpoint_creation_script() {
+    let mock_server = MockServer::start().await;
+
+    Mock::given(method("GET"))
+        .and(path(
+            "/subscriptions/123/private-service-connect/789/endpoints/1/creationScripts",
+        ))
+        .and(header("x-api-key", "test-key"))
+        .and(header("x-api-secret-key", "test-secret"))
+        .respond_with(ResponseTemplate::new(202).set_body_json(json!({
+            "taskId": "task-get-psc-creation-script",
+            "commandType": "GET_PSC_SERVICE_ENDPOINT_CREATION_SCRIPT",
+            "status": "processing-in-progress"
+        })))
+        .mount(&mock_server)
+        .await;
+
+    let client = CloudClient::builder()
+        .api_key("test-key".to_string())
+        .api_secret("test-secret".to_string())
+        .base_url(mock_server.uri())
+        .build()
+        .unwrap();
+
+    let handler = PscHandler::new(client);
+    let result = handler
+        .get_endpoint_creation_script(123, 789, 1)
+        .await
+        .unwrap();
+
+    assert_eq!(
+        result.task_id,
+        Some("task-get-psc-creation-script".to_string())
+    );
+}
+
+#[tokio::test]
+async fn test_get_psc_endpoint_deletion_script() {
+    let mock_server = MockServer::start().await;
+
+    Mock::given(method("GET"))
+        .and(path(
+            "/subscriptions/123/private-service-connect/789/endpoints/1/deletionScripts",
+        ))
+        .and(header("x-api-key", "test-key"))
+        .and(header("x-api-secret-key", "test-secret"))
+        .respond_with(ResponseTemplate::new(202).set_body_json(json!({
+            "taskId": "task-get-psc-deletion-script",
+            "commandType": "GET_PSC_SERVICE_ENDPOINT_DELETION_SCRIPT",
+            "status": "processing-in-progress"
+        })))
+        .mount(&mock_server)
+        .await;
+
+    let client = CloudClient::builder()
+        .api_key("test-key".to_string())
+        .api_secret("test-secret".to_string())
+        .base_url(mock_server.uri())
+        .build()
+        .unwrap();
+
+    let handler = PscHandler::new(client);
+    let result = handler
+        .get_endpoint_deletion_script(123, 789, 1)
+        .await
+        .unwrap();
+
+    assert_eq!(
+        result.task_id,
+        Some("task-get-psc-deletion-script".to_string())
+    );
+}
+
+#[tokio::test]
+async fn test_delete_psc_endpoint() {
+    let mock_server = MockServer::start().await;
+
+    Mock::given(method("DELETE"))
+        .and(path(
+            "/subscriptions/123/private-service-connect/789/endpoints/1",
+        ))
+        .and(header("x-api-key", "test-key"))
+        .and(header("x-api-secret-key", "test-secret"))
+        .respond_with(ResponseTemplate::new(202).set_body_json(json!({
+            "taskId": "task-delete-psc-endpoint",
+            "commandType": "DELETE_PSC_SERVICE_ENDPOINT",
+            "status": "processing-in-progress"
+        })))
+        .mount(&mock_server)
+        .await;
+
+    let client = CloudClient::builder()
+        .api_key("test-key".to_string())
+        .api_secret("test-secret".to_string())
+        .base_url(mock_server.uri())
+        .build()
+        .unwrap();
+
+    let handler = PscHandler::new(client);
+    let result = handler.delete_endpoint(123, 789, 1).await.unwrap();
+
+    assert_eq!(result.task_id, Some("task-delete-psc-endpoint".to_string()));
 }
 
 #[tokio::test]
@@ -427,8 +598,263 @@ async fn test_delete_psc_service() {
     let handler = ConnectivityHandler::new(client);
     let result = handler.delete_psc_service(123).await.unwrap();
 
-    // Delete methods now return serde_json::Value::Null
-    assert_eq!(result, serde_json::Value::Null);
+    assert_eq!(result.task_id, Some("task-delete-psc".to_string()));
+}
+
+#[tokio::test]
+async fn test_get_active_active_psc_service() {
+    let mock_server = MockServer::start().await;
+
+    Mock::given(method("GET"))
+        .and(path(
+            "/subscriptions/123/regions/27/private-service-connect",
+        ))
+        .and(header("x-api-key", "test-key"))
+        .and(header("x-api-secret-key", "test-secret"))
+        .respond_with(ResponseTemplate::new(202).set_body_json(json!({
+            "taskId": "task-get-aa-psc",
+            "commandType": "GET_ACTIVE_ACTIVE_PSC_SERVICE",
+            "status": "processing-in-progress"
+        })))
+        .mount(&mock_server)
+        .await;
+
+    let client = CloudClient::builder()
+        .api_key("test-key".to_string())
+        .api_secret("test-secret".to_string())
+        .base_url(mock_server.uri())
+        .build()
+        .unwrap();
+
+    let handler = PscHandler::new(client);
+    let result = handler.get_service_active_active(123, 27).await.unwrap();
+
+    assert_eq!(result.task_id, Some("task-get-aa-psc".to_string()));
+}
+
+#[tokio::test]
+async fn test_create_active_active_psc_service() {
+    let mock_server = MockServer::start().await;
+
+    Mock::given(method("POST"))
+        .and(path(
+            "/subscriptions/123/regions/27/private-service-connect",
+        ))
+        .and(header("x-api-key", "test-key"))
+        .and(header("x-api-secret-key", "test-secret"))
+        .respond_with(ResponseTemplate::new(202).set_body_json(json!({
+            "taskId": "task-create-aa-psc",
+            "commandType": "CREATE_ACTIVE_ACTIVE_PSC_SERVICE",
+            "status": "processing-in-progress"
+        })))
+        .mount(&mock_server)
+        .await;
+
+    let client = CloudClient::builder()
+        .api_key("test-key".to_string())
+        .api_secret("test-secret".to_string())
+        .base_url(mock_server.uri())
+        .build()
+        .unwrap();
+
+    let handler = PscHandler::new(client);
+    let result = handler.create_service_active_active(123, 27).await.unwrap();
+
+    assert_eq!(result.task_id, Some("task-create-aa-psc".to_string()));
+}
+
+#[tokio::test]
+async fn test_delete_active_active_psc_service() {
+    let mock_server = MockServer::start().await;
+
+    Mock::given(method("DELETE"))
+        .and(path(
+            "/subscriptions/123/regions/27/private-service-connect",
+        ))
+        .and(header("x-api-key", "test-key"))
+        .and(header("x-api-secret-key", "test-secret"))
+        .respond_with(ResponseTemplate::new(202).set_body_json(json!({
+            "taskId": "task-delete-aa-psc",
+            "commandType": "DELETE_ACTIVE_ACTIVE_PSC_SERVICE",
+            "status": "processing-in-progress"
+        })))
+        .mount(&mock_server)
+        .await;
+
+    let client = CloudClient::builder()
+        .api_key("test-key".to_string())
+        .api_secret("test-secret".to_string())
+        .base_url(mock_server.uri())
+        .build()
+        .unwrap();
+
+    let handler = PscHandler::new(client);
+    let result = handler.delete_service_active_active(123, 27).await.unwrap();
+
+    assert_eq!(result.task_id, Some("task-delete-aa-psc".to_string()));
+}
+
+#[tokio::test]
+async fn test_get_active_active_psc_endpoints() {
+    let mock_server = MockServer::start().await;
+
+    Mock::given(method("GET"))
+        .and(path(
+            "/subscriptions/123/regions/27/private-service-connect/789",
+        ))
+        .and(header("x-api-key", "test-key"))
+        .and(header("x-api-secret-key", "test-secret"))
+        .respond_with(ResponseTemplate::new(202).set_body_json(json!({
+            "taskId": "task-get-aa-psc-endpoints",
+            "commandType": "GET_ACTIVE_ACTIVE_PSC_SERVICE_ENDPOINTS",
+            "status": "processing-in-progress"
+        })))
+        .mount(&mock_server)
+        .await;
+
+    let client = CloudClient::builder()
+        .api_key("test-key".to_string())
+        .api_secret("test-secret".to_string())
+        .base_url(mock_server.uri())
+        .build()
+        .unwrap();
+
+    let handler = PscHandler::new(client);
+    let result = handler
+        .get_endpoints_active_active(123, 27, 789)
+        .await
+        .unwrap();
+
+    assert_eq!(
+        result.task_id,
+        Some("task-get-aa-psc-endpoints".to_string())
+    );
+}
+
+#[tokio::test]
+async fn test_create_active_active_psc_endpoint() {
+    let mock_server = MockServer::start().await;
+
+    Mock::given(method("POST"))
+        .and(path(
+            "/subscriptions/123/regions/27/private-service-connect/789",
+        ))
+        .and(header("x-api-key", "test-key"))
+        .and(header("x-api-secret-key", "test-secret"))
+        .respond_with(ResponseTemplate::new(202).set_body_json(json!({
+            "taskId": "task-create-aa-psc-endpoint",
+            "commandType": "CREATE_ACTIVE_ACTIVE_PSC_SERVICE_ENDPOINT",
+            "status": "processing-in-progress"
+        })))
+        .mount(&mock_server)
+        .await;
+
+    let client = CloudClient::builder()
+        .api_key("test-key".to_string())
+        .api_secret("test-secret".to_string())
+        .base_url(mock_server.uri())
+        .build()
+        .unwrap();
+
+    let handler = PscHandler::new(client);
+    let request = redis_cloud::connectivity::PscEndpointCreateRequest {
+        gcp_project_id: "project1".to_string(),
+        gcp_vpc_name: "vpc1".to_string(),
+        gcp_vpc_subnet_name: "subnet1".to_string(),
+        endpoint_connection_name: "psc-endpoint".to_string(),
+    };
+
+    let result = handler
+        .create_endpoint_active_active(123, 27, 789, &request)
+        .await
+        .unwrap();
+
+    assert_eq!(
+        result.task_id,
+        Some("task-create-aa-psc-endpoint".to_string())
+    );
+}
+
+#[tokio::test]
+async fn test_update_active_active_psc_endpoint() {
+    let mock_server = MockServer::start().await;
+
+    Mock::given(method("PUT"))
+        .and(path(
+            "/subscriptions/123/regions/27/private-service-connect/789/endpoints/1",
+        ))
+        .and(header("x-api-key", "test-key"))
+        .and(header("x-api-secret-key", "test-secret"))
+        .respond_with(ResponseTemplate::new(202).set_body_json(json!({
+            "taskId": "task-update-aa-psc-endpoint",
+            "commandType": "UPDATE_ACTIVE_ACTIVE_PSC_SERVICE_ENDPOINT",
+            "status": "processing-in-progress"
+        })))
+        .mount(&mock_server)
+        .await;
+
+    let client = CloudClient::builder()
+        .api_key("test-key".to_string())
+        .api_secret("test-secret".to_string())
+        .base_url(mock_server.uri())
+        .build()
+        .unwrap();
+
+    let handler = PscHandler::new(client);
+    let request = redis_cloud::connectivity::PscEndpointUpdateRequest {
+        gcp_project_id: Some("project1".to_string()),
+        gcp_vpc_name: Some("vpc1".to_string()),
+        gcp_vpc_subnet_name: Some("subnet1".to_string()),
+        endpoint_connection_name: Some("psc-endpoint".to_string()),
+        action: Some("accept".to_string()),
+    };
+
+    let result = handler
+        .update_endpoint_active_active(123, 27, 789, 1, &request)
+        .await
+        .unwrap();
+
+    assert_eq!(
+        result.task_id,
+        Some("task-update-aa-psc-endpoint".to_string())
+    );
+}
+
+#[tokio::test]
+async fn test_delete_active_active_psc_endpoint() {
+    let mock_server = MockServer::start().await;
+
+    Mock::given(method("DELETE"))
+        .and(path(
+            "/subscriptions/123/regions/27/private-service-connect/789/endpoints/1",
+        ))
+        .and(header("x-api-key", "test-key"))
+        .and(header("x-api-secret-key", "test-secret"))
+        .respond_with(ResponseTemplate::new(202).set_body_json(json!({
+            "taskId": "task-delete-aa-psc-endpoint",
+            "commandType": "DELETE_ACTIVE_ACTIVE_PSC_SERVICE_ENDPOINT",
+            "status": "processing-in-progress"
+        })))
+        .mount(&mock_server)
+        .await;
+
+    let client = CloudClient::builder()
+        .api_key("test-key".to_string())
+        .api_secret("test-secret".to_string())
+        .base_url(mock_server.uri())
+        .build()
+        .unwrap();
+
+    let handler = PscHandler::new(client);
+    let result = handler
+        .delete_endpoint_active_active(123, 27, 789, 1)
+        .await
+        .unwrap();
+
+    assert_eq!(
+        result.task_id,
+        Some("task-delete-aa-psc-endpoint".to_string())
+    );
 }
 
 #[tokio::test]

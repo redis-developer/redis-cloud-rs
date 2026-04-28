@@ -39,7 +39,7 @@ pub use transit_gateway::TransitGatewayHandler;
 pub use vpc_peering::VpcPeeringHandler;
 
 // Re-export types used by handlers
-pub use psc::PscEndpointUpdateRequest;
+pub use psc::{PscEndpointCreateRequest, PscEndpointUpdateRequest};
 pub use transit_gateway::{Cidr, TgwAttachmentRequest, TgwUpdateCidrsRequest};
 pub use vpc_peering::{
     ActiveActiveVpcPeering, ActiveActiveVpcPeeringList, ActiveActiveVpcRegion, VpcCidr, VpcPeering,
@@ -133,16 +133,19 @@ impl ConnectivityHandler {
     pub async fn delete_psc_service(
         &self,
         subscription_id: i32,
-    ) -> crate::Result<serde_json::Value> {
+    ) -> crate::Result<crate::types::TaskStateUpdate> {
         self.psc.delete_service(subscription_id).await
     }
 
     pub async fn create_psc_endpoint(
         &self,
         subscription_id: i32,
-        request: &PscEndpointUpdateRequest,
+        psc_service_id: i32,
+        request: &PscEndpointCreateRequest,
     ) -> crate::Result<crate::types::TaskStateUpdate> {
-        self.psc.create_endpoint(subscription_id, request).await
+        self.psc
+            .create_endpoint(subscription_id, psc_service_id, request)
+            .await
     }
 
     // Transit Gateway delegation methods
@@ -203,11 +206,12 @@ impl ConnectivityHandler {
     pub async fn update_psc_service_endpoint(
         &self,
         subscription_id: i32,
+        psc_service_id: i32,
         endpoint_id: i32,
         request: &PscEndpointUpdateRequest,
     ) -> crate::Result<crate::types::TaskStateUpdate> {
         self.psc
-            .update_endpoint(subscription_id, endpoint_id, request)
+            .update_endpoint(subscription_id, psc_service_id, endpoint_id, request)
             .await
     }
 

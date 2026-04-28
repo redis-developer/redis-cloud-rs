@@ -1,14 +1,2 @@
 # Bundled-spec routes that do not currently have a matching typed handler path.
 # Keep entries normalized as: METHOD /path/{}/segments
-
-DELETE /subscriptions/{}/private-service-connect/{}/endpoints/{}
-DELETE /subscriptions/{}/regions/{}/private-service-connect
-DELETE /subscriptions/{}/regions/{}/private-service-connect/{}/endpoints/{}
-GET /subscriptions/{}/private-service-connect/{}
-GET /subscriptions/{}/private-service-connect/{}/endpoints/{}/creationScripts
-GET /subscriptions/{}/private-service-connect/{}/endpoints/{}/deletionScripts
-GET /subscriptions/{}/regions/{}/private-service-connect
-GET /subscriptions/{}/regions/{}/private-service-connect/{}
-POST /subscriptions/{}/private-service-connect/{}
-POST /subscriptions/{}/regions/{}/private-service-connect
-POST /subscriptions/{}/regions/{}/private-service-connect/{}
