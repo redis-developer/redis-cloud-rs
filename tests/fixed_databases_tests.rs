@@ -7,15 +7,48 @@ use wiremock::{Mock, MockServer, ResponseTemplate};
 async fn test_get_fixed_subscription_databases() {
     let mock_server = MockServer::start().await;
 
+    // Shape derived from the AccountFixedSubscriptionDatabases.example field in the
+    // bundled cloud_openapi.json: subscription is a single object containing
+    // subscriptionId, numberOfDatabases, databases[], and links.
     Mock::given(method("GET"))
         .and(path("/fixed/subscriptions/123/databases"))
         .and(header("x-api-key", "test-key"))
         .and(header("x-api-secret-key", "test-secret"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "accountId": 456,
             "subscription": {
                 "subscriptionId": 123,
-                "numberOfDatabases": 3,
-                "planType": "fixed"
+                "numberOfDatabases": 2,
+                "databases": [
+                    {
+                        "databaseId": 51324587,
+                        "name": "bdb",
+                        "protocol": "stack",
+                        "provider": "AWS",
+                        "region": "us-east-1",
+                        "redisVersion": "7.4",
+                        "status": "active",
+                        "planMemoryLimit": 250,
+                        "memoryLimitMeasurementUnit": "MB",
+                        "memoryUsedInMb": 1,
+                        "memoryStorage": "ram",
+                        "dataPersistence": "none",
+                        "replication": true,
+                        "dataEvictionPolicy": "noeviction",
+                    },
+                    {
+                        "databaseId": 51324586,
+                        "name": "firstDB",
+                        "protocol": "stack",
+                        "provider": "AWS",
+                        "region": "us-east-1",
+                        "status": "active",
+                        "planMemoryLimit": 250,
+                        "memoryLimitMeasurementUnit": "MB",
+                        "memoryStorage": "ram",
+                    },
+                ],
+                "links": []
             },
             "links": [
                 {
@@ -24,7 +57,6 @@ async fn test_get_fixed_subscription_databases() {
                     "type": "GET"
                 }
             ],
-            "accountId": 456
         })))
         .mount(&mock_server)
         .await;
@@ -41,6 +73,17 @@ async fn test_get_fixed_subscription_databases() {
 
     assert_eq!(result.account_id, Some(456));
     assert!(result.links.is_some());
+
+    let subscription = result
+        .subscription
+        .expect("response should include the subscription object");
+    assert_eq!(subscription.subscription_id, Some(123));
+    assert_eq!(subscription.number_of_databases, Some(2));
+    assert_eq!(subscription.databases.len(), 2);
+    assert_eq!(subscription.databases[0].database_id, Some(51324587));
+    assert_eq!(subscription.databases[0].name.as_deref(), Some("bdb"));
+    assert_eq!(subscription.databases[1].database_id, Some(51324586));
+    assert_eq!(subscription.databases[1].name.as_deref(), Some("firstDB"));
 }
 
 #[tokio::test]
