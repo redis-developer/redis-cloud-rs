@@ -57,11 +57,47 @@ use typed_builder::TypedBuilder;
 // ============================================================================
 
 /// `RedisLabs` Account Subscription Databases information
+///
+/// Response from `GET /fixed/subscriptions/{subscriptionId}/databases`.
+///
+/// Note: the OpenAPI schema lists only `accountId` and `links`, but real responses
+/// (and the spec's own example) include a `subscription` object containing the
+/// databases. See [`FixedSubscriptionDatabasesInfo`] for the inner shape.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AccountFixedSubscriptionDatabases {
+    /// Account ID
     #[serde(skip_serializing_if = "Option::is_none")]
     pub account_id: Option<i32>,
+
+    /// Subscription information with the nested databases array.
+    ///
+    /// The Essentials response wraps databases under a single `subscription` object
+    /// (unlike the Pro response, which uses an array — see
+    /// [`crate::flexible::databases::AccountSubscriptionDatabases`]).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub subscription: Option<FixedSubscriptionDatabasesInfo>,
+
+    /// HATEOAS links
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub links: Option<Vec<Link>>,
+}
+
+/// Subscription databases info returned within [`AccountFixedSubscriptionDatabases`].
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FixedSubscriptionDatabasesInfo {
+    /// Subscription ID
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub subscription_id: Option<i32>,
+
+    /// Number of databases reported by the API for this subscription
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub number_of_databases: Option<i32>,
+
+    /// List of databases in this subscription
+    #[serde(default)]
+    pub databases: Vec<FixedDatabase>,
 
     /// HATEOAS links
     #[serde(skip_serializing_if = "Option::is_none")]
