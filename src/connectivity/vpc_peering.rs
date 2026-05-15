@@ -6,43 +6,95 @@
 use crate::{CloudClient, Result};
 use serde::{Deserialize, Serialize};
 
-/// VPC peering creation request
+/// VPC peering creation request.
+///
+/// The Redis Cloud API documents this as a `oneOf` between an AWS-shaped
+/// body (requiring `region`, `awsAccountId`, `vpcId`) and a GCP-shaped body
+/// (requiring `vpcProjectUid`, `vpcNetworkName`). This struct keeps both
+/// providers in one type for caller flexibility, but uses
+/// `#[serde(rename = ...)]` so the AWS and GCP fields serialize to the
+/// **exact wire names the spec requires**. Use [`Self::for_aws`] or
+/// [`Self::for_gcp`] to construct provider-targeted bodies that avoid
+/// mixing fields.
+///
+/// A type-safe enum split that prevents AWS+GCP field mixing at compile
+/// time is tracked as a follow-on under #65.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct VpcPeeringCreateRequest {
+    /// Cloud provider discriminator (e.g. "AWS", "GCP").
     #[serde(skip_serializing_if = "Option::is_none")]
     pub provider: Option<String>,
 
+    /// Read-only on the response; populated by the server.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub command_type: Option<String>,
 
-    /// AWS VPC ID
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub vpc_id: Option<String>,
-
-    /// AWS region
-    #[serde(skip_serializing_if = "Option::is_none")]
+    // ------- AWS body -------
+    /// AWS region. Wire name: `region` (spec required for AWS).
+    #[serde(rename = "region", skip_serializing_if = "Option::is_none")]
     pub aws_region: Option<String>,
 
-    /// AWS account ID
+    /// AWS account ID (spec required for AWS).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub aws_account_id: Option<String>,
 
-    /// VPC CIDR
+    /// AWS VPC ID (spec required for AWS).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub vpc_id: Option<String>,
+
+    /// VPC CIDR. AWS only; optional.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub vpc_cidr: Option<String>,
 
-    /// List of VPC CIDRs
+    /// List of VPC CIDRs. AWS only; optional.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub vpc_cidrs: Option<Vec<String>>,
 
-    /// GCP project ID
-    #[serde(skip_serializing_if = "Option::is_none")]
+    // ------- GCP body -------
+    /// GCP project UID. Wire name: `vpcProjectUid` (spec required for GCP).
+    #[serde(rename = "vpcProjectUid", skip_serializing_if = "Option::is_none")]
     pub gcp_project_id: Option<String>,
 
-    /// GCP network name
-    #[serde(skip_serializing_if = "Option::is_none")]
+    /// GCP network name. Wire name: `vpcNetworkName` (spec required for GCP).
+    #[serde(rename = "vpcNetworkName", skip_serializing_if = "Option::is_none")]
     pub network_name: Option<String>,
+}
+
+impl VpcPeeringCreateRequest {
+    /// Construct an AWS-targeted VPC peering creation body.
+    ///
+    /// Pre-populates `provider = "AWS"` and the three required AWS fields
+    /// (`region`, `awsAccountId`, `vpcId`). Optional CIDR fields can be set
+    /// directly on the returned struct.
+    #[must_use]
+    pub fn for_aws(
+        region: impl Into<String>,
+        aws_account_id: impl Into<String>,
+        vpc_id: impl Into<String>,
+    ) -> Self {
+        Self {
+            provider: Some("AWS".to_string()),
+            aws_region: Some(region.into()),
+            aws_account_id: Some(aws_account_id.into()),
+            vpc_id: Some(vpc_id.into()),
+            ..Self::default()
+        }
+    }
+
+    /// Construct a GCP-targeted VPC peering creation body.
+    ///
+    /// Pre-populates `provider = "GCP"` and the two required GCP fields
+    /// (`vpcProjectUid`, `vpcNetworkName`).
+    #[must_use]
+    pub fn for_gcp(project_uid: impl Into<String>, network_name: impl Into<String>) -> Self {
+        Self {
+            provider: Some("GCP".to_string()),
+            gcp_project_id: Some(project_uid.into()),
+            network_name: Some(network_name.into()),
+            ..Self::default()
+        }
+    }
 }
 
 /// Base VPC peering creation request (for backward compatibility)
