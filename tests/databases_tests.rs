@@ -141,7 +141,7 @@ async fn test_get_database_by_id() {
             "privateEndpoint": "redis-12345.c1.us-east-1.redislabs.com:16379",
             "publicEndpoint": "redis-12345-ext.c1.us-east-1.redislabs.com:16379",
             "protocol": "redis",
-            "activated": "2024-01-01T00:00:00Z",
+            "activatedOn": "2024-01-01T00:00:00Z",
             "lastModified": "2024-01-01T12:00:00Z"
         })))
         .mount(&mock_server)
@@ -177,6 +177,11 @@ async fn test_get_database_by_id() {
     assert_eq!(result.replication, Some(true));
     assert_eq!(result.data_persistence, Some("aof-every-1-sec".to_string()));
     assert_eq!(result.protocol, Some("redis".to_string()));
+    // Regression guard for #76: the wire field is `activatedOn`, not `activated`.
+    assert_eq!(
+        result.activated_on,
+        Some("2024-01-01T00:00:00Z".to_string())
+    );
 }
 
 #[tokio::test]

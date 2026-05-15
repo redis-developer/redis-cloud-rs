@@ -923,9 +923,13 @@ pub struct Database {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub tls_client_authentication: Option<bool>,
 
-    /// Timestamp when database was activated
+    /// Timestamp when the database was activated.
+    ///
+    /// Wire field is `activatedOn` per the OpenAPI spec. The previous Rust
+    /// name (`activated`) serialized as `activated`, so real responses
+    /// silently deserialized to `None`.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub activated: Option<String>,
+    pub activated_on: Option<String>,
 
     /// Timestamp of last modification
     #[serde(skip_serializing_if = "Option::is_none")]
