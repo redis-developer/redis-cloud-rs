@@ -1,6 +1,6 @@
 use redis_cloud::{CloudClient, ConnectivityHandler};
 use serde_json::json;
-use wiremock::matchers::{header, method, path};
+use wiremock::matchers::{body_json, header, method, path};
 use wiremock::{Mock, MockServer, ResponseTemplate};
 
 #[tokio::test]
@@ -693,4 +693,89 @@ async fn test_error_handling_500() {
         Err(redis_cloud::CloudError::InternalServerError { .. }) => {}
         _ => panic!("Expected InternalServerError error"),
     }
+}
+
+// Regression guards for #75: VPC peering create body must serialize with the
+// spec's wire-key names (`region` for AWS, `vpcProjectUid` / `vpcNetworkName`
+// for GCP) — not the previous incorrect `awsRegion` / `gcpProjectId` /
+// `networkName`.
+
+#[tokio::test]
+async fn test_vpc_peering_create_aws_wire_keys() {
+    let mock_server = MockServer::start().await;
+
+    // The exact body the SDK should send for an AWS peering create.
+    let expected_body = json!({
+        "provider": "AWS",
+        "region": "us-east-1",
+        "awsAccountId": "123456789012",
+        "vpcId": "vpc-abcdef01",
+        "vpcCidr": "10.0.0.0/16",
+    });
+
+    Mock::given(method("POST"))
+        .and(path("/subscriptions/123/peerings"))
+        .and(body_json(&expected_body))
+        .respond_with(ResponseTemplate::new(202).set_body_json(json!({
+            "taskId": "task-aws-keys",
+            "status": "received"
+        })))
+        .mount(&mock_server)
+        .await;
+
+    let client = CloudClient::builder()
+        .api_key("test-key".to_string())
+        .api_secret("test-secret".to_string())
+        .base_url(mock_server.uri())
+        .build()
+        .unwrap();
+
+    let handler = ConnectivityHandler::new(client);
+    let mut request = redis_cloud::connectivity::VpcPeeringCreateRequest::for_aws(
+        "us-east-1",
+        "123456789012",
+        "vpc-abcdef01",
+    );
+    request.vpc_cidr = Some("10.0.0.0/16".to_string());
+
+    let result = handler.create_vpc_peering(123, &request).await.unwrap();
+    assert_eq!(result.task_id, Some("task-aws-keys".to_string()));
+}
+
+#[tokio::test]
+async fn test_vpc_peering_create_gcp_wire_keys() {
+    let mock_server = MockServer::start().await;
+
+    // GCP body: must use the spec's `vpcProjectUid` and `vpcNetworkName`.
+    let expected_body = json!({
+        "provider": "GCP",
+        "vpcProjectUid": "my-gcp-project-uid",
+        "vpcNetworkName": "my-vpc-network",
+    });
+
+    Mock::given(method("POST"))
+        .and(path("/subscriptions/123/peerings"))
+        .and(body_json(&expected_body))
+        .respond_with(ResponseTemplate::new(202).set_body_json(json!({
+            "taskId": "task-gcp-keys",
+            "status": "received"
+        })))
+        .mount(&mock_server)
+        .await;
+
+    let client = CloudClient::builder()
+        .api_key("test-key".to_string())
+        .api_secret("test-secret".to_string())
+        .base_url(mock_server.uri())
+        .build()
+        .unwrap();
+
+    let handler = ConnectivityHandler::new(client);
+    let request = redis_cloud::connectivity::VpcPeeringCreateRequest::for_gcp(
+        "my-gcp-project-uid",
+        "my-vpc-network",
+    );
+
+    let result = handler.create_vpc_peering(123, &request).await.unwrap();
+    assert_eq!(result.task_id, Some("task-gcp-keys".to_string()));
 }
