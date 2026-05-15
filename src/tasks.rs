@@ -55,6 +55,7 @@
 //! # }
 //! ```
 
+use crate::error::CloudError;
 use crate::types::{Link, ProcessorResponse};
 use crate::{CloudClient, Result};
 use serde::{Deserialize, Serialize};
@@ -62,6 +63,16 @@ use serde::{Deserialize, Serialize};
 // ============================================================================
 // Models
 // ============================================================================
+
+/// Wrapper response for `GET /tasks` per the OpenAPI spec (`TasksStateUpdate`).
+///
+/// Kept private because [`TasksHandler::get_all_tasks`] unwraps to the inner
+/// `Vec<TaskStateUpdate>` for caller ergonomics.
+#[derive(Debug, Clone, Deserialize)]
+struct TasksStateUpdate {
+    #[serde(default)]
+    tasks: Vec<TaskStateUpdate>,
+}
 
 /// Task state update
 ///
@@ -124,17 +135,32 @@ impl TasksHandler {
     /// Get tasks
     /// Gets a list of all currently running tasks for this account.
     ///
-    /// The API returns an array when tasks exist but an empty object `{}` when
-    /// there are no tasks, so we handle both cases.
+    /// The OpenAPI spec defines the response as `TasksStateUpdate { tasks: [...] }`
+    /// (a wrapper object). In practice the API also returns:
+    /// - an empty object `{}` when there are no tasks,
+    /// - and historically a bare JSON array.
+    ///
+    /// All three shapes deserialize cleanly to `Vec<TaskStateUpdate>`. Any other
+    /// shape surfaces as [`CloudError::JsonError`] rather than silently returning
+    /// an empty list, so a future schema change is loud instead of invisible.
     ///
     /// GET /tasks
     pub async fn get_all_tasks(&self) -> Result<Vec<TaskStateUpdate>> {
         let value: serde_json::Value = self.client.get_raw("/tasks").await?;
         match value {
-            serde_json::Value::Array(arr) => {
-                Ok(serde_json::from_value(serde_json::Value::Array(arr))?)
+            // Canonical spec shape: {"tasks": [...]}
+            serde_json::Value::Object(ref obj) if obj.contains_key("tasks") => {
+                let wrapped: TasksStateUpdate = serde_json::from_value(value)?;
+                Ok(wrapped.tasks)
             }
-            _ => Ok(Vec::new()),
+            // No tasks: API returns `{}` (or null) instead of the wrapper.
+            serde_json::Value::Object(obj) if obj.is_empty() => Ok(Vec::new()),
+            serde_json::Value::Null => Ok(Vec::new()),
+            // Legacy bare-array shape, still tolerated.
+            serde_json::Value::Array(_) => Ok(serde_json::from_value(value)?),
+            other => Err(CloudError::JsonError(format!(
+                "GET /tasks: expected {{\"tasks\": [...]}}, {{}}, null, or a bare array; got {other}"
+            ))),
         }
     }
 
