@@ -182,12 +182,26 @@ async fn test_get_supported_regions() {
 async fn test_get_account_payment_methods() {
     let mock_server = MockServer::start().await;
 
+    // Realistic shape including a paymentMethods array entry with a
+    // string `creditCardEndsWith` containing leading zeros — the previous
+    // `Option<i32>` typing would either drop the leading zero or fail
+    // outright.
     Mock::given(method("GET"))
         .and(path("/payment-methods"))
         .and(header("x-api-key", "test-key"))
         .and(header("x-api-secret-key", "test-secret"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
-            "accountId": 123
+            "accountId": 123,
+            "paymentMethods": [
+                {
+                    "id": 555,
+                    "type": "Visa",
+                    "creditCardEndsWith": "0042",
+                    "nameOnCard": "Alex Example",
+                    "expirationMonth": 9,
+                    "expirationYear": 2030
+                }
+            ]
         })))
         .mount(&mock_server)
         .await;
@@ -202,7 +216,15 @@ async fn test_get_account_payment_methods() {
     let handler = AccountHandler::new(client);
     let result = handler.get_account_payment_methods().await.unwrap();
 
-    assert!(result.account_id.is_some());
+    assert_eq!(result.account_id, Some(123));
+    let methods = result
+        .payment_methods
+        .expect("response should include paymentMethods");
+    assert_eq!(methods.len(), 1);
+    assert_eq!(methods[0].id, Some(555));
+    assert_eq!(methods[0].r#type.as_deref(), Some("Visa"));
+    // Regression guard for #77: leading-zero card tails survive the round-trip.
+    assert_eq!(methods[0].credit_card_ends_with.as_deref(), Some("0042"));
 }
 
 #[tokio::test]
