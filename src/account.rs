@@ -239,9 +239,13 @@ pub struct PaymentMethod {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub r#type: Option<String>,
 
-    /// Last 4 digits of the credit card
+    /// Last digits of the credit card as a masked string.
+    ///
+    /// Typed as `Option<String>` because the OpenAPI example shows a string
+    /// value and real responses can include leading zeros (`"0042"`) or
+    /// non-numeric formatting that would be lost or fail to parse as `i32`.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub credit_card_ends_with: Option<i32>,
+    pub credit_card_ends_with: Option<String>,
 
     /// Name on the card
     #[serde(skip_serializing_if = "Option::is_none")]
