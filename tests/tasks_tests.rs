@@ -3,8 +3,19 @@ use serde_json::json;
 use wiremock::matchers::{header, method, path};
 use wiremock::{Mock, MockServer, ResponseTemplate};
 
+// Helper: build a Cloud client wired to the given mock server URI.
+fn test_client(uri: String) -> CloudClient {
+    CloudClient::builder()
+        .api_key("test-key".to_string())
+        .api_secret("test-secret".to_string())
+        .base_url(uri)
+        .build()
+        .unwrap()
+}
+
 #[tokio::test]
-async fn test_get_all_tasks() {
+async fn test_get_all_tasks_canonical_wrapper() {
+    // OpenAPI spec response shape: TasksStateUpdate { tasks: [TaskStateUpdate] }.
     let mock_server = MockServer::start().await;
 
     Mock::given(method("GET"))
@@ -16,7 +27,7 @@ async fn test_get_all_tasks() {
                 {
                     "taskId": "task-1",
                     "commandType": "CREATE_DATABASE",
-                    "status": "completed",
+                    "status": "processing-completed",
                     "description": "Created database successfully",
                     "timestamp": "2024-01-01T10:00:00Z",
                     "response": {
@@ -26,14 +37,14 @@ async fn test_get_all_tasks() {
                 {
                     "taskId": "task-2",
                     "commandType": "UPDATE_SUBSCRIPTION",
-                    "status": "processing",
+                    "status": "processing-in-progress",
                     "description": "Updating subscription",
                     "timestamp": "2024-01-01T11:00:00Z"
                 },
                 {
                     "taskId": "task-3",
                     "commandType": "DELETE_DATABASE",
-                    "status": "failed",
+                    "status": "processing-error",
                     "description": "Failed to delete database",
                     "timestamp": "2024-01-01T12:00:00Z",
                     "response": {
@@ -45,18 +56,77 @@ async fn test_get_all_tasks() {
         .mount(&mock_server)
         .await;
 
-    let client = CloudClient::builder()
-        .api_key("test-key".to_string())
-        .api_secret("test-secret".to_string())
-        .base_url(mock_server.uri())
-        .build()
-        .unwrap();
+    let handler = TasksHandler::new(test_client(mock_server.uri()));
+    let tasks = handler.get_all_tasks().await.unwrap();
 
-    let _handler = TasksHandler::new(client);
-    // Note: get_all_tasks currently returns () - the method seems not fully implemented
-    // For now, we skip the actual test since the endpoint doesn't return the expected response
-    // let result = handler.get_all_tasks().await;
-    // assert!(result.is_ok());
+    assert_eq!(tasks.len(), 3);
+    assert_eq!(tasks[0].task_id, Some("task-1".to_string()));
+    assert_eq!(tasks[0].command_type, Some("CREATE_DATABASE".to_string()));
+    assert_eq!(tasks[1].status, Some("processing-in-progress".to_string()));
+    assert_eq!(tasks[2].task_id, Some("task-3".to_string()));
+}
+
+#[tokio::test]
+async fn test_get_all_tasks_empty_object() {
+    // When the account has no tasks, the API returns `{}` rather than the wrapper.
+    let mock_server = MockServer::start().await;
+
+    Mock::given(method("GET"))
+        .and(path("/tasks"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({})))
+        .mount(&mock_server)
+        .await;
+
+    let handler = TasksHandler::new(test_client(mock_server.uri()));
+    let tasks = handler.get_all_tasks().await.unwrap();
+
+    assert!(tasks.is_empty());
+}
+
+#[tokio::test]
+async fn test_get_all_tasks_legacy_bare_array() {
+    // Older responses use a bare array. Still tolerated for backward compatibility.
+    let mock_server = MockServer::start().await;
+
+    Mock::given(method("GET"))
+        .and(path("/tasks"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!([
+            { "taskId": "legacy-1", "status": "processing-completed" }
+        ])))
+        .mount(&mock_server)
+        .await;
+
+    let handler = TasksHandler::new(test_client(mock_server.uri()));
+    let tasks = handler.get_all_tasks().await.unwrap();
+
+    assert_eq!(tasks.len(), 1);
+    assert_eq!(tasks[0].task_id, Some("legacy-1".to_string()));
+}
+
+#[tokio::test]
+async fn test_get_all_tasks_unknown_shape_errors() {
+    // Anything outside the three known shapes should surface a JsonError —
+    // never an empty Vec that silently masks a schema regression.
+    let mock_server = MockServer::start().await;
+
+    Mock::given(method("GET"))
+        .and(path("/tasks"))
+        .respond_with(ResponseTemplate::new(200).set_body_string("\"unexpected string\""))
+        .mount(&mock_server)
+        .await;
+
+    let handler = TasksHandler::new(test_client(mock_server.uri()));
+    let err = handler.get_all_tasks().await.unwrap_err();
+
+    match err {
+        redis_cloud::CloudError::JsonError(msg) => {
+            assert!(
+                msg.contains("GET /tasks"),
+                "JsonError message should mention the endpoint: {msg}"
+            );
+        }
+        other => panic!("expected CloudError::JsonError, got: {other:?}"),
+    }
 }
 
 #[tokio::test]

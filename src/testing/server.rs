@@ -273,13 +273,19 @@ impl MockCloudServer {
 
     /// Mock the tasks list endpoint (GET /tasks)
     ///
-    /// Returns a direct array since `get_all_tasks()` returns `Result<Vec<TaskStateUpdate>>`.
+    /// Wraps the supplied tasks in the canonical `{"tasks": [...]}` shape that
+    /// the real Redis Cloud API returns (per the OpenAPI `TasksStateUpdate`
+    /// schema). Callers continue to pass `Vec<Value>`; the wrapper is added on
+    /// the wire so `get_all_tasks()` exercises the same code path it would
+    /// against production.
     pub async fn mock_tasks_list(&self, tasks: Vec<Value>) {
         Mock::given(method("GET"))
             .and(path("/tasks"))
             .and(header("x-api-key", "test-key"))
             .and(header("x-api-secret-key", "test-secret"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(tasks))
+            .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+                "tasks": tasks,
+            })))
             .mount(&self.server)
             .await;
     }
