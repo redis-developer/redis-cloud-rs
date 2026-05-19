@@ -10,6 +10,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Cidr {
+    /// CIDR notation address (e.g. `"10.0.0.0/16"`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub cidr_address: Option<String>,
 }
@@ -22,6 +23,8 @@ pub struct TgwUpdateCidrsRequest {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub cidrs: Option<Vec<Cidr>>,
 
+    /// Read-only on the response; populated by the server with the
+    /// operation type (e.g. `"UPDATE_TGW_CIDRS"`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub command_type: Option<String>,
 }

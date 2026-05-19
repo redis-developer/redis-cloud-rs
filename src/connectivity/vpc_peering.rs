@@ -104,6 +104,7 @@ pub type VpcPeeringCreateBaseRequest = VpcPeeringCreateRequest;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct VpcPeeringUpdateAwsRequest {
+    /// Subscription that owns the peering. Server-populated from the path.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub subscription_id: Option<i32>,
 
@@ -119,6 +120,8 @@ pub struct VpcPeeringUpdateAwsRequest {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub vpc_cidrs: Option<Vec<String>>,
 
+    /// Read-only on the response; populated by the server with the
+    /// operation type (e.g. `"UPDATE_VPC_PEERING"`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub command_type: Option<String>,
 }

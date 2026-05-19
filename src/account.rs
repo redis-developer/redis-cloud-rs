@@ -54,6 +54,7 @@ use serde::{Deserialize, Serialize};
 /// Database modules/capabilities response
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ModulesData {
+    /// Database modules supported on this account.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub modules: Option<Vec<Module>>,
 
@@ -158,18 +159,23 @@ pub struct AccountApiKeyOwner {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AccountSystemLogEntry {
+    /// Unique log entry ID.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub id: Option<i32>,
 
+    /// Timestamp the event was recorded (ISO-8601).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub time: Option<String>,
 
+    /// Originator of the event (user, system, etc.).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub originator: Option<String>,
 
+    /// Name of the API key that initiated the action, if any.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub api_key_name: Option<String>,
 
+    /// Resource category the event applies to (e.g. `"database"`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub resource: Option<String>,
 
@@ -177,9 +183,11 @@ pub struct AccountSystemLogEntry {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub resource_id: Option<i32>,
 
+    /// Event type (e.g. `"info"`, `"warning"`, `"error"`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub r#type: Option<String>,
 
+    /// Human-readable description of the event.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
 }
@@ -187,6 +195,7 @@ pub struct AccountSystemLogEntry {
 /// Available regions response
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Regions {
+    /// Regions available on the account.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub regions: Option<Vec<Region>>,
 
@@ -215,6 +224,7 @@ pub struct Region {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PaymentMethods {
+    /// Account ID the payment methods belong to.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub account_id: Option<i32>,
 
@@ -313,6 +323,7 @@ pub struct ModuleParameter {
 /// Account system log entries response
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AccountSystemLogEntries {
+    /// System log entries returned by the server.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub entries: Option<Vec<AccountSystemLogEntry>>,
 
@@ -399,6 +410,7 @@ pub struct DataPersistenceOptions {
 /// Account session log entries response
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AccountSessionLogEntries {
+    /// Session log entries returned by the server.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub entries: Option<Vec<AccountSessionLogEntry>>,
 
