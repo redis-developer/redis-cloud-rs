@@ -1,7 +1,41 @@
-//! Private Service Connect (PSC) operations
+//! Google Cloud Private Service Connect (PSC) operations.
 //!
-//! Manages Google Cloud Private Service Connect endpoints for secure connectivity
-//! to Redis Cloud databases without traversing the public internet.
+//! Manages Private Service Connect services and endpoints so Redis Cloud
+//! databases can be reached from a GCP VPC without traversing the public
+//! internet.
+//!
+//! # When to use this module
+//!
+//! - The subscription is on GCP and you want connectivity that does not
+//!   require a VPC peering connection or a public endpoint.
+//! - You manage multiple client projects and want each to attach via its
+//!   own consumer endpoint.
+//!
+//! For AWS connectivity see [`crate::connectivity::vpc_peering`] (general
+//! VPC peering) or [`crate::connectivity::private_link`] (AWS PrivateLink).
+//! For AWS hub-and-spoke topologies see
+//! [`crate::connectivity::transit_gateway`].
+//!
+//! # Endpoint surface
+//!
+//! Service-level (one per subscription / region):
+//!
+//! - `GET    /subscriptions/{subscriptionId}/private-service-connect`
+//! - `POST   /subscriptions/{subscriptionId}/private-service-connect`
+//! - `DELETE /subscriptions/{subscriptionId}/private-service-connect`
+//!
+//! Endpoint-level (consumer endpoints under the service):
+//!
+//! - `POST /subscriptions/{subscriptionId}/private-service-connect/.../endpoints`
+//! - `PUT  /subscriptions/{subscriptionId}/private-service-connect/.../endpoints/{endpointId}`
+//!
+//! Active-Active subscriptions expose the same surface scoped to a region
+//! id via `/subscriptions/{subscriptionId}/regions/{regionId}/...`.
+//!
+//! # Errors
+//!
+//! All operations return [`crate::Result`]; transport, auth, and 4xx/5xx
+//! responses surface as the corresponding [`crate::CloudError`] variant.
 
 use crate::{CloudClient, Result};
 use serde::{Deserialize, Serialize};

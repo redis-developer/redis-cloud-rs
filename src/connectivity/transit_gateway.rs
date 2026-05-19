@@ -1,7 +1,36 @@
-//! AWS Transit Gateway operations
+//! AWS Transit Gateway (TGW) attachment operations.
 //!
-//! Manages AWS Transit Gateway attachments for hub-and-spoke network topologies,
-//! enabling centralized connectivity management for Redis Cloud subscriptions.
+//! Manages AWS Transit Gateway attachments and CIDR allow-lists so a Redis
+//! Cloud subscription can ride a hub-and-spoke topology you already
+//! operate, rather than terminating its own VPC peering connection.
+//!
+//! # When to use this module
+//!
+//! - You already run a Transit Gateway and want Redis Cloud subscriptions
+//!   to attach to it for centralized routing and segmentation.
+//! - You need to extend or update the CIDRs a subscription is allowed to
+//!   reach through its TGW attachment.
+//!
+//! For direct point-to-point AWS peering see
+//! [`crate::connectivity::vpc_peering`]; for endpoint-style PrivateLink
+//! connectivity see [`crate::connectivity::private_link`].
+//!
+//! # Endpoint surface
+//!
+//! Standard subscriptions:
+//!
+//! - `GET    /subscriptions/{subscriptionId}/transitGateways`
+//! - `POST   /subscriptions/{subscriptionId}/transitGateways/{tgwId}`
+//! - `DELETE /subscriptions/{subscriptionId}/transitGateways/{tgwId}`
+//! - `PUT    /subscriptions/{subscriptionId}/transitGateways/{tgwId}/attachment`
+//!
+//! Active-Active subscriptions expose the same surface under
+//! `/subscriptions/{subscriptionId}/regions/{regionId}/...`.
+//!
+//! # Errors
+//!
+//! All operations return [`crate::Result`]; transport, auth, and 4xx/5xx
+//! responses surface as the corresponding [`crate::CloudError`] variant.
 
 use crate::{CloudClient, Result};
 use serde::{Deserialize, Serialize};
