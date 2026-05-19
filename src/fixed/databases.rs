@@ -108,9 +108,11 @@ pub struct FixedSubscriptionDatabasesInfo {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct FixedDatabaseImportRequest {
+    /// Subscription ID being updated. Server-populated from the path.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub subscription_id: Option<i32>,
 
+    /// Database ID being updated. Server-populated from the path.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub database_id: Option<i32>,
 
@@ -120,6 +122,8 @@ pub struct FixedDatabaseImportRequest {
     /// One or more paths to source data files or Redis databases, as appropriate to specified source type.
     pub import_from_uri: Vec<String>,
 
+    /// Read-only on the response; populated by the server with the
+    /// operation type (e.g. `"IMPORT_DATABASE"`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub command_type: Option<String>,
 }
@@ -128,18 +132,23 @@ pub struct FixedDatabaseImportRequest {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DatabaseTagUpdateRequest {
+    /// Subscription ID being updated. Server-populated from the path.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub subscription_id: Option<i32>,
 
+    /// Database ID being updated. Server-populated from the path.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub database_id: Option<i32>,
 
+    /// Tag key being updated. Server-populated from the path.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub key: Option<String>,
 
     /// Database tag value
     pub value: String,
 
+    /// Read-only on the response; populated by the server with the
+    /// operation type (e.g. `"UPDATE_DATABASE_TAG"`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub command_type: Option<String>,
 }
@@ -147,9 +156,11 @@ pub struct DatabaseTagUpdateRequest {
 /// `DynamicEndpoints`
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DynamicEndpoints {
+    /// Public endpoint for the database (if available).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub public: Option<String>,
 
+    /// Private endpoint for the database (if available).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub private: Option<String>,
 }
@@ -164,6 +175,8 @@ pub struct Tag {
     /// Database tag value.
     pub value: String,
 
+    /// Read-only on the response; populated by the server with the
+    /// operation type (e.g. `"CREATE_DATABASE_TAG"`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub command_type: Option<String>,
 }
@@ -172,15 +185,19 @@ pub struct Tag {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DatabaseTagsUpdateRequest {
+    /// Subscription ID being updated. Server-populated from the path.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub subscription_id: Option<i32>,
 
+    /// Database ID being updated. Server-populated from the path.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub database_id: Option<i32>,
 
     /// List of database tags.
     pub tags: Vec<Tag>,
 
+    /// Read-only on the response; populated by the server with the
+    /// operation type (e.g. `"UPDATE_DATABASE_TAGS"`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub command_type: Option<String>,
 }
@@ -213,15 +230,19 @@ pub struct DatabaseCertificateSpec {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CloudTag {
+    /// Database tag key.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub key: Option<String>,
 
+    /// Database tag value.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub value: Option<String>,
 
+    /// Timestamp when the tag was created.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub created_at: Option<String>,
 
+    /// Timestamp when the tag was last updated.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub updated_at: Option<String>,
 
@@ -234,15 +255,19 @@ pub struct CloudTag {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DatabaseSlowLogEntry {
+    /// Slowlog entry identifier.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub id: Option<i32>,
 
+    /// Timestamp when the command began executing.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub start_time: Option<String>,
 
+    /// Execution duration in microseconds.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub duration: Option<i32>,
 
+    /// Command arguments captured for this slowlog entry.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub arguments: Option<String>,
 }
@@ -257,12 +282,16 @@ pub struct DatabaseTagCreateRequest {
     /// Database tag value.
     pub value: String,
 
+    /// Subscription ID being updated. Server-populated from the path.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub subscription_id: Option<i32>,
 
+    /// Database ID being updated. Server-populated from the path.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub database_id: Option<i32>,
 
+    /// Read-only on the response; populated by the server with the
+    /// operation type (e.g. `"CREATE_DATABASE_TAG"`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub command_type: Option<String>,
 }
@@ -271,9 +300,11 @@ pub struct DatabaseTagCreateRequest {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct FixedDatabaseBackupRequest {
+    /// Subscription ID being updated. Server-populated from the path.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub subscription_id: Option<i32>,
 
+    /// Database ID being updated. Server-populated from the path.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub database_id: Option<i32>,
 
@@ -281,6 +312,8 @@ pub struct FixedDatabaseBackupRequest {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub adhoc_backup_path: Option<String>,
 
+    /// Read-only on the response; populated by the server with the
+    /// operation type (e.g. `"BACKUP_DATABASE"`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub command_type: Option<String>,
 }
@@ -344,6 +377,7 @@ pub struct DatabaseAlertSpec {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CloudTags {
+    /// Account ID owning the tags.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub account_id: Option<i32>,
 
@@ -356,87 +390,115 @@ pub struct CloudTags {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct FixedDatabase {
+    /// Database identifier.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub database_id: Option<i32>,
 
+    /// Database name.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
 
+    /// Database protocol (e.g. `"redis"`, `"stack"`, `"memcached"`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub protocol: Option<String>,
 
+    /// Cloud provider (e.g. `"AWS"`, `"GCP"`, `"Azure"`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub provider: Option<String>,
 
+    /// Cloud region where the database is hosted.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub region: Option<String>,
 
+    /// Redis version currently running on the database.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub redis_version: Option<String>,
 
+    /// Redis version compliance level (e.g. `"latest"`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub redis_version_compliance: Option<String>,
 
+    /// Redis Serialization Protocol (RESP) version in use.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub resp_version: Option<String>,
 
+    /// Current database status (e.g. `"active"`, `"pending"`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub status: Option<String>,
 
+    /// Memory limit from the plan, in the plan's measurement unit.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub plan_memory_limit: Option<f64>,
 
+    /// Dataset size from the plan, in the plan's measurement unit.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub plan_dataset_size: Option<f64>,
 
+    /// Measurement unit for memory limits (e.g. `"GB"`, `"MB"`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub memory_limit_measurement_unit: Option<String>,
 
+    /// Total memory limit in GB, including replication and other overhead.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub memory_limit_in_gb: Option<f64>,
 
+    /// Maximum dataset size for this database in GB.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub dataset_size_in_gb: Option<f64>,
 
+    /// Currently used memory, in MB.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub memory_used_in_mb: Option<f64>,
 
+    /// Network usage so far this month, in bytes.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub network_monthly_usage_in_byte: Option<f64>,
 
+    /// Memory storage type (e.g. `"ram"`, `"ram-and-flash"`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub memory_storage: Option<String>,
 
+    /// Whether Redis Flex (auto-tiering) is enabled.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub redis_flex: Option<bool>,
 
+    /// Whether Redis OSS Cluster API support is enabled.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub support_oss_cluster_api: Option<bool>,
 
+    /// Whether the external endpoint is used for OSS Cluster API.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub use_external_endpoint_for_oss_cluster_api: Option<bool>,
 
+    /// Data persistence type (e.g. `"none"`, `"aof-every-1-second"`, `"snapshot-every-1-hour"`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub data_persistence: Option<String>,
 
+    /// Whether replication is enabled.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub replication: Option<bool>,
 
+    /// Data eviction policy (e.g. `"allkeys-lru"`, `"noeviction"`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub data_eviction_policy: Option<String>,
 
+    /// Timestamp when the database was activated.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub activated_on: Option<String>,
 
+    /// Timestamp when the database was last modified.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub last_modified: Option<String>,
 
+    /// Public endpoint hostname/port for connecting from the internet.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub public_endpoint: Option<String>,
 
+    /// Private endpoint hostname/port for connecting from inside the VPC.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub private_endpoint: Option<String>,
 
+    /// Additional dynamic endpoints. See [`DynamicEndpoints`].
     #[serde(skip_serializing_if = "Option::is_none")]
     pub dynamic_endpoints: Option<DynamicEndpoints>,
 
@@ -500,6 +562,7 @@ pub struct FixedDatabase {
 /// `DatabaseSlowLogEntries`
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DatabaseSlowLogEntries {
+    /// Slowlog entries returned for the database.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub entries: Option<Vec<DatabaseSlowLogEntry>>,
 
@@ -512,21 +575,28 @@ pub struct DatabaseSlowLogEntries {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TaskStateUpdate {
+    /// Task identifier.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub task_id: Option<String>,
 
+    /// Read-only on the response; populated by the server with the
+    /// operation type (e.g. `"CREATE_DATABASE"`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub command_type: Option<String>,
 
+    /// Current task status (e.g. `"processing-in-progress"`, `"processing-completed"`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub status: Option<String>,
 
+    /// Human-readable description of the current task state.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
 
+    /// Timestamp of the latest task state update.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timestamp: Option<String>,
 
+    /// Task response payload from the processor.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub response: Option<ProcessorResponse>,
 
@@ -550,6 +620,7 @@ pub struct TaskStateUpdate {
 #[derive(Debug, Clone, Serialize, Deserialize, TypedBuilder)]
 #[serde(rename_all = "camelCase")]
 pub struct FixedDatabaseCreateRequest {
+    /// Subscription ID being updated. Server-populated from the path.
     #[serde(skip_serializing_if = "Option::is_none")]
     #[builder(default, setter(strip_option))]
     pub subscription_id: Option<i32>,
@@ -638,6 +709,7 @@ pub struct FixedDatabaseCreateRequest {
     #[builder(default, setter(strip_option))]
     pub replica_of: Option<Vec<String>>,
 
+    /// Optional. Replica-of (Active-Passive) configuration. See [`ReplicaOfSpec`].
     #[serde(skip_serializing_if = "Option::is_none")]
     #[builder(default, setter(strip_option))]
     pub replica: Option<ReplicaOfSpec>,
@@ -672,6 +744,8 @@ pub struct FixedDatabaseCreateRequest {
     #[builder(default, setter(strip_option))]
     pub modules: Option<Vec<DatabaseModuleSpec>>,
 
+    /// Read-only on the response; populated by the server with the
+    /// operation type (e.g. `"CREATE_FIXED_DATABASE"`).
     #[serde(skip_serializing_if = "Option::is_none")]
     #[builder(default, setter(strip_option, into))]
     pub command_type: Option<String>,
@@ -691,10 +765,12 @@ pub struct FixedDatabaseCreateRequest {
 #[derive(Debug, Clone, Serialize, Deserialize, TypedBuilder)]
 #[serde(rename_all = "camelCase")]
 pub struct FixedDatabaseUpdateRequest {
+    /// Subscription ID being updated. Server-populated from the path.
     #[serde(skip_serializing_if = "Option::is_none")]
     #[builder(default, setter(strip_option))]
     pub subscription_id: Option<i32>,
 
+    /// Database ID being updated. Server-populated from the path.
     #[serde(skip_serializing_if = "Option::is_none")]
     #[builder(default, setter(strip_option))]
     pub database_id: Option<i32>,
@@ -769,6 +845,7 @@ pub struct FixedDatabaseUpdateRequest {
     #[builder(default, setter(strip_option))]
     pub replica_of: Option<Vec<String>>,
 
+    /// Optional. Replica-of (Active-Passive) configuration. See [`ReplicaOfSpec`].
     #[serde(skip_serializing_if = "Option::is_none")]
     #[builder(default, setter(strip_option))]
     pub replica: Option<ReplicaOfSpec>,
@@ -808,6 +885,8 @@ pub struct FixedDatabaseUpdateRequest {
     #[builder(default, setter(strip_option))]
     pub alerts: Option<Vec<DatabaseAlertSpec>>,
 
+    /// Read-only on the response; populated by the server with the
+    /// operation type (e.g. `"UPDATE_FIXED_DATABASE"`).
     #[serde(skip_serializing_if = "Option::is_none")]
     #[builder(default, setter(strip_option, into))]
     pub command_type: Option<String>,

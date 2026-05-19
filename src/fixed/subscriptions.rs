@@ -62,6 +62,7 @@ use typed_builder::TypedBuilder;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RedisVersions {
+    /// List of Redis versions available for the account.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub redis_versions: Option<Vec<RedisVersion>>,
 }
@@ -88,6 +89,7 @@ pub struct FixedSubscriptionsPlans {
 #[derive(Debug, Clone, Serialize, Deserialize, TypedBuilder)]
 #[serde(rename_all = "camelCase")]
 pub struct FixedSubscriptionUpdateRequest {
+    /// Subscription ID being updated. Server-populated from the path.
     #[serde(skip_serializing_if = "Option::is_none")]
     #[builder(default, setter(strip_option))]
     pub subscription_id: Option<i32>,
@@ -112,6 +114,8 @@ pub struct FixedSubscriptionUpdateRequest {
     #[builder(default, setter(strip_option))]
     pub payment_method_id: Option<i32>,
 
+    /// Read-only on the response; populated by the server with the
+    /// operation type (e.g. `"UPDATE_FIXED_SUBSCRIPTION"`).
     #[serde(skip_serializing_if = "Option::is_none")]
     #[builder(default, setter(strip_option, into))]
     pub command_type: Option<String>,
@@ -121,72 +125,95 @@ pub struct FixedSubscriptionUpdateRequest {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct FixedSubscriptionsPlan {
+    /// Plan identifier.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub id: Option<i32>,
 
+    /// Plan name.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
 
+    /// Total memory size of the plan in the plan's measurement unit.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub size: Option<f64>,
 
+    /// Dataset size of the plan in the plan's measurement unit.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub dataset_size: Option<f64>,
 
+    /// Measurement unit for `size`/`dataset_size` (e.g. `"GB"`, `"MB"`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub size_measurement_unit: Option<String>,
 
+    /// Cloud provider (e.g. `"AWS"`, `"GCP"`, `"Azure"`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub provider: Option<String>,
 
+    /// Cloud region for the plan.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub region: Option<String>,
 
+    /// Region identifier.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub region_id: Option<i32>,
 
+    /// Plan price in the plan's currency.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub price: Option<i32>,
 
+    /// ISO currency code for the plan price (e.g. `"USD"`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub price_currency: Option<String>,
 
+    /// Billing period for the plan price (e.g. `"Month"`, `"Hour"`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub price_period: Option<String>,
 
+    /// Maximum number of databases allowed under this plan.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub maximum_databases: Option<i32>,
 
+    /// Maximum throughput (ops/sec) allowed under this plan.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub maximum_throughput: Option<i32>,
 
+    /// Maximum monthly bandwidth, in GB.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub maximum_bandwidth_gb: Option<i32>,
 
+    /// Availability tier (e.g. `"Single-zone"`, `"Multi-zone"`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub availability: Option<String>,
 
+    /// Connection limit description for this plan.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub connections: Option<String>,
 
+    /// Number of CIDR allow rules supported by this plan.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub cidr_allow_rules: Option<i32>,
 
+    /// Whether the plan supports data persistence.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub support_data_persistence: Option<bool>,
 
+    /// Whether the plan supports Redis Flex (auto-tiering).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub redis_flex: Option<bool>,
 
+    /// Whether the plan supports instant and daily backups.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub support_instant_and_daily_backups: Option<bool>,
 
+    /// Whether the plan supports replication.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub support_replication: Option<bool>,
 
+    /// Whether the plan supports clustering.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub support_clustering: Option<bool>,
 
+    /// Whether the plan supports SSL/TLS connections.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub support_ssl: Option<bool>,
 
@@ -194,6 +221,7 @@ pub struct FixedSubscriptionsPlan {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub supported_alerts: Option<Vec<String>>,
 
+    /// Customer support tier included with this plan.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub customer_support: Option<String>,
 
@@ -234,6 +262,8 @@ pub struct FixedSubscriptionCreateRequest {
     #[builder(default, setter(strip_option))]
     pub payment_method_id: Option<i32>,
 
+    /// Read-only on the response; populated by the server with the
+    /// operation type (e.g. `"CREATE_FIXED_SUBSCRIPTION"`).
     #[serde(skip_serializing_if = "Option::is_none")]
     #[builder(default, setter(strip_option, into))]
     pub command_type: Option<String>,
@@ -243,6 +273,7 @@ pub struct FixedSubscriptionCreateRequest {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct FixedSubscriptions {
+    /// Account identifier owning these subscriptions.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub account_id: Option<i32>,
 
@@ -259,15 +290,19 @@ pub struct FixedSubscriptions {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RedisVersion {
+    /// Redis version string (e.g. `"7.2"`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub version: Option<String>,
 
+    /// End-of-life date for this Redis version.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub eol_date: Option<String>,
 
+    /// Whether this Redis version is a preview/early-access release.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub is_preview: Option<bool>,
 
+    /// Whether this Redis version is the default for new databases.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub is_default: Option<bool>,
 }
@@ -276,81 +311,107 @@ pub struct RedisVersion {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct FixedSubscription {
+    /// Subscription identifier.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub id: Option<i32>,
 
+    /// Subscription name.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
 
+    /// Current subscription status (e.g. `"active"`, `"pending"`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub status: Option<String>,
 
+    /// Payment method identifier for this subscription.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub payment_method_id: Option<i32>,
 
+    /// Payment method type (e.g. `"credit-card"`, `"marketplace"`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub payment_method_type: Option<String>,
 
+    /// Identifier of the Essentials plan for this subscription.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub plan_id: Option<i32>,
 
+    /// Name of the Essentials plan for this subscription.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub plan_name: Option<String>,
 
+    /// Plan type (e.g. `"single-region"`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub plan_type: Option<String>,
 
+    /// Plan size in the plan's measurement unit.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub size: Option<f64>,
 
+    /// Measurement unit for `size` (e.g. `"GB"`, `"MB"`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub size_measurement_unit: Option<String>,
 
+    /// Cloud provider (e.g. `"AWS"`, `"GCP"`, `"Azure"`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub provider: Option<String>,
 
+    /// Cloud region for the subscription.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub region: Option<String>,
 
+    /// Subscription price in the configured currency.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub price: Option<i32>,
 
+    /// Billing period for the subscription price (e.g. `"Month"`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub price_period: Option<String>,
 
+    /// ISO currency code for the subscription price (e.g. `"USD"`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub price_currency: Option<String>,
 
+    /// Maximum number of databases allowed under this subscription.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub maximum_databases: Option<i32>,
 
+    /// Availability tier (e.g. `"Single-zone"`, `"Multi-zone"`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub availability: Option<String>,
 
+    /// Connection limit description.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub connections: Option<String>,
 
+    /// Number of CIDR allow rules supported by this subscription.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub cidr_allow_rules: Option<i32>,
 
+    /// Whether data persistence is supported.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub support_data_persistence: Option<bool>,
 
+    /// Whether instant and daily backups are supported.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub support_instant_and_daily_backups: Option<bool>,
 
+    /// Whether replication is supported.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub support_replication: Option<bool>,
 
+    /// Whether clustering is supported.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub support_clustering: Option<bool>,
 
+    /// Customer support tier included with this subscription.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub customer_support: Option<String>,
 
+    /// Timestamp when the subscription was created.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub creation_date: Option<String>,
 
+    /// Aggregate status of databases in this subscription.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub database_status: Option<String>,
 
@@ -363,21 +424,28 @@ pub struct FixedSubscription {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TaskStateUpdate {
+    /// Task identifier.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub task_id: Option<String>,
 
+    /// Read-only on the response; populated by the server with the
+    /// operation type (e.g. `"CREATE_FIXED_SUBSCRIPTION"`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub command_type: Option<String>,
 
+    /// Current task status (e.g. `"processing-in-progress"`, `"processing-completed"`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub status: Option<String>,
 
+    /// Human-readable description of the current task state.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
 
+    /// Timestamp of the latest task state update.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timestamp: Option<String>,
 
+    /// Task response payload from the processor.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub response: Option<ProcessorResponse>,
 

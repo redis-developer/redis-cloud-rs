@@ -66,9 +66,12 @@ use typed_builder::TypedBuilder;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct BaseSubscriptionUpdateRequest {
+    /// Subscription ID being updated. Server-populated from the path.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub subscription_id: Option<i32>,
 
+    /// Read-only on the response; populated by the server with the
+    /// operation type (e.g. `"UPDATE_SUBSCRIPTION"`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub command_type: Option<String>,
 }
@@ -87,6 +90,7 @@ pub struct BaseSubscriptionUpdateRequest {
 #[derive(Debug, Clone, Serialize, Deserialize, TypedBuilder)]
 #[serde(rename_all = "camelCase")]
 pub struct SubscriptionUpdateRequest {
+    /// Subscription ID being updated. Server-populated from the path.
     #[serde(skip_serializing_if = "Option::is_none")]
     #[builder(default, setter(strip_option))]
     pub subscription_id: Option<i32>,
@@ -106,6 +110,8 @@ pub struct SubscriptionUpdateRequest {
     #[builder(default, setter(strip_option, into))]
     pub payment_method: Option<String>,
 
+    /// Read-only on the response; populated by the server with the
+    /// operation type (e.g. `"UPDATE_SUBSCRIPTION"`).
     #[serde(skip_serializing_if = "Option::is_none")]
     #[builder(default, setter(strip_option, into))]
     pub command_type: Option<String>,
@@ -164,6 +170,7 @@ pub struct CrdbRegionSpec {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
 
+    /// Optional. Local throughput settings for this region. See [`LocalThroughput`].
     #[serde(skip_serializing_if = "Option::is_none")]
     pub local_throughput_measurement: Option<LocalThroughput>,
 }
@@ -172,9 +179,12 @@ pub struct CrdbRegionSpec {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SubscriptionUpdateCMKRequest {
+    /// Subscription ID being updated. Server-populated from the path.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub subscription_id: Option<i32>,
 
+    /// Read-only on the response; populated by the server with the
+    /// operation type (e.g. `"UPDATE_SUBSCRIPTION_CMK"`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub command_type: Option<String>,
 
@@ -189,6 +199,7 @@ pub struct SubscriptionUpdateCMKRequest {
 /// `SubscriptionPricings`
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SubscriptionPricings {
+    /// Pricing breakdown entries for the subscription.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub pricing: Option<Vec<SubscriptionPricing>>,
 }
@@ -218,6 +229,7 @@ pub struct DatabaseModuleSpec {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CidrAllowlistUpdateRequest {
+    /// Subscription ID being updated. Server-populated from the path.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub subscription_id: Option<i32>,
 
@@ -229,6 +241,8 @@ pub struct CidrAllowlistUpdateRequest {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub security_group_ids: Option<Vec<String>>,
 
+    /// Read-only on the response; populated by the server with the
+    /// operation type (e.g. `"UPDATE_SUBSCRIPTION_CIDR_ALLOWLIST"`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub command_type: Option<String>,
 }
@@ -248,9 +262,11 @@ pub struct SubscriptionMaintenanceWindowsSpec {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct MaintenanceWindowSkipStatus {
+    /// Number of remaining maintenance-window skips available.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub remaining_skips: Option<i32>,
 
+    /// Timestamp marking the end of the currently skipped window, if any.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub current_skip_end: Option<String>,
 }
@@ -259,6 +275,7 @@ pub struct MaintenanceWindowSkipStatus {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ActiveActiveSubscriptionRegions {
+    /// Subscription identifier.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub subscription_id: Option<i32>,
 
@@ -275,27 +292,35 @@ pub struct SubscriptionPricing {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub database_name: Option<String>,
 
+    /// Pricing line type (e.g. `"Shards"`, `"EBSVolume"`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub r#type: Option<String>,
 
+    /// Additional details about the pricing line type.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub type_details: Option<String>,
 
+    /// Quantity of the priced unit.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub quantity: Option<i32>,
 
+    /// Unit used to measure `quantity` (e.g. `"shards"`, `"GB"`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub quantity_measurement: Option<String>,
 
+    /// Price per unit in the configured currency.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub price_per_unit: Option<f64>,
 
+    /// ISO currency code for `price_per_unit` (e.g. `"USD"`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub price_currency: Option<String>,
 
+    /// Billing period for the price (e.g. `"Month"`, `"Hour"`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub price_period: Option<String>,
 
+    /// Cloud region this pricing entry applies to.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub region: Option<String>,
 }
@@ -395,6 +420,8 @@ pub struct SubscriptionCreateRequest {
     #[builder(default, setter(strip_option, into))]
     pub redis_version: Option<String>,
 
+    /// Read-only on the response; populated by the server with the
+    /// operation type (e.g. `"CREATE_SUBSCRIPTION"`).
     #[serde(skip_serializing_if = "Option::is_none")]
     #[builder(default, setter(strip_option, into))]
     pub command_type: Option<String>,
@@ -404,21 +431,27 @@ pub struct SubscriptionCreateRequest {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CustomerManagedKeyAccessDetails {
+    /// Redis service account that requires CMK access (GCP).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub redis_service_account: Option<String>,
 
+    /// GCP predefined roles the service account must be granted.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub google_predefined_roles: Option<Vec<String>>,
 
+    /// GCP custom permissions required on the customer managed key.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub google_custom_permissions: Option<Vec<String>>,
 
+    /// AWS IAM role used by Redis to access the customer managed key.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub redis_iam_role: Option<String>,
 
+    /// AWS KMS key-policy statements required for Redis to use the CMK.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub required_key_policy_statements: Option<HashMap<String, Value>>,
 
+    /// Supported deletion grace period options for the CMK.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub deletion_grace_period_options: Option<Vec<String>>,
 }
@@ -453,6 +486,7 @@ pub struct SubscriptionDatabaseSpec {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub replication: Option<bool>,
 
+    /// Optional. Throughput measurement spec. See [`DatabaseThroughputSpec`].
     #[serde(skip_serializing_if = "Option::is_none")]
     pub throughput_measurement: Option<DatabaseThroughputSpec>,
 
@@ -514,15 +548,19 @@ pub struct SubscriptionRegionNetworkingSpec {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RedisVersion {
+    /// Redis version string (e.g. `"7.2"`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub version: Option<String>,
 
+    /// End-of-life date for this Redis version.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub eol_date: Option<String>,
 
+    /// Whether this Redis version is a preview/early-access release.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub is_preview: Option<bool>,
 
+    /// Whether this Redis version is the default for new databases.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub is_default: Option<bool>,
 }
@@ -531,12 +569,15 @@ pub struct RedisVersion {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct MaintenanceWindow {
+    /// Days of the week the window is active (e.g. `["Monday", "Wednesday"]`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub days: Option<Vec<String>>,
 
+    /// Window start hour in 24-hour UTC time (0-23).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub start_hour: Option<i32>,
 
+    /// Window duration in hours.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub duration_in_hours: Option<i32>,
 }
@@ -726,6 +767,7 @@ pub struct AccountSubscriptions {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ActiveActiveRegionCreateRequest {
+    /// Subscription ID being updated. Server-populated from the path.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub subscription_id: Option<i32>,
 
@@ -756,6 +798,8 @@ pub struct ActiveActiveRegionCreateRequest {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub customer_managed_key_resource_name: Option<String>,
 
+    /// Read-only on the response; populated by the server with the
+    /// operation type (e.g. `"CREATE_ACTIVE_ACTIVE_REGION"`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub command_type: Option<String>,
 }
@@ -764,6 +808,7 @@ pub struct ActiveActiveRegionCreateRequest {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RedisVersions {
+    /// List of Redis versions available for the account.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub redis_versions: Option<Vec<RedisVersion>>,
 }
@@ -772,6 +817,7 @@ pub struct RedisVersions {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ActiveActiveRegionDeleteRequest {
+    /// Subscription ID being updated. Server-populated from the path.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub subscription_id: Option<i32>,
 
@@ -783,6 +829,8 @@ pub struct ActiveActiveRegionDeleteRequest {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub dry_run: Option<bool>,
 
+    /// Read-only on the response; populated by the server with the
+    /// operation type (e.g. `"DELETE_ACTIVE_ACTIVE_REGION"`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub command_type: Option<String>,
 }
@@ -799,21 +847,28 @@ pub struct ActiveActiveRegionToDelete {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TaskStateUpdate {
+    /// Task identifier.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub task_id: Option<String>,
 
+    /// Read-only on the response; populated by the server with the
+    /// operation type (e.g. `"CREATE_SUBSCRIPTION"`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub command_type: Option<String>,
 
+    /// Current task status (e.g. `"processing-in-progress"`, `"processing-completed"`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub status: Option<String>,
 
+    /// Human-readable description of the current task state.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
 
+    /// Timestamp of the latest task state update.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timestamp: Option<String>,
 
+    /// Task response payload from the processor.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub response: Option<ProcessorResponse>,
 
@@ -837,6 +892,7 @@ pub struct SubscriptionRegionSpec {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub preferred_availability_zones: Option<Vec<String>>,
 
+    /// Optional. Per-region networking configuration. See [`SubscriptionRegionNetworkingSpec`].
     #[serde(skip_serializing_if = "Option::is_none")]
     pub networking: Option<SubscriptionRegionNetworkingSpec>,
 }
@@ -845,15 +901,19 @@ pub struct SubscriptionRegionSpec {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SubscriptionMaintenanceWindows {
+    /// Maintenance window mode (e.g. `"manual"`, `"automatic"`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub mode: Option<String>,
 
+    /// Time zone used to interpret window times (e.g. `"UTC"`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub time_zone: Option<String>,
 
+    /// Configured maintenance windows when `mode` is `"manual"`.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub windows: Option<Vec<MaintenanceWindow>>,
 
+    /// Current skip status for upcoming maintenance windows. See [`MaintenanceWindowSkipStatus`].
     #[serde(skip_serializing_if = "Option::is_none")]
     pub skip_status: Option<MaintenanceWindowSkipStatus>,
 }
