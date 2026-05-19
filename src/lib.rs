@@ -1,5 +1,9 @@
 // Allow doc strings with quoted values like 'true'/'false' from OpenAPI spec
 #![allow(clippy::doc_link_with_quotes)]
+// Every public item must carry a docstring. Closed the 368 existing
+// gaps under #80; this lint keeps the bar from regressing.
+#![deny(missing_docs)]
+#![deny(rustdoc::broken_intra_doc_links)]
 
 //! Redis Cloud REST API Client
 //!
