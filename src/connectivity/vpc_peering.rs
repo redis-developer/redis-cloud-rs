@@ -1,7 +1,61 @@
-//! VPC Peering connectivity operations
+//! VPC peering operations for AWS and GCP Pro subscriptions.
 //!
-//! Manages VPC peering connections between Redis Cloud VPCs and customer VPCs
-//! for both standard and Active-Active subscriptions.
+//! Manages VPC peering connections between a Redis Cloud subscription's
+//! VPC and a customer-owned VPC, covering both standard subscriptions and
+//! Active-Active (CRDB) subscriptions where each region is peered
+//! independently.
+//!
+//! # When to use this module
+//!
+//! - You want direct VPC-to-VPC private connectivity (no public
+//!   endpoint, no shared TGW).
+//! - The subscription is on **AWS** or **GCP**. Azure connectivity is
+//!   handled separately by the Redis Cloud console; the SDK does not
+//!   yet expose Azure-specific endpoints here.
+//!
+//! For AWS hub-and-spoke topologies see
+//! [`crate::connectivity::transit_gateway`]; for AWS endpoint-style
+//! private connectivity see [`crate::connectivity::private_link`]; for
+//! GCP endpoint-style private connectivity see
+//! [`crate::connectivity::psc`].
+//!
+//! # Endpoint surface
+//!
+//! - `GET    /subscriptions/{subscriptionId}/peerings`
+//! - `POST   /subscriptions/{subscriptionId}/peerings`
+//! - `PUT    /subscriptions/{subscriptionId}/peerings/{peeringId}`
+//! - `DELETE /subscriptions/{subscriptionId}/peerings/{peeringId}`
+//!
+//! Active-Active subscriptions expose the same surface scoped to a
+//! region under `/subscriptions/{subscriptionId}/regions/{regionId}/...`.
+//!
+//! # Example
+//!
+//! Construct a provider-targeted body and create a peering:
+//!
+//! ```rust,no_run
+//! use redis_cloud::{CloudClient, VpcPeeringHandler};
+//! use redis_cloud::connectivity::VpcPeeringCreateRequest;
+//!
+//! # async fn example() -> Result<(), Box<dyn std::error::Error>> {
+//! let client = CloudClient::builder()
+//!     .api_key("k").api_secret("s").build()?;
+//! let handler = VpcPeeringHandler::new(client);
+//!
+//! let mut request = VpcPeeringCreateRequest::for_aws(
+//!     "us-east-1", "123456789012", "vpc-12345678",
+//! );
+//! request.vpc_cidr = Some("10.0.0.0/16".to_string());
+//! let task = handler.create(123, &request).await?;
+//! # let _ = task;
+//! # Ok(())
+//! # }
+//! ```
+//!
+//! # Errors
+//!
+//! All operations return [`crate::Result`]; transport, auth, and 4xx/5xx
+//! responses surface as the corresponding [`crate::CloudError`] variant.
 
 use crate::{CloudClient, Result};
 use serde::{Deserialize, Serialize};
