@@ -61,6 +61,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AccountUserUpdateRequest {
+    /// User ID being updated. Server-populated from the path.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub user_id: Option<i32>,
 
@@ -71,6 +72,8 @@ pub struct AccountUserUpdateRequest {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub role: Option<String>,
 
+    /// Read-only on the response; populated by the server with the
+    /// operation type (e.g. `"UPDATE_ACCOUNT_USER"`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub command_type: Option<String>,
 }
@@ -78,6 +81,7 @@ pub struct AccountUserUpdateRequest {
 /// Account users response
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AccountUsers {
+    /// Account ID the users belong to.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub account: Option<i32>,
 
@@ -94,38 +98,51 @@ pub struct AccountUsers {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AccountUserOptions {
+    /// Whether the user has access to billing information.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub billing: Option<bool>,
 
+    /// Whether the user receives email alerts.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub email_alerts: Option<bool>,
 
+    /// Whether the user receives operational/maintenance emails.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub operational_emails: Option<bool>,
 
+    /// Whether multi-factor authentication is enabled for this user.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub mfa_enabled: Option<bool>,
 }
 
-/// Task state update response
+/// Task state update response for user operations.
+///
+/// Local copy duplicating [`crate::types::TaskStateUpdate`]. Consolidation
+/// onto the canonical type is tracked in #64.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TaskStateUpdate {
+    /// UUID of the task. Use with `TasksHandler::get_task_by_id` to poll.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub task_id: Option<String>,
 
+    /// Type of command being executed (e.g. `"DELETE_ACCOUNT_USER"`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub command_type: Option<String>,
 
+    /// Current task status (kebab-case, e.g. `"processing-completed"`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub status: Option<String>,
 
+    /// Human-readable description of the task.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
 
+    /// Timestamp of the last task update (ISO-8601).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timestamp: Option<String>,
 
+    /// Result of the task once it has completed. See [`ProcessorResponse`].
     #[serde(skip_serializing_if = "Option::is_none")]
     pub response: Option<ProcessorResponse>,
 
@@ -138,27 +155,36 @@ pub struct TaskStateUpdate {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AccountUser {
+    /// Unique user ID.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub id: Option<i32>,
 
+    /// User's display name.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
 
+    /// User's email address (also the login identifier).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub email: Option<String>,
 
+    /// User's role (e.g. `"Owner"`, `"Manager"`, `"Viewer"`, `"Billing Admin"`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub role: Option<String>,
 
+    /// Timestamp the user signed up (ISO-8601).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub sign_up: Option<String>,
 
+    /// User type (e.g. `"local"`, `"saml"`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub user_type: Option<String>,
 
+    /// Whether the user has at least one API key configured.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub has_api_key: Option<bool>,
 
+    /// Notification and access option flags for this user.
+    /// See [`AccountUserOptions`].
     #[serde(skip_serializing_if = "Option::is_none")]
     pub options: Option<AccountUserOptions>,
 
