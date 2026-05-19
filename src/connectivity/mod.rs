@@ -48,19 +48,50 @@ pub use vpc_peering::{
 // For backward compatibility, provide a unified handler
 use crate::CloudClient;
 
-/// Unified connectivity handler - provides backward compatibility
+/// Unified connectivity handler combining VPC Peering, PSC, and Transit Gateway operations.
 ///
-/// Consider using the specific handlers directly:
-/// - `VpcPeeringHandler` for VPC peering operations
-/// - `PscHandler` for Private Service Connect operations
-/// - `TransitGatewayHandler` for Transit Gateway operations
+/// `ConnectivityHandler` is a backward-compatibility facade: each method
+/// delegates to the underlying specialized handler. New code should prefer
+/// the specialized handlers directly — they expose the full surface for their
+/// respective connectivity domains:
+///
+/// - [`VpcPeeringHandler`] — VPC peering for AWS, GCP, and Azure
+/// - [`PscHandler`] — Google Cloud Private Service Connect
+/// - [`TransitGatewayHandler`] — AWS Transit Gateway attachments
+///
+/// Errors returned from delegated calls propagate unchanged; see each backing
+/// handler's documentation for the full error surface.
+///
+/// # Example
+///
+/// ```rust,no_run
+/// use redis_cloud::{CloudClient, ConnectivityHandler};
+///
+/// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
+/// let client = CloudClient::builder()
+///     .api_key("key")
+///     .api_secret("secret")
+///     .build()?;
+///
+/// let connectivity = ConnectivityHandler::new(client);
+/// let _vpc_task = connectivity.get_vpc_peering(123).await?;
+/// # Ok(())
+/// # }
+/// ```
 pub struct ConnectivityHandler {
+    /// VPC peering sub-handler. See [`VpcPeeringHandler`].
     pub vpc_peering: VpcPeeringHandler,
+    /// Private Service Connect sub-handler. See [`PscHandler`].
     pub psc: PscHandler,
+    /// Transit Gateway sub-handler. See [`TransitGatewayHandler`].
     pub transit_gateway: TransitGatewayHandler,
 }
 
 impl ConnectivityHandler {
+    /// Construct a `ConnectivityHandler` wired to the supplied [`CloudClient`].
+    ///
+    /// Internally clones the client into each of the three sub-handlers, so
+    /// `client` can be dropped after construction if not needed elsewhere.
     #[must_use]
     pub fn new(client: CloudClient) -> Self {
         Self {
@@ -70,7 +101,20 @@ impl ConnectivityHandler {
         }
     }
 
+    // ========================================================================
     // VPC Peering delegation methods
+    // ========================================================================
+
+    /// Get the VPC peering configuration for a Pro subscription.
+    ///
+    /// `GET /subscriptions/{subscriptionId}/peerings`. Delegates to
+    /// [`VpcPeeringHandler::get`].
+    ///
+    /// # Errors
+    ///
+    /// Propagates any [`crate::CloudError`] returned by the underlying call —
+    /// typically `NotFound` if the subscription has no peering configured,
+    /// `AuthenticationFailed` for bad credentials, or `InternalServerError`.
     pub async fn get_vpc_peering(
         &self,
         subscription_id: i32,
@@ -78,6 +122,19 @@ impl ConnectivityHandler {
         self.vpc_peering.get(subscription_id).await
     }
 
+    /// Create a VPC peering on a Pro subscription.
+    ///
+    /// `POST /subscriptions/{subscriptionId}/peerings`. Delegates to
+    /// [`VpcPeeringHandler::create`]. Use
+    /// [`VpcPeeringCreateRequest::for_aws`] or
+    /// [`VpcPeeringCreateRequest::for_gcp`] to build a provider-targeted body
+    /// with the spec's required fields.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`crate::CloudError`] for transport, auth, or 4xx/5xx
+    /// responses. `BadRequest` is common when the body is missing
+    /// provider-required fields.
     pub async fn create_vpc_peering(
         &self,
         subscription_id: i32,
@@ -86,6 +143,17 @@ impl ConnectivityHandler {
         self.vpc_peering.create(subscription_id, request).await
     }
 
+    /// Delete a VPC peering by its peering ID.
+    ///
+    /// `DELETE /subscriptions/{subscriptionId}/peerings/{peeringId}`.
+    /// Delegates to [`VpcPeeringHandler::delete`], which currently returns
+    /// `serde_json::Value::Null`. Typing the deletion response is tracked as
+    /// a follow-on under #78.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`crate::CloudError`] for non-2xx responses; `NotFound` if the
+    /// peering does not exist.
     pub async fn delete_vpc_peering(
         &self,
         subscription_id: i32,
@@ -94,13 +162,23 @@ impl ConnectivityHandler {
         self.vpc_peering.delete(subscription_id, peering_id).await
     }
 
+    /// Update a VPC peering's CIDR list.
+    ///
+    /// `PUT /subscriptions/{subscriptionId}/peerings/{peeringId}`. Translates
+    /// the AWS-only [`VpcPeeringUpdateAwsRequest`] into the underlying
+    /// [`VpcPeeringCreateRequest`] shape and delegates to
+    /// [`VpcPeeringHandler::update`].
+    ///
+    /// # Errors
+    ///
+    /// Returns [`crate::CloudError`] for transport, auth, or 4xx/5xx
+    /// responses.
     pub async fn update_vpc_peering(
         &self,
         subscription_id: i32,
         peering_id: i32,
         request: &VpcPeeringUpdateAwsRequest,
     ) -> crate::Result<crate::types::TaskStateUpdate> {
-        // Map VpcPeeringUpdateAwsRequest fields to VpcPeeringCreateRequest
         let create_request = VpcPeeringCreateRequest {
             provider: None,
             command_type: request.command_type.clone(),
@@ -113,7 +191,19 @@ impl ConnectivityHandler {
             .await
     }
 
-    // PSC delegation methods
+    // ========================================================================
+    // PSC (Private Service Connect) delegation methods
+    // ========================================================================
+
+    /// Get the Private Service Connect service for a Pro subscription.
+    ///
+    /// `GET /subscriptions/{subscriptionId}/private-service-connect`.
+    /// Delegates to [`PscHandler::get_service`].
+    ///
+    /// # Errors
+    ///
+    /// Returns [`crate::CloudError`] for transport, auth, or 4xx/5xx
+    /// responses. `NotFound` is returned when no PSC service is configured.
     pub async fn get_psc_service(
         &self,
         subscription_id: i32,
@@ -121,6 +211,15 @@ impl ConnectivityHandler {
         self.psc.get_service(subscription_id).await
     }
 
+    /// Create a Private Service Connect service on a Pro subscription.
+    ///
+    /// `POST /subscriptions/{subscriptionId}/private-service-connect`.
+    /// Delegates to [`PscHandler::create_service`].
+    ///
+    /// # Errors
+    ///
+    /// Returns [`crate::CloudError`] for transport, auth, or 4xx/5xx
+    /// responses.
     pub async fn create_psc_service(
         &self,
         subscription_id: i32,
@@ -128,6 +227,16 @@ impl ConnectivityHandler {
         self.psc.create_service(subscription_id).await
     }
 
+    /// Delete the Private Service Connect service for a Pro subscription.
+    ///
+    /// `DELETE /subscriptions/{subscriptionId}/private-service-connect`.
+    /// Delegates to [`PscHandler::delete_service`]. Currently returns
+    /// `serde_json::Value::Null`; typing the deletion response is tracked
+    /// under #78.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`crate::CloudError`] for non-2xx responses.
     pub async fn delete_psc_service(
         &self,
         subscription_id: i32,
@@ -135,6 +244,15 @@ impl ConnectivityHandler {
         self.psc.delete_service(subscription_id).await
     }
 
+    /// Create a PSC endpoint under the subscription's PSC service.
+    ///
+    /// `POST /subscriptions/{subscriptionId}/private-service-connect/.../endpoints`.
+    /// Delegates to [`PscHandler::create_endpoint`].
+    ///
+    /// # Errors
+    ///
+    /// Returns [`crate::CloudError`] for transport, auth, or 4xx/5xx
+    /// responses; `BadRequest` if the endpoint payload is malformed.
     pub async fn create_psc_endpoint(
         &self,
         subscription_id: i32,
@@ -143,7 +261,19 @@ impl ConnectivityHandler {
         self.psc.create_endpoint(subscription_id, request).await
     }
 
+    // ========================================================================
     // Transit Gateway delegation methods
+    // ========================================================================
+
+    /// List Transit Gateway attachments for a Pro subscription.
+    ///
+    /// `GET /subscriptions/{subscriptionId}/transitGateways`. Delegates to
+    /// [`TransitGatewayHandler::get_attachments`].
+    ///
+    /// # Errors
+    ///
+    /// Returns [`crate::CloudError`] for transport, auth, or 4xx/5xx
+    /// responses.
     pub async fn get_tgws(
         &self,
         subscription_id: i32,
@@ -151,6 +281,15 @@ impl ConnectivityHandler {
         self.transit_gateway.get_attachments(subscription_id).await
     }
 
+    /// Create a Transit Gateway attachment for the given TGW ID.
+    ///
+    /// `POST /subscriptions/{subscriptionId}/transitGateways/{tgwId}`.
+    /// Delegates to [`TransitGatewayHandler::create_attachment_with_id`].
+    ///
+    /// # Errors
+    ///
+    /// Returns [`crate::CloudError`] for transport, auth, or 4xx/5xx
+    /// responses; `BadRequest` if `tgw_id` is not in a valid AWS format.
     pub async fn create_tgw_attachment(
         &self,
         subscription_id: i32,
@@ -161,6 +300,17 @@ impl ConnectivityHandler {
             .await
     }
 
+    /// Delete a Transit Gateway attachment by attachment ID.
+    ///
+    /// `DELETE /subscriptions/{subscriptionId}/transitGateways/{tgwId}`.
+    /// Delegates to [`TransitGatewayHandler::delete_attachment`]. Currently
+    /// returns `serde_json::Value::Null`; typing the deletion response is
+    /// tracked under #78.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`crate::CloudError`] for non-2xx responses; `NotFound` if
+    /// the attachment does not exist.
     pub async fn delete_tgw_attachment(
         &self,
         subscription_id: i32,
@@ -171,13 +321,25 @@ impl ConnectivityHandler {
             .await
     }
 
+    /// Update the CIDR list on a Transit Gateway attachment.
+    ///
+    /// `PUT /subscriptions/{subscriptionId}/transitGateways/{tgwId}/attachment`.
+    /// Translates [`TgwUpdateCidrsRequest`] (which carries CIDR-with-status
+    /// entries) into the [`TgwAttachmentRequest`] the underlying handler
+    /// expects and delegates to
+    /// [`TransitGatewayHandler::update_attachment_cidrs`]. Only the
+    /// `cidr_address` portion of each CIDR entry is forwarded.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`crate::CloudError`] for transport, auth, or 4xx/5xx
+    /// responses; `BadRequest` if any CIDR string is not in valid form.
     pub async fn update_tgw_cidrs(
         &self,
         subscription_id: i32,
         attachment_id: &str,
         request: &TgwUpdateCidrsRequest,
     ) -> crate::Result<crate::types::TaskStateUpdate> {
-        // Convert TgwUpdateCidrsRequest to TgwAttachmentRequest
         let attachment_request = TgwAttachmentRequest {
             aws_account_id: None,
             tgw_id: None,
@@ -197,7 +359,19 @@ impl ConnectivityHandler {
             .await
     }
 
-    // Additional backward compatibility methods
+    // ========================================================================
+    // Backward-compatibility shims
+    // ========================================================================
+
+    /// Update a PSC endpoint by endpoint ID. Backward-compatibility wrapper
+    /// over [`PscHandler::update_endpoint`].
+    ///
+    /// `PUT /subscriptions/{subscriptionId}/private-service-connect/.../endpoints/{endpointId}`.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`crate::CloudError`] for transport, auth, or 4xx/5xx
+    /// responses.
     pub async fn update_psc_service_endpoint(
         &self,
         subscription_id: i32,
@@ -209,6 +383,12 @@ impl ConnectivityHandler {
             .await
     }
 
+    /// Alias for [`Self::update_tgw_cidrs`] retained for backward
+    /// compatibility. New code should call `update_tgw_cidrs` directly.
+    ///
+    /// # Errors
+    ///
+    /// Forwards any [`crate::CloudError`] from the wrapped call.
     pub async fn update_tgw_attachment_cidrs(
         &self,
         subscription_id: i32,
