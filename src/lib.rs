@@ -29,10 +29,10 @@
 //!         .api_secret("your-api-secret")
 //!         .build()?;
 //!
-//!     // List all databases
+//!     // List all databases in subscription 123 (Vec<Database>, no wrapper)
 //!     let db_handler = DatabaseHandler::new(client.clone());
-//!     let databases = db_handler.get_subscription_databases(123, None, None).await?;
-//!     println!("Found databases: {:?}", databases);
+//!     let databases = db_handler.list(123).await?;
+//!     println!("Found {} databases", databases.len());
 //!
 //!     Ok(())
 //! }
@@ -155,8 +155,8 @@
 //!
 //! #### VPC Peering
 //! ```rust,no_run
-//! use redis_cloud::{CloudClient, ConnectivityHandler};
-//! use serde_json::json;
+//! use redis_cloud::{CloudClient, VpcPeeringHandler};
+//! use redis_cloud::connectivity::VpcPeeringCreateRequest;
 //!
 //! # #[tokio::main]
 //! # async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -165,15 +165,19 @@
 //!     .api_secret("secret")
 //!     .build()?;
 //!
-//! let peering_handler = ConnectivityHandler::new(client.clone());
+//! let handler = VpcPeeringHandler::new(client);
 //!
-//! let peering_request = json!({
-//!     "aws_account_id": "123456789012",
-//!     "vpc_id": "vpc-12345678",
-//!     "vpc_cidr": "10.0.0.0/16",
-//!     "region": "us-east-1"
-//! });
-//! let peering = client.post_raw("/subscriptions/123/peerings", peering_request).await?;
+//! // Construct a provider-targeted body — `for_aws` pre-populates the
+//! // spec's required AWS fields with the correct wire names.
+//! let mut request = VpcPeeringCreateRequest::for_aws(
+//!     "us-east-1",
+//!     "123456789012",
+//!     "vpc-12345678",
+//! );
+//! request.vpc_cidr = Some("10.0.0.0/16".to_string());
+//!
+//! let task = handler.create(123, &request).await?;
+//! println!("Peering create task: {:?}", task.task_id);
 //! # Ok(())
 //! # }
 //! ```
@@ -202,10 +206,9 @@
 //! # }
 //! ```
 //!
-//! #### API Keys (Typed)
+//! #### Account Information (Typed)
 //! ```rust,no_run
-//! use redis_cloud::{CloudClient, AccountHandler};
-//! use serde_json::json;
+//! use redis_cloud::{AccountHandler, CloudClient};
 //!
 //! # #[tokio::main]
 //! # async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -216,6 +219,7 @@
 //!
 //! let account = AccountHandler::new(client.clone());
 //! let account_info = account.get_current_account().await?;
+//! # let _ = account_info;
 //! # Ok(())
 //! # }
 //! ```
