@@ -152,18 +152,23 @@ pub struct LocalThroughput {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DatabaseTagUpdateRequest {
+    /// Subscription ID being updated. Server-populated from the path.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub subscription_id: Option<i32>,
 
+    /// Database ID being updated. Server-populated from the path.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub database_id: Option<i32>,
 
+    /// Tag key being updated. Server-populated from the path.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub key: Option<String>,
 
     /// Database tag value
     pub value: String,
 
+    /// Read-only on the response; populated by the server with the
+    /// operation type (e.g. `"UPDATE_DATABASE_TAG"`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub command_type: Option<String>,
 }
@@ -178,6 +183,8 @@ pub struct Tag {
     /// Database tag value.
     pub value: String,
 
+    /// Read-only on the response; populated by the server with the
+    /// operation type (e.g. `"CREATE_DATABASE_TAG"`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub command_type: Option<String>,
 }
@@ -186,12 +193,16 @@ pub struct Tag {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CrdbFlushRequest {
+    /// Subscription ID being updated. Server-populated from the path.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub subscription_id: Option<i32>,
 
+    /// Database ID being updated. Server-populated from the path.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub database_id: Option<i32>,
 
+    /// Read-only on the response; populated by the server with the
+    /// operation type (e.g. `"FLUSH_CRDB"`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub command_type: Option<String>,
 }
@@ -209,15 +220,19 @@ pub struct DatabaseCertificate {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DatabaseTagsUpdateRequest {
+    /// Subscription ID being updated. Server-populated from the path.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub subscription_id: Option<i32>,
 
+    /// Database ID being updated. Server-populated from the path.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub database_id: Option<i32>,
 
     /// List of database tags.
     pub tags: Vec<Tag>,
 
+    /// Read-only on the response; populated by the server with the
+    /// operation type (e.g. `"UPDATE_DATABASE_TAGS"`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub command_type: Option<String>,
 }
@@ -250,15 +265,19 @@ pub struct DatabaseCertificateSpec {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CloudTag {
+    /// Database tag key.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub key: Option<String>,
 
+    /// Database tag value.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub value: Option<String>,
 
+    /// Timestamp when the tag was created.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub created_at: Option<String>,
 
+    /// Timestamp when the tag was last updated.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub updated_at: Option<String>,
 
@@ -271,15 +290,19 @@ pub struct CloudTag {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct BdbVersionUpgradeStatus {
+    /// Database identifier.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub database_id: Option<i32>,
 
+    /// Target Redis version of the upgrade.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub target_redis_version: Option<String>,
 
+    /// Upgrade progress (0.0 - 100.0).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub progress: Option<f64>,
 
+    /// Current upgrade status (e.g. `"in-progress"`, `"completed"`, `"failed"`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub upgrade_status: Option<String>,
 }
@@ -288,9 +311,11 @@ pub struct BdbVersionUpgradeStatus {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CrdbUpdatePropertiesRequest {
+    /// Subscription ID being updated. Server-populated from the path.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub subscription_id: Option<i32>,
 
+    /// Database ID being updated. Server-populated from the path.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub database_id: Option<i32>,
 
@@ -354,6 +379,8 @@ pub struct CrdbUpdatePropertiesRequest {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub data_eviction_policy: Option<String>,
 
+    /// Read-only on the response; populated by the server with the
+    /// operation type (e.g. `"UPDATE_CRDB"`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub command_type: Option<String>,
 }
@@ -362,15 +389,19 @@ pub struct CrdbUpdatePropertiesRequest {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DatabaseSlowLogEntry {
+    /// Slowlog entry identifier.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub id: Option<i32>,
 
+    /// Timestamp when the command began executing.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub start_time: Option<String>,
 
+    /// Execution duration in microseconds.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub duration: Option<i32>,
 
+    /// Command arguments captured for this slowlog entry.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub arguments: Option<String>,
 }
@@ -385,12 +416,16 @@ pub struct DatabaseTagCreateRequest {
     /// Database tag value.
     pub value: String,
 
+    /// Subscription ID being updated. Server-populated from the path.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub subscription_id: Option<i32>,
 
+    /// Database ID being updated. Server-populated from the path.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub database_id: Option<i32>,
 
+    /// Read-only on the response; populated by the server with the
+    /// operation type (e.g. `"CREATE_DATABASE_TAG"`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub command_type: Option<String>,
 }
@@ -417,6 +452,7 @@ pub struct DatabaseBackupConfig {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub interval: Option<String>,
 
+    /// Server-returned alias for `interval` (e.g. `"every-4-hours"`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub backup_interval: Option<String>,
 
@@ -424,6 +460,7 @@ pub struct DatabaseBackupConfig {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub time_utc: Option<String>,
 
+    /// Server-returned alias for `time_utc` (24-hour UTC time, e.g. `"14:00"`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub database_backup_time_utc: Option<String>,
 
@@ -431,6 +468,7 @@ pub struct DatabaseBackupConfig {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub storage_type: Option<String>,
 
+    /// Server-returned alias for `storage_type`.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub backup_storage_type: Option<String>,
 
@@ -710,10 +748,12 @@ pub struct CrdbDatabase {
 #[derive(Debug, Clone, Serialize, Deserialize, TypedBuilder)]
 #[serde(rename_all = "camelCase")]
 pub struct DatabaseBackupRequest {
+    /// Subscription ID being updated. Server-populated from the path.
     #[serde(skip_serializing_if = "Option::is_none")]
     #[builder(default, setter(strip_option))]
     pub subscription_id: Option<i32>,
 
+    /// Database ID being updated. Server-populated from the path.
     #[serde(skip_serializing_if = "Option::is_none")]
     #[builder(default, setter(strip_option))]
     pub database_id: Option<i32>,
@@ -728,6 +768,8 @@ pub struct DatabaseBackupRequest {
     #[builder(default, setter(strip_option, into))]
     pub adhoc_backup_path: Option<String>,
 
+    /// Read-only on the response; populated by the server with the
+    /// operation type (e.g. `"BACKUP_DATABASE"`).
     #[serde(skip_serializing_if = "Option::is_none")]
     #[builder(default, setter(strip_option, into))]
     pub command_type: Option<String>,
@@ -969,6 +1011,7 @@ pub struct DatabaseAlertSpec {
 #[derive(Debug, Clone, Serialize, Deserialize, TypedBuilder)]
 #[serde(rename_all = "camelCase")]
 pub struct DatabaseCreateRequest {
+    /// Subscription ID being updated. Server-populated from the path.
     #[serde(skip_serializing_if = "Option::is_none")]
     #[builder(default, setter(strip_option))]
     pub subscription_id: Option<i32>,
@@ -1042,10 +1085,12 @@ pub struct DatabaseCreateRequest {
     #[builder(default, setter(strip_option))]
     pub replica_of: Option<Vec<String>>,
 
+    /// Optional. Replica-of (Active-Passive) configuration. See [`ReplicaOfSpec`].
     #[serde(skip_serializing_if = "Option::is_none")]
     #[builder(default, setter(strip_option))]
     pub replica: Option<ReplicaOfSpec>,
 
+    /// Optional. Throughput measurement spec. See [`DatabaseThroughputSpec`].
     #[serde(skip_serializing_if = "Option::is_none")]
     #[builder(default, setter(strip_option))]
     pub throughput_measurement: Option<DatabaseThroughputSpec>,
@@ -1065,6 +1110,7 @@ pub struct DatabaseCreateRequest {
     #[builder(default, setter(strip_option, into))]
     pub periodic_backup_path: Option<String>,
 
+    /// Optional. Remote backup configuration. See [`DatabaseBackupConfig`].
     #[serde(skip_serializing_if = "Option::is_none")]
     #[builder(default, setter(strip_option))]
     pub remote_backup: Option<DatabaseBackupConfig>,
@@ -1119,6 +1165,8 @@ pub struct DatabaseCreateRequest {
     #[builder(default, setter(strip_option, into))]
     pub sharding_type: Option<String>,
 
+    /// Read-only on the response; populated by the server with the
+    /// operation type (e.g. `"CREATE_DATABASE"`).
     #[serde(skip_serializing_if = "Option::is_none")]
     #[builder(default, setter(strip_option, into))]
     pub command_type: Option<String>,
@@ -1144,10 +1192,12 @@ pub struct DatabaseCreateRequest {
 #[derive(Debug, Clone, Serialize, Deserialize, TypedBuilder)]
 #[serde(rename_all = "camelCase")]
 pub struct DatabaseImportRequest {
+    /// Subscription ID being updated. Server-populated from the path.
     #[serde(skip_serializing_if = "Option::is_none")]
     #[builder(default, setter(strip_option))]
     pub subscription_id: Option<i32>,
 
+    /// Database ID being updated. Server-populated from the path.
     #[serde(skip_serializing_if = "Option::is_none")]
     #[builder(default, setter(strip_option))]
     pub database_id: Option<i32>,
@@ -1159,6 +1209,8 @@ pub struct DatabaseImportRequest {
     /// One or more paths to source data files or Redis databases, as appropriate to specified source type.
     pub import_from_uri: Vec<String>,
 
+    /// Read-only on the response; populated by the server with the
+    /// operation type (e.g. `"IMPORT_DATABASE"`).
     #[serde(skip_serializing_if = "Option::is_none")]
     #[builder(default, setter(strip_option, into))]
     pub command_type: Option<String>,
@@ -1168,6 +1220,7 @@ pub struct DatabaseImportRequest {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CloudTags {
+    /// Account ID owning the tags.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub account_id: Option<i32>,
 
@@ -1180,15 +1233,19 @@ pub struct CloudTags {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DatabaseUpgradeRedisVersionRequest {
+    /// Database ID being updated. Server-populated from the path.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub database_id: Option<i32>,
 
+    /// Subscription ID being updated. Server-populated from the path.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub subscription_id: Option<i32>,
 
     /// The target Redis version the database will be upgraded to. Use GET /subscriptions/redis-versions to get a list of available Redis versions.
     pub target_redis_version: String,
 
+    /// Read-only on the response; populated by the server with the
+    /// operation type (e.g. `"UPGRADE_DATABASE_REDIS_VERSION"`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub command_type: Option<String>,
 }
@@ -1196,6 +1253,7 @@ pub struct DatabaseUpgradeRedisVersionRequest {
 /// `DatabaseSlowLogEntries`
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DatabaseSlowLogEntries {
+    /// Slowlog entries returned for the database.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub entries: Option<Vec<DatabaseSlowLogEntry>>,
 
@@ -1212,9 +1270,11 @@ pub struct LocalRegionProperties {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub region: Option<String>,
 
+    /// Optional. Remote backup configuration for this region. See [`DatabaseBackupConfig`].
     #[serde(skip_serializing_if = "Option::is_none")]
     pub remote_backup: Option<DatabaseBackupConfig>,
 
+    /// Optional. Local throughput settings for this region. See [`LocalThroughput`].
     #[serde(skip_serializing_if = "Option::is_none")]
     pub local_throughput_measurement: Option<LocalThroughput>,
 
@@ -1243,21 +1303,28 @@ pub struct LocalRegionProperties {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TaskStateUpdate {
+    /// Task identifier.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub task_id: Option<String>,
 
+    /// Read-only on the response; populated by the server with the
+    /// operation type (e.g. `"CREATE_DATABASE"`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub command_type: Option<String>,
 
+    /// Current task status (e.g. `"processing-in-progress"`, `"processing-completed"`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub status: Option<String>,
 
+    /// Human-readable description of the current task state.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
 
+    /// Timestamp of the latest task state update.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timestamp: Option<String>,
 
+    /// Task response payload from the processor.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub response: Option<ProcessorResponse>,
 
@@ -1281,10 +1348,12 @@ pub struct TaskStateUpdate {
 #[derive(Debug, Clone, Serialize, Deserialize, TypedBuilder)]
 #[serde(rename_all = "camelCase")]
 pub struct DatabaseUpdateRequest {
+    /// Subscription ID being updated. Server-populated from the path.
     #[serde(skip_serializing_if = "Option::is_none")]
     #[builder(default, setter(strip_option))]
     pub subscription_id: Option<i32>,
 
+    /// Database ID being updated. Server-populated from the path.
     #[serde(skip_serializing_if = "Option::is_none")]
     #[builder(default, setter(strip_option))]
     pub database_id: Option<i32>,
@@ -1314,6 +1383,7 @@ pub struct DatabaseUpdateRequest {
     #[builder(default, setter(strip_option, into))]
     pub resp_version: Option<String>,
 
+    /// Optional. Throughput measurement spec. See [`DatabaseThroughputSpec`].
     #[serde(skip_serializing_if = "Option::is_none")]
     #[builder(default, setter(strip_option))]
     pub throughput_measurement: Option<DatabaseThroughputSpec>,
@@ -1343,6 +1413,7 @@ pub struct DatabaseUpdateRequest {
     #[builder(default, setter(strip_option))]
     pub replica_of: Option<Vec<String>>,
 
+    /// Optional. Replica-of (Active-Passive) configuration. See [`ReplicaOfSpec`].
     #[serde(skip_serializing_if = "Option::is_none")]
     #[builder(default, setter(strip_option))]
     pub replica: Option<ReplicaOfSpec>,
@@ -1402,6 +1473,7 @@ pub struct DatabaseUpdateRequest {
     #[builder(default, setter(strip_option, into))]
     pub periodic_backup_path: Option<String>,
 
+    /// Optional. Remote backup configuration. See [`DatabaseBackupConfig`].
     #[serde(skip_serializing_if = "Option::is_none")]
     #[builder(default, setter(strip_option))]
     pub remote_backup: Option<DatabaseBackupConfig>,
@@ -1411,6 +1483,8 @@ pub struct DatabaseUpdateRequest {
     #[builder(default, setter(strip_option))]
     pub alerts: Option<Vec<DatabaseAlertSpec>>,
 
+    /// Read-only on the response; populated by the server with the
+    /// operation type (e.g. `"UPDATE_DATABASE"`).
     #[serde(skip_serializing_if = "Option::is_none")]
     #[builder(default, setter(strip_option, into))]
     pub command_type: Option<String>,
