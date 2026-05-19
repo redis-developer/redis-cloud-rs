@@ -69,6 +69,7 @@ pub struct CloudAccountUpdateRequest {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
 
+    /// Cloud account ID being updated. Server-populated from the path.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub cloud_account_id: Option<i32>,
 
@@ -88,6 +89,8 @@ pub struct CloudAccountUpdateRequest {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub sign_in_login_url: Option<String>,
 
+    /// Read-only on the response; populated by the server with the
+    /// operation type (e.g. `"UPDATE_CLOUD_ACCOUNT"`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub command_type: Option<String>,
 }
@@ -171,6 +174,8 @@ pub struct CloudAccountCreateRequest {
     /// Cloud provider management console login URL.
     pub sign_in_login_url: String,
 
+    /// Read-only on the response; populated by the server with the
+    /// operation type (e.g. `"CREATE_CLOUD_ACCOUNT"`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub command_type: Option<String>,
 }

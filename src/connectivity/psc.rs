@@ -44,8 +44,12 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PscEndpointUpdateRequest {
+    /// Subscription that owns the PSC service. Server-populated; clients
+    /// pass the value via the path parameter and may leave the default.
     pub subscription_id: i32,
+    /// PSC service ID under the subscription. Server-populated.
     pub psc_service_id: i32,
+    /// PSC endpoint ID being updated. Server-populated.
     pub endpoint_id: i32,
 
     /// Google Cloud project ID

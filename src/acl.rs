@@ -58,6 +58,8 @@ pub struct AclRoleCreateRequest {
     /// A list of Redis ACL rules to assign to this database access role.
     pub redis_rules: Vec<AclRoleRedisRuleSpec>,
 
+    /// Read-only on the response; populated by the server with the
+    /// operation type.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub command_type: Option<String>,
 }
@@ -66,6 +68,7 @@ pub struct AclRoleCreateRequest {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AclUserUpdateRequest {
+    /// ACL user ID being updated. Server-populated from the path.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub user_id: Option<i32>,
 
@@ -77,6 +80,8 @@ pub struct AclUserUpdateRequest {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub password: Option<String>,
 
+    /// Read-only on the response; populated by the server with the
+    /// operation type.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub command_type: Option<String>,
 }
@@ -154,6 +159,8 @@ pub struct AclRedisRuleCreateRequest {
     /// Redis ACL rule pattern. See [ACL syntax](https://redis.io/docs/latest/operate/rc/security/access-control/data-access-control/configure-acls/#define-permissions-with-acl-syntax) to learn how to define rules.
     pub redis_rule: String,
 
+    /// Read-only on the response; populated by the server with the
+    /// operation type.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub command_type: Option<String>,
 }
@@ -262,6 +269,7 @@ pub struct ACLRoleDatabase {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AclRedisRuleUpdateRequest {
+    /// Redis ACL rule ID being updated. Server-populated from the path.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub redis_rule_id: Option<i32>,
 
@@ -271,6 +279,8 @@ pub struct AclRedisRuleUpdateRequest {
     /// Optional. Changes the Redis ACL rule pattern. See [ACL syntax](https://redis.io/docs/latest/operate/rc/security/access-control/data-access-control/configure-acls/#define-permissions-with-acl-syntax) to learn how to define rules.
     pub redis_rule: String,
 
+    /// Read-only on the response; populated by the server with the
+    /// operation type.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub command_type: Option<String>,
 }
@@ -303,6 +313,8 @@ pub struct AclUserCreateRequest {
     /// The database password for this user.
     pub password: String,
 
+    /// Read-only on the response; populated by the server with the
+    /// operation type.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub command_type: Option<String>,
 }
@@ -343,9 +355,12 @@ pub struct AclRoleUpdateRequest {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub redis_rules: Option<Vec<AclRoleRedisRuleSpec>>,
 
+    /// ACL role ID being updated. Server-populated from the path.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub role_id: Option<i32>,
 
+    /// Read-only on the response; populated by the server with the
+    /// operation type.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub command_type: Option<String>,
 }
