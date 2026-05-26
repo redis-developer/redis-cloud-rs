@@ -1,6 +1,6 @@
 use redis_cloud::{CloudClient, SubscriptionsHandler};
 use serde_json::json;
-use wiremock::matchers::{header, method, path, query_param};
+use wiremock::matchers::{body_json, header, method, path, query_param};
 use wiremock::{Mock, MockServer, ResponseTemplate};
 
 #[tokio::test]
@@ -424,8 +424,57 @@ async fn test_get_subscription_pricing() {
     assert_eq!(pricing[0].r#type, Some("Shards".to_string()));
 }
 
-// Skipping test_delete_regions_from_active_active_subscription
-// as the client doesn't yet support DELETE with body
+#[tokio::test]
+async fn test_delete_regions_from_active_active_subscription() {
+    // Regression guard for #59: the AA region-delete handler must send
+    // its JSON body on the wire, not drop it on the floor.
+    let mock_server = MockServer::start().await;
+
+    Mock::given(method("DELETE"))
+        .and(path("/subscriptions/123/regions"))
+        .and(header("x-api-key", "test-key"))
+        .and(header("x-api-secret-key", "test-secret"))
+        .and(body_json(json!({
+            "regions": [{"region": "us-east-1"}],
+            "dryRun": false,
+            "commandType": "DELETE_REGION"
+        })))
+        .respond_with(ResponseTemplate::new(202).set_body_json(json!({
+            "taskId": "task-delete-region",
+            "commandType": "DELETE_REGION",
+            "status": "processing"
+        })))
+        .mount(&mock_server)
+        .await;
+
+    let client = CloudClient::builder()
+        .api_key("test-key".to_string())
+        .api_secret("test-secret".to_string())
+        .base_url(mock_server.uri())
+        .build()
+        .unwrap();
+
+    let handler = SubscriptionsHandler::new(client);
+    let request = redis_cloud::subscriptions::ActiveActiveRegionDeleteRequest {
+        subscription_id: None,
+        regions: Some(vec![
+            redis_cloud::subscriptions::ActiveActiveRegionToDelete {
+                region: Some("us-east-1".to_string()),
+            },
+        ]),
+        dry_run: Some(false),
+        command_type: Some("DELETE_REGION".to_string()),
+    };
+
+    let result = handler
+        .delete_regions_from_active_active_subscription(123, &request)
+        .await
+        .unwrap();
+
+    assert_eq!(result.task_id.as_deref(), Some("task-delete-region"));
+    assert_eq!(result.command_type.as_deref(), Some("DELETE_REGION"));
+    assert_eq!(result.status.as_deref(), Some("processing"));
+}
 
 #[tokio::test]
 async fn test_get_regions_from_active_active_subscription() {
