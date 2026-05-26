@@ -28,10 +28,10 @@ A comprehensive Rust client library for the Redis Cloud REST API, with Python bi
 
 ```toml
 [dependencies]
-redis-cloud = "0.8"
+redis-cloud = "0.10"
 
 # Optional: Enable Tower service integration
-redis-cloud = { version = "0.8", features = ["tower-integration"] }
+redis-cloud = { version = "0.10", features = ["tower-integration"] }
 ```
 
 ## Quick Start
@@ -41,47 +41,38 @@ use redis_cloud::CloudClient;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // Create client using builder pattern
     let client = CloudClient::builder()
-        .api_key("your-api-key")
-        .api_secret("your-api-secret")
+        .api_key(std::env::var("REDIS_CLOUD_API_KEY")?)
+        .api_secret(std::env::var("REDIS_CLOUD_API_SECRET")?)
         .build()?;
 
-    // Get account information using fluent API
+    // Account info
     let account = client.account().get_current_account().await?;
-    println!("Account: {:?}", account);
+    if let Some(acc) = account.account {
+        println!("Account: {:?} ({:?})", acc.name, acc.id);
+    }
 
-    // List all subscriptions
-    let subscriptions = client.subscriptions().get_all_subscriptions().await?;
-    println!("Subscriptions: {:?}", subscriptions);
+    // List Pro subscriptions
+    let subs = client.subscriptions().get_all_subscriptions().await?;
+    for sub in subs.subscriptions.unwrap_or_default() {
+        println!("  - subscription {:?}: {:?}", sub.id, sub.name);
+    }
 
-    // List databases in a subscription
-    let databases = client.databases().get_subscription_databases(123, None, None).await?;
-    println!("Databases: {:?}", databases);
-
-    Ok(())
-}
-```
-
-You can also use explicit handler creation if preferred:
-
-```rust
-use redis_cloud::{CloudClient, SubscriptionHandler};
-
-#[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let client = CloudClient::builder()
-        .api_key("your-api-key")
-        .api_secret("your-api-secret")
-        .build()?;
-
-    // Explicit handler creation
-    let handler = SubscriptionHandler::new(client.clone());
-    let subscriptions = handler.get_all_subscriptions().await?;
+    // List databases for a subscription (unwrapped helper)
+    let dbs = client.databases().list(123).await?;
+    for db in &dbs {
+        println!("  - db {:?}: {:?}", db.database_id, db.name);
+    }
 
     Ok(())
 }
 ```
+
+## Environment Variables
+
+- `REDIS_CLOUD_API_KEY` — API key
+- `REDIS_CLOUD_API_SECRET` — API secret
+- `REDIS_CLOUD_BASE_URL` — Override the API base URL (optional; defaults to the production Redis Cloud endpoint)
 
 ## Tower Integration
 
@@ -116,81 +107,43 @@ This enables composition with Tower middleware like circuit breakers, retry, rat
 
 ## Examples
 
-See the `examples/` directory for runnable examples:
+See the [`examples/`](examples) directory for runnable end-to-end programs:
 
 ```bash
-# Basic usage - connect and list subscriptions
-REDIS_CLOUD_API_KEY=xxx REDIS_CLOUD_API_SECRET=yyy cargo run --example basic
+# Basic — connect, fetch account, list Pro + Essentials subscriptions
+cargo run --example basic
 
-# Database operations
-REDIS_CLOUD_API_KEY=xxx REDIS_CLOUD_API_SECRET=yyy cargo run --example databases
+# Database operations — list databases for a subscription, paginated
+cargo run --example databases [SUBSCRIPTION_ID]
 
-# Streaming with pagination
-REDIS_CLOUD_API_KEY=xxx REDIS_CLOUD_API_SECRET=yyy cargo run --example stream_databases -- SUBSCRIPTION_ID
+# Streaming — process databases one at a time via the paginated stream
+cargo run --example stream_databases -- SUBSCRIPTION_ID
+
+# Tasks — poll an async task by ID
+cargo run --example tasks -- TASK_ID
+
+# Cost reports — fetch a cost report in FOCUS-format JSON
+cargo run --example cost_report -- START_DATE END_DATE
 ```
+
+All examples read credentials from `REDIS_CLOUD_API_KEY` / `REDIS_CLOUD_API_SECRET`.
 
 ## Python Bindings
 
-This library also provides Python bindings via PyO3:
+A thin PyO3 binding covering a subset of read operations is published at
+[redis-cloud on PyPI](https://pypi.org/project/redis-cloud/). See
+[`python/README.md`](python/README.md) for the supported API.
 
-```bash
-pip install redis-cloud
-```
-
-```python
-from redis_cloud import CloudClient
-
-# Create client
-client = CloudClient(
-    api_key="your-api-key",
-    api_secret="your-api-secret"
-)
-
-# Or from environment variables
-client = CloudClient.from_env()
-
-# Async usage
-async def main():
-    subs = await client.subscriptions()
-    for sub in subs:
-        print(sub["name"], sub["id"])
-
-# Sync usage
-subs = client.subscriptions_sync()
-```
-
-### Python API
-
-- `CloudClient(api_key, api_secret, base_url=None, timeout_secs=None)`
-- `CloudClient.from_env()` - Create from environment variables
-- `client.timeout` - Get configured timeout in seconds (property)
-
-#### Account
-- `account()` / `account_sync()` - Get current account information
-
-#### Subscriptions
-- `subscriptions()` / `subscriptions_sync()` - List all subscriptions
-- `subscription(id)` / `subscription_sync(id)` - Get subscription by ID
-
-#### Databases
-- `databases(subscription_id, offset=None, limit=None)` / `databases_sync(...)` - List databases (paginated)
-- `database(subscription_id, database_id)` / `database_sync(...)` - Get database
-- `all_databases(subscription_id)` / `all_databases_sync(...)` - Get all databases (auto-pagination)
-
-#### Raw API
-- `get(path)` / `get_sync(path)` - Raw GET request
-- `post(path, body)` / `post_sync(path, body)` - Raw POST request
-- `delete(path)` / `delete_sync(path)` - Raw DELETE request
-
-### Environment Variables
-
-- `REDIS_CLOUD_API_KEY` - API key
-- `REDIS_CLOUD_API_SECRET` - API secret
-- `REDIS_CLOUD_BASE_URL` - Base URL (optional)
+The PyPI publish workflow has been failing since the `reqwest 0.13` upgrade
+([#48](https://github.com/redis-developer/redis-cloud-rs/issues/48)) and the
+overall scope is still being scoped under
+[#66](https://github.com/redis-developer/redis-cloud-rs/issues/66) — treat
+the Python surface as experimental for now.
 
 ## API Coverage
 
-This library provides comprehensive coverage of the Redis Cloud REST API:
+The crate aims for comprehensive coverage of the documented Redis Cloud REST
+API surface. Handler organization:
 
 | Handler | Description |
 |---------|-------------|
@@ -208,6 +161,9 @@ This library provides comprehensive coverage of the Redis Cloud REST API:
 | `private_link()` | AWS PrivateLink |
 | `tasks()` | Async operation tracking |
 | `cost_reports()` | Cost reports in FOCUS format |
+
+For the authoritative per-endpoint mapping see the bundled OpenAPI spec at
+[`tests/fixtures/cloud_openapi.json`](tests/fixtures/cloud_openapi.json).
 
 ## Documentation
 

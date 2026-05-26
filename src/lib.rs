@@ -23,19 +23,17 @@
 //! ## Quick Start
 //!
 //! ```rust,no_run
-//! use redis_cloud::{CloudClient, DatabaseHandler};
+//! use redis_cloud::CloudClient;
 //!
 //! #[tokio::main]
 //! async fn main() -> Result<(), Box<dyn std::error::Error>> {
-//!     // Create client with API credentials
 //!     let client = CloudClient::builder()
-//!         .api_key("your-api-key")
-//!         .api_secret("your-api-secret")
+//!         .api_key(std::env::var("REDIS_CLOUD_API_KEY")?)
+//!         .api_secret(std::env::var("REDIS_CLOUD_API_SECRET")?)
 //!         .build()?;
 //!
 //!     // List all databases in subscription 123 (Vec<Database>, no wrapper)
-//!     let db_handler = DatabaseHandler::new(client.clone());
-//!     let databases = db_handler.list(123).await?;
+//!     let databases = client.databases().list(123).await?;
 //!     println!("Found {} databases", databases.len());
 //!
 //!     Ok(())
