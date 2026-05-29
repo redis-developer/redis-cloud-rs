@@ -36,11 +36,13 @@ fn test_all_endpoints_documented() {
         }
     }
 
-    // The OpenAPI spec in our repo has 130 endpoints
-    // (Note: The spec we analyzed from redis.io had 140, but this is the version we have)
+    // The bundled fixture currently exposes 155 operations across 93 paths
+    // (matches upstream `https://api.redislabs.com/v1/cloud-api-docs` as of
+    // the last refresh; see #69). Use a floor so future refreshes that add
+    // endpoints don't break this gate.
     assert!(
-        endpoint_count >= 130,
-        "Expected at least 130 endpoints in OpenAPI spec, found {}",
+        endpoint_count >= 150,
+        "Expected at least 150 endpoints in OpenAPI spec, found {}",
         endpoint_count
     );
 }
