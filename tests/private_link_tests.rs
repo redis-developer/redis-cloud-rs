@@ -2,77 +2,73 @@ use redis_cloud::connectivity::{
     PrincipalType, PrivateLinkAddPrincipalRequest, PrivateLinkCreateRequest,
     PrivateLinkRemovePrincipalRequest,
 };
+use redis_cloud::types::TaskStatus;
 use redis_cloud::{CloudClient, PrivateLinkHandler};
 use serde_json::json;
 use wiremock::matchers::{header, method, path};
 use wiremock::{Mock, MockServer, ResponseTemplate};
 
+/// A `TaskStateUpdate`-shaped body. Per the OpenAPI spec every private-link
+/// operation is asynchronous and returns a task the caller can poll.
+fn task_body(task_id: &str, command_type: &str, resource_id: i64) -> serde_json::Value {
+    json!({
+        "taskId": task_id,
+        "commandType": command_type,
+        "status": "processing-completed",
+        "response": { "resourceId": resource_id }
+    })
+}
+
+fn test_client(uri: String) -> CloudClient {
+    CloudClient::builder()
+        .api_key("test-key")
+        .api_secret("test-secret")
+        .base_url(uri)
+        .build()
+        .unwrap()
+}
+
 #[tokio::test]
 async fn test_get_private_link() {
     let mock_server = MockServer::start().await;
-
-    let response_body = json!({
-        "resourceId": 123456,
-        "status": "active",
-        "shareName": "my-redis-share",
-        "principals": [
-            {
-                "principal": "123456789012",
-                "type": "aws_account",
-                "alias": "Production Account"
-            }
-        ]
-    });
 
     Mock::given(method("GET"))
         .and(path("/subscriptions/123/private-link"))
         .and(header("x-api-key", "test-key"))
         .and(header("x-api-secret-key", "test-secret"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(&response_body))
+        .respond_with(ResponseTemplate::new(200).set_body_json(task_body(
+            "task-get",
+            "PRIVATE_LINK_GET",
+            123456,
+        )))
         .mount(&mock_server)
         .await;
 
-    let client = CloudClient::builder()
-        .api_key("test-key")
-        .api_secret("test-secret")
-        .base_url(mock_server.uri())
-        .build()
-        .unwrap();
-
-    let handler = PrivateLinkHandler::new(client);
+    let handler = PrivateLinkHandler::new(test_client(mock_server.uri()));
     let result = handler.get(123).await.unwrap();
 
-    assert_eq!(result["resourceId"], 123456);
-    assert_eq!(result["status"], "active");
-    assert_eq!(result["shareName"], "my-redis-share");
+    assert_eq!(result.task_id.as_deref(), Some("task-get"));
+    assert_eq!(result.status, Some(TaskStatus::ProcessingCompleted));
+    assert_eq!(result.response.and_then(|r| r.resource_id), Some(123456));
 }
 
 #[tokio::test]
 async fn test_create_private_link() {
     let mock_server = MockServer::start().await;
 
-    let response_body = json!({
-        "resourceId": 123456,
-        "status": "pending",
-        "taskId": "task-789"
-    });
-
     Mock::given(method("POST"))
         .and(path("/subscriptions/123/private-link"))
         .and(header("x-api-key", "test-key"))
         .and(header("x-api-secret-key", "test-secret"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(&response_body))
+        .respond_with(ResponseTemplate::new(200).set_body_json(task_body(
+            "task-789",
+            "PRIVATE_LINK_CREATE",
+            123456,
+        )))
         .mount(&mock_server)
         .await;
 
-    let client = CloudClient::builder()
-        .api_key("test-key")
-        .api_secret("test-secret")
-        .base_url(mock_server.uri())
-        .build()
-        .unwrap();
-
-    let handler = PrivateLinkHandler::new(client);
+    let handler = PrivateLinkHandler::new(test_client(mock_server.uri()));
 
     let request = PrivateLinkCreateRequest {
         share_name: "my-redis-share".to_string(),
@@ -83,42 +79,27 @@ async fn test_create_private_link() {
 
     let result = handler.create(123, &request).await.unwrap();
 
-    assert_eq!(result["resourceId"], 123456);
-    assert_eq!(result["status"], "pending");
-    assert_eq!(result["taskId"], "task-789");
+    assert_eq!(result.task_id.as_deref(), Some("task-789"));
+    assert_eq!(result.command_type.as_deref(), Some("PRIVATE_LINK_CREATE"));
 }
 
 #[tokio::test]
 async fn test_add_principals() {
     let mock_server = MockServer::start().await;
 
-    let response_body = json!({
-        "resourceId": 123456,
-        "principals": [
-            {
-                "principal": "987654321098",
-                "type": "iam_role",
-                "alias": "Dev Role"
-            }
-        ]
-    });
-
     Mock::given(method("POST"))
         .and(path("/subscriptions/123/private-link/principals"))
         .and(header("x-api-key", "test-key"))
         .and(header("x-api-secret-key", "test-secret"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(&response_body))
+        .respond_with(ResponseTemplate::new(200).set_body_json(task_body(
+            "task-add",
+            "PRIVATE_LINK_ADD_PRINCIPAL",
+            123456,
+        )))
         .mount(&mock_server)
         .await;
 
-    let client = CloudClient::builder()
-        .api_key("test-key")
-        .api_secret("test-secret")
-        .base_url(mock_server.uri())
-        .build()
-        .unwrap();
-
-    let handler = PrivateLinkHandler::new(client);
+    let handler = PrivateLinkHandler::new(test_client(mock_server.uri()));
 
     let request = PrivateLinkAddPrincipalRequest {
         principal: "987654321098".to_string(),
@@ -128,34 +109,27 @@ async fn test_add_principals() {
 
     let result = handler.add_principals(123, &request).await.unwrap();
 
-    assert_eq!(result["resourceId"], 123456);
-    assert!(result["principals"].is_array());
+    assert_eq!(result.task_id.as_deref(), Some("task-add"));
+    assert_eq!(result.status, Some(TaskStatus::ProcessingCompleted));
 }
 
 #[tokio::test]
 async fn test_remove_principals() {
     let mock_server = MockServer::start().await;
 
-    let response_body = json!({
-        "status": "deleted"
-    });
-
     Mock::given(method("DELETE"))
         .and(path("/subscriptions/123/private-link/principals"))
         .and(header("x-api-key", "test-key"))
         .and(header("x-api-secret-key", "test-secret"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(&response_body))
+        .respond_with(ResponseTemplate::new(200).set_body_json(task_body(
+            "task-remove",
+            "PRIVATE_LINK_REMOVE_PRINCIPAL",
+            123456,
+        )))
         .mount(&mock_server)
         .await;
 
-    let client = CloudClient::builder()
-        .api_key("test-key")
-        .api_secret("test-secret")
-        .base_url(mock_server.uri())
-        .build()
-        .unwrap();
-
-    let handler = PrivateLinkHandler::new(client);
+    let handler = PrivateLinkHandler::new(test_client(mock_server.uri()));
 
     let request = PrivateLinkRemovePrincipalRequest {
         principal: "987654321098".to_string(),
@@ -165,102 +139,72 @@ async fn test_remove_principals() {
 
     let result = handler.remove_principals(123, &request).await.unwrap();
 
-    assert_eq!(result["status"], "deleted");
+    assert_eq!(result.task_id.as_deref(), Some("task-remove"));
+    assert_eq!(result.status, Some(TaskStatus::ProcessingCompleted));
 }
 
 #[tokio::test]
 async fn test_get_endpoint_script() {
     let mock_server = MockServer::start().await;
 
-    let response_body = json!({
-        "script": "aws ec2 create-vpc-endpoint --vpc-id vpc-123 --service-name com.amazonaws.vpce.us-east-1.vpce-svc-abc123"
-    });
-
     Mock::given(method("GET"))
-        .and(method("GET"))
         .and(path("/subscriptions/123/private-link/endpoint-script"))
         .and(header("x-api-key", "test-key"))
         .and(header("x-api-secret-key", "test-secret"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(&response_body))
+        .respond_with(ResponseTemplate::new(200).set_body_json(task_body(
+            "task-script",
+            "PRIVATE_LINK_ENDPOINT_SCRIPT",
+            123456,
+        )))
         .mount(&mock_server)
         .await;
 
-    let client = CloudClient::builder()
-        .api_key("test-key")
-        .api_secret("test-secret")
-        .base_url(mock_server.uri())
-        .build()
-        .unwrap();
-
-    let handler = PrivateLinkHandler::new(client);
+    let handler = PrivateLinkHandler::new(test_client(mock_server.uri()));
     let result = handler.get_endpoint_script(123).await.unwrap();
 
-    assert!(result["script"].is_string());
-    assert!(result["script"].as_str().unwrap().contains("aws ec2"));
+    assert_eq!(result.task_id.as_deref(), Some("task-script"));
 }
 
 #[tokio::test]
 async fn test_get_active_active_private_link() {
     let mock_server = MockServer::start().await;
 
-    let response_body = json!({
-        "resourceId": 123456,
-        "regionId": 1,
-        "status": "active",
-        "shareName": "my-crdb-share"
-    });
-
     Mock::given(method("GET"))
-        .and(method("GET"))
         .and(path("/subscriptions/123/regions/1/private-link"))
         .and(header("x-api-key", "test-key"))
         .and(header("x-api-secret-key", "test-secret"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(&response_body))
+        .respond_with(ResponseTemplate::new(200).set_body_json(task_body(
+            "task-aa-get",
+            "PRIVATE_LINK_GET",
+            123456,
+        )))
         .mount(&mock_server)
         .await;
 
-    let client = CloudClient::builder()
-        .api_key("test-key")
-        .api_secret("test-secret")
-        .base_url(mock_server.uri())
-        .build()
-        .unwrap();
-
-    let handler = PrivateLinkHandler::new(client);
+    let handler = PrivateLinkHandler::new(test_client(mock_server.uri()));
     let result = handler.get_active_active(123, 1).await.unwrap();
 
-    assert_eq!(result["resourceId"], 123456);
-    assert_eq!(result["regionId"], 1);
-    assert_eq!(result["shareName"], "my-crdb-share");
+    assert_eq!(result.task_id.as_deref(), Some("task-aa-get"));
+    assert_eq!(result.response.and_then(|r| r.resource_id), Some(123456));
 }
 
 #[tokio::test]
 async fn test_create_active_active_private_link() {
     let mock_server = MockServer::start().await;
 
-    let response_body = json!({
-        "resourceId": 123456,
-        "regionId": 1,
-        "status": "pending",
-        "taskId": "task-999"
-    });
-
     Mock::given(method("POST"))
         .and(path("/subscriptions/123/regions/1/private-link"))
         .and(header("x-api-key", "test-key"))
         .and(header("x-api-secret-key", "test-secret"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(&response_body))
+        .respond_with(ResponseTemplate::new(200).set_body_json(task_body(
+            "task-999",
+            "PRIVATE_LINK_CREATE",
+            123456,
+        )))
         .mount(&mock_server)
         .await;
 
-    let client = CloudClient::builder()
-        .api_key("test-key")
-        .api_secret("test-secret")
-        .base_url(mock_server.uri())
-        .build()
-        .unwrap();
-
-    let handler = PrivateLinkHandler::new(client);
+    let handler = PrivateLinkHandler::new(test_client(mock_server.uri()));
 
     let request = PrivateLinkCreateRequest {
         share_name: "my-crdb-share".to_string(),
@@ -274,42 +218,27 @@ async fn test_create_active_active_private_link() {
         .await
         .unwrap();
 
-    assert_eq!(result["resourceId"], 123456);
-    assert_eq!(result["regionId"], 1);
-    assert_eq!(result["taskId"], "task-999");
+    assert_eq!(result.task_id.as_deref(), Some("task-999"));
+    assert_eq!(result.command_type.as_deref(), Some("PRIVATE_LINK_CREATE"));
 }
 
 #[tokio::test]
 async fn test_add_principals_active_active() {
     let mock_server = MockServer::start().await;
 
-    let response_body = json!({
-        "resourceId": 123456,
-        "regionId": 1,
-        "principals": [
-            {
-                "principal": "555666777888",
-                "type": "aws_account"
-            }
-        ]
-    });
-
     Mock::given(method("POST"))
         .and(path("/subscriptions/123/regions/1/private-link/principals"))
         .and(header("x-api-key", "test-key"))
         .and(header("x-api-secret-key", "test-secret"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(&response_body))
+        .respond_with(ResponseTemplate::new(200).set_body_json(task_body(
+            "task-aa-add",
+            "PRIVATE_LINK_ADD_PRINCIPAL",
+            123456,
+        )))
         .mount(&mock_server)
         .await;
 
-    let client = CloudClient::builder()
-        .api_key("test-key")
-        .api_secret("test-secret")
-        .base_url(mock_server.uri())
-        .build()
-        .unwrap();
-
-    let handler = PrivateLinkHandler::new(client);
+    let handler = PrivateLinkHandler::new(test_client(mock_server.uri()));
 
     let request = PrivateLinkAddPrincipalRequest {
         principal: "555666777888".to_string(),
@@ -322,34 +251,26 @@ async fn test_add_principals_active_active() {
         .await
         .unwrap();
 
-    assert_eq!(result["resourceId"], 123456);
-    assert_eq!(result["regionId"], 1);
+    assert_eq!(result.task_id.as_deref(), Some("task-aa-add"));
 }
 
 #[tokio::test]
 async fn test_remove_principals_active_active() {
     let mock_server = MockServer::start().await;
 
-    let response_body = json!({
-        "status": "deleted"
-    });
-
     Mock::given(method("DELETE"))
         .and(path("/subscriptions/123/regions/1/private-link/principals"))
         .and(header("x-api-key", "test-key"))
         .and(header("x-api-secret-key", "test-secret"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(&response_body))
+        .respond_with(ResponseTemplate::new(200).set_body_json(task_body(
+            "task-aa-remove",
+            "PRIVATE_LINK_REMOVE_PRINCIPAL",
+            123456,
+        )))
         .mount(&mock_server)
         .await;
 
-    let client = CloudClient::builder()
-        .api_key("test-key")
-        .api_secret("test-secret")
-        .base_url(mock_server.uri())
-        .build()
-        .unwrap();
-
-    let handler = PrivateLinkHandler::new(client);
+    let handler = PrivateLinkHandler::new(test_client(mock_server.uri()));
 
     let request = PrivateLinkRemovePrincipalRequest {
         principal: "555666777888".to_string(),
@@ -362,43 +283,35 @@ async fn test_remove_principals_active_active() {
         .await
         .unwrap();
 
-    assert_eq!(result["status"], "deleted");
+    assert_eq!(result.task_id.as_deref(), Some("task-aa-remove"));
+    assert_eq!(result.status, Some(TaskStatus::ProcessingCompleted));
 }
 
 #[tokio::test]
 async fn test_get_endpoint_script_active_active() {
     let mock_server = MockServer::start().await;
 
-    let response_body = json!({
-        "script": "aws ec2 create-vpc-endpoint --vpc-id vpc-456 --service-name com.amazonaws.vpce.us-west-2.vpce-svc-xyz789"
-    });
-
     Mock::given(method("GET"))
-        .and(method("GET"))
         .and(path(
             "/subscriptions/123/regions/1/private-link/endpoint-script",
         ))
         .and(header("x-api-key", "test-key"))
         .and(header("x-api-secret-key", "test-secret"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(&response_body))
+        .respond_with(ResponseTemplate::new(200).set_body_json(task_body(
+            "task-aa-script",
+            "PRIVATE_LINK_ENDPOINT_SCRIPT",
+            123456,
+        )))
         .mount(&mock_server)
         .await;
 
-    let client = CloudClient::builder()
-        .api_key("test-key")
-        .api_secret("test-secret")
-        .base_url(mock_server.uri())
-        .build()
-        .unwrap();
-
-    let handler = PrivateLinkHandler::new(client);
+    let handler = PrivateLinkHandler::new(test_client(mock_server.uri()));
     let result = handler
         .get_endpoint_script_active_active(123, 1)
         .await
         .unwrap();
 
-    assert!(result["script"].is_string());
-    assert!(result["script"].as_str().unwrap().contains("aws ec2"));
+    assert_eq!(result.task_id.as_deref(), Some("task-aa-script"));
 }
 
 #[tokio::test]
@@ -406,7 +319,6 @@ async fn test_error_handling_401() {
     let mock_server = MockServer::start().await;
 
     Mock::given(method("GET"))
-        .and(method("GET"))
         .and(path("/subscriptions/123/private-link"))
         .respond_with(ResponseTemplate::new(401).set_body_string("Unauthorized"))
         .mount(&mock_server)
@@ -430,20 +342,12 @@ async fn test_error_handling_404() {
     let mock_server = MockServer::start().await;
 
     Mock::given(method("GET"))
-        .and(method("GET"))
         .and(path("/subscriptions/999/private-link"))
         .respond_with(ResponseTemplate::new(404).set_body_string("Not Found"))
         .mount(&mock_server)
         .await;
 
-    let client = CloudClient::builder()
-        .api_key("test-key")
-        .api_secret("test-secret")
-        .base_url(mock_server.uri())
-        .build()
-        .unwrap();
-
-    let handler = PrivateLinkHandler::new(client);
+    let handler = PrivateLinkHandler::new(test_client(mock_server.uri()));
     let result = handler.get(999).await;
 
     assert!(result.is_err());
@@ -459,14 +363,7 @@ async fn test_error_handling_500() {
         .mount(&mock_server)
         .await;
 
-    let client = CloudClient::builder()
-        .api_key("test-key")
-        .api_secret("test-secret")
-        .base_url(mock_server.uri())
-        .build()
-        .unwrap();
-
-    let handler = PrivateLinkHandler::new(client);
+    let handler = PrivateLinkHandler::new(test_client(mock_server.uri()));
     let request = PrivateLinkCreateRequest {
         share_name: "test".to_string(),
         principal: "123".to_string(),

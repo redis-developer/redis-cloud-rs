@@ -44,10 +44,9 @@
 //! # }
 //! ```
 
+use crate::types::TaskStateUpdate;
 use crate::{CloudClient, Result};
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
-// Note: Value is still needed for return types that use raw JSON responses
 
 // ============================================================================
 // Request/Response Types
@@ -273,8 +272,9 @@ impl PrivateLinkHandler {
     ///
     /// # Returns
     ///
-    /// Returns the `PrivateLink` configuration as JSON
-    pub async fn get(&self, subscription_id: i32) -> Result<Value> {
+    /// Returns a [`TaskStateUpdate`] to poll; the configuration is available
+    /// once the task completes.
+    pub async fn get(&self, subscription_id: i32) -> Result<TaskStateUpdate> {
         self.client
             .get(&format!("/subscriptions/{subscription_id}/private-link"))
             .await
@@ -298,7 +298,7 @@ impl PrivateLinkHandler {
         &self,
         subscription_id: i32,
         request: &PrivateLinkCreateRequest,
-    ) -> Result<Value> {
+    ) -> Result<TaskStateUpdate> {
         self.client
             .post(
                 &format!("/subscriptions/{subscription_id}/private-link"),
@@ -320,12 +320,12 @@ impl PrivateLinkHandler {
     ///
     /// # Returns
     ///
-    /// Returns the updated principal configuration
+    /// Returns a [`TaskStateUpdate`] to poll for completion.
     pub async fn add_principals(
         &self,
         subscription_id: i32,
         request: &PrivateLinkAddPrincipalRequest,
-    ) -> Result<Value> {
+    ) -> Result<TaskStateUpdate> {
         self.client
             .post(
                 &format!("/subscriptions/{subscription_id}/private-link/principals"),
@@ -347,12 +347,12 @@ impl PrivateLinkHandler {
     ///
     /// # Returns
     ///
-    /// Returns confirmation of deletion
+    /// Returns a [`TaskStateUpdate`] to poll the asynchronous deletion.
     pub async fn remove_principals(
         &self,
         subscription_id: i32,
         request: &PrivateLinkRemovePrincipalRequest,
-    ) -> Result<Value> {
+    ) -> Result<TaskStateUpdate> {
         self.client
             .delete_with_body(
                 &format!("/subscriptions/{subscription_id}/private-link/principals"),
@@ -373,8 +373,9 @@ impl PrivateLinkHandler {
     ///
     /// # Returns
     ///
-    /// Returns the endpoint creation script
-    pub async fn get_endpoint_script(&self, subscription_id: i32) -> Result<Value> {
+    /// Returns a [`TaskStateUpdate`]; the generated script is available once
+    /// the task completes.
+    pub async fn get_endpoint_script(&self, subscription_id: i32) -> Result<TaskStateUpdate> {
         self.client
             .get(&format!(
                 "/subscriptions/{subscription_id}/private-link/endpoint-script"
@@ -395,9 +396,9 @@ impl PrivateLinkHandler {
     /// # Returns
     ///
     /// Returns task information for tracking the deletion
-    pub async fn delete(&self, subscription_id: i32) -> Result<Value> {
+    pub async fn delete(&self, subscription_id: i32) -> Result<TaskStateUpdate> {
         self.client
-            .delete_raw(&format!("/subscriptions/{subscription_id}/private-link"))
+            .delete_typed(&format!("/subscriptions/{subscription_id}/private-link"))
             .await
     }
 
@@ -414,8 +415,13 @@ impl PrivateLinkHandler {
     ///
     /// # Returns
     ///
-    /// Returns the `PrivateLink` configuration for the region
-    pub async fn get_active_active(&self, subscription_id: i32, region_id: i32) -> Result<Value> {
+    /// Returns a [`TaskStateUpdate`] to poll; the configuration is available
+    /// once the task completes.
+    pub async fn get_active_active(
+        &self,
+        subscription_id: i32,
+        region_id: i32,
+    ) -> Result<TaskStateUpdate> {
         self.client
             .get(&format!(
                 "/subscriptions/{subscription_id}/regions/{region_id}/private-link"
@@ -443,7 +449,7 @@ impl PrivateLinkHandler {
         subscription_id: i32,
         region_id: i32,
         request: &PrivateLinkCreateRequest,
-    ) -> Result<Value> {
+    ) -> Result<TaskStateUpdate> {
         self.client
             .post(
                 &format!("/subscriptions/{subscription_id}/regions/{region_id}/private-link"),
@@ -466,13 +472,13 @@ impl PrivateLinkHandler {
     ///
     /// # Returns
     ///
-    /// Returns the updated configuration
+    /// Returns a [`TaskStateUpdate`] to poll for completion.
     pub async fn add_principals_active_active(
         &self,
         subscription_id: i32,
         region_id: i32,
         request: &PrivateLinkAddPrincipalRequest,
-    ) -> Result<Value> {
+    ) -> Result<TaskStateUpdate> {
         self.client
             .post(
                 &format!(
@@ -497,13 +503,13 @@ impl PrivateLinkHandler {
     ///
     /// # Returns
     ///
-    /// Returns confirmation of deletion
+    /// Returns a [`TaskStateUpdate`] to poll the asynchronous deletion.
     pub async fn remove_principals_active_active(
         &self,
         subscription_id: i32,
         region_id: i32,
         request: &PrivateLinkRemovePrincipalRequest,
-    ) -> Result<Value> {
+    ) -> Result<TaskStateUpdate> {
         self.client
             .delete_with_body(
                 &format!(
@@ -527,12 +533,13 @@ impl PrivateLinkHandler {
     ///
     /// # Returns
     ///
-    /// Returns the endpoint creation script
+    /// Returns a [`TaskStateUpdate`]; the generated script is available once
+    /// the task completes.
     pub async fn get_endpoint_script_active_active(
         &self,
         subscription_id: i32,
         region_id: i32,
-    ) -> Result<Value> {
+    ) -> Result<TaskStateUpdate> {
         self.client
             .get(&format!(
                 "/subscriptions/{subscription_id}/regions/{region_id}/private-link/endpoint-script"
