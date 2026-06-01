@@ -412,23 +412,32 @@ pub struct DatabaseBackupConfig {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub interval: Option<String>,
 
-    /// Server-returned alias for `interval` (e.g. `"every-4-hours"`).
+    /// Alternate request field name for [`Self::interval`] that the API also
+    /// accepts (`backupInterval`). Prefer `interval`, which is the documented
+    /// form in the OpenAPI spec.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub backup_interval: Option<String>,
 
     /// Optional. Hour when the backup starts. Available only for "every-12-hours" and "every-24-hours" backup intervals. Specified as an hour in 24-hour UTC time. Example: "14:00" is 2 PM UTC.
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "timeUTC", skip_serializing_if = "Option::is_none")]
     pub time_utc: Option<String>,
 
-    /// Server-returned alias for `time_utc` (24-hour UTC time, e.g. `"14:00"`).
-    #[serde(skip_serializing_if = "Option::is_none")]
+    /// Alternate request field name for [`Self::time_utc`] that the API also
+    /// accepts (`databaseBackupTimeUTC`). Prefer `time_utc`, which is the
+    /// documented form in the OpenAPI spec.
+    #[serde(
+        rename = "databaseBackupTimeUTC",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub database_backup_time_utc: Option<String>,
 
     /// Required when active is 'true'. Type of storage to host backup files. Can be "aws-s3", "google-blob-storage", "azure-blob-storage", or "ftp". See [Set up backup storage locations](https://redis.io/docs/latest/operate/rc/databases/back-up-data/#set-up-backup-storage-locations) to learn how to set up backup storage locations.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub storage_type: Option<String>,
 
-    /// Server-returned alias for `storage_type`.
+    /// Alternate request field name for [`Self::storage_type`] that the API
+    /// also accepts (`backupStorageType`). Prefer `storage_type`, which is the
+    /// documented form in the OpenAPI spec.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub backup_storage_type: Option<String>,
 

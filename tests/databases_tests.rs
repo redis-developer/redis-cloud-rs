@@ -1113,3 +1113,62 @@ async fn test_stream_databases() {
     }
     assert_eq!(count, 2);
 }
+
+/// Lock the `DatabaseBackupConfig` wire field names to the OpenAPI spec.
+///
+/// Regression guard for #108: `time_utc`/`database_backup_time_utc` must
+/// serialize as `timeUTC`/`databaseBackupTimeUTC` (uppercase `UTC`), not the
+/// camelCase `timeUtc` that `rename_all` would otherwise produce — otherwise
+/// the backup start hour is silently dropped from create/update requests.
+#[test]
+fn test_backup_config_wire_field_names_match_spec() {
+    use redis_cloud::databases::DatabaseBackupConfig;
+
+    let config = DatabaseBackupConfig {
+        active: Some(true),
+        interval: Some("every-12-hours".to_string()),
+        backup_interval: Some("every-12-hours".to_string()),
+        time_utc: Some("14:00".to_string()),
+        database_backup_time_utc: Some("14:00".to_string()),
+        storage_type: Some("aws-s3".to_string()),
+        backup_storage_type: Some("aws-s3".to_string()),
+        storage_path: Some("s3://bucket/path".to_string()),
+    };
+
+    let value = serde_json::to_value(&config).unwrap();
+    let obj = value.as_object().unwrap();
+
+    // The two fields the bug was about: uppercase UTC, matching the spec.
+    assert!(
+        obj.contains_key("timeUTC"),
+        "expected key `timeUTC`, got {obj:?}"
+    );
+    assert!(
+        obj.contains_key("databaseBackupTimeUTC"),
+        "expected key `databaseBackupTimeUTC`, got {obj:?}"
+    );
+    // The camelCase forms must NOT appear (they would be silently ignored by the API).
+    assert!(!obj.contains_key("timeUtc"));
+    assert!(!obj.contains_key("databaseBackupTimeUtc"));
+
+    // The rest follow plain camelCase, matching the spec.
+    for key in [
+        "active",
+        "interval",
+        "backupInterval",
+        "storageType",
+        "backupStorageType",
+        "storagePath",
+    ] {
+        assert!(obj.contains_key(key), "expected key `{key}`, got {obj:?}");
+    }
+
+    // Round-trips from the spec's wire names back into the typed fields.
+    let parsed: DatabaseBackupConfig = serde_json::from_value(json!({
+        "timeUTC": "09:00",
+        "databaseBackupTimeUTC": "09:00"
+    }))
+    .unwrap();
+    assert_eq!(parsed.time_utc.as_deref(), Some("09:00"));
+    assert_eq!(parsed.database_backup_time_utc.as_deref(), Some("09:00"));
+}

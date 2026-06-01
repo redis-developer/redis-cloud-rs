@@ -45,6 +45,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     HATEOAS envelope). The key/value request pair is now `types::Tag`.
     `flexible::databases` and `fixed::databases` re-export these.
 
+### Fixed
+
+- `DatabaseBackupConfig::time_utc` and `database_backup_time_utc` now serialize
+  as `timeUTC` / `databaseBackupTimeUTC` (uppercase `UTC`) to match the OpenAPI
+  spec ([#108](https://github.com/redis-developer/redis-cloud-rs/issues/108)).
+  The previous camelCase (`timeUtc`) did not match the API, so a backup start
+  hour set on a create/update request was silently dropped. Also corrected the
+  docs on the paired `backup_interval`/`database_backup_time_utc`/
+  `backup_storage_type` fields: they are alternate **request** field names the
+  API accepts, not server-returned aliases (investigation from #97).
+
 ## [0.9.5](https://github.com/redis-developer/redis-cloud-rs/compare/v0.9.4...v0.9.5) - 2026-02-06
 
 ### Fixed
