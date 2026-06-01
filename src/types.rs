@@ -263,6 +263,39 @@ pub struct CloudTags {
     pub links: Option<Vec<Link>>,
 }
 
+/// Traffic state for a database, returned by the `.../traffic` endpoints.
+///
+/// Matches the `DatabaseTrafficStateResponse` schema. Reports whether traffic
+/// to the database is currently stopped and, if so, whether it can be resumed.
+/// Shared by the Pro and Essentials (fixed) database traffic endpoints.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DatabaseTrafficStateResponse {
+    /// Database (BDB) ID the traffic state applies to.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub bdb_id: Option<i32>,
+
+    /// Current traffic status (e.g. `"active"`, `"stopped"`).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub traffic_status: Option<String>,
+
+    /// Whether traffic can currently be resumed.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub can_resume: Option<bool>,
+
+    /// Whether a resume operation is already in progress.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub resume_in_progress: Option<bool>,
+
+    /// Reason traffic was stopped, when applicable.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub stop_reason: Option<String>,
+
+    /// Timestamp from which traffic becomes eligible to resume.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub resume_eligible_at: Option<String>,
+}
+
 // ============================================================================
 // Common Response Types
 // ============================================================================

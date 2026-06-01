@@ -501,3 +501,62 @@ async fn test_error_handling_500() {
         _ => panic!("Expected InternalServerError error"),
     }
 }
+
+#[tokio::test]
+async fn test_get_fixed_database_traffic() {
+    let mock_server = MockServer::start().await;
+
+    Mock::given(method("GET"))
+        .and(path("/fixed/subscriptions/123/databases/456/traffic"))
+        .and(header("x-api-key", "test-key"))
+        .and(header("x-api-secret-key", "test-secret"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "bdbId": 456,
+            "trafficStatus": "active",
+            "canResume": false,
+            "resumeInProgress": false
+        })))
+        .mount(&mock_server)
+        .await;
+
+    let client = CloudClient::builder()
+        .api_key("test-key".to_string())
+        .api_secret("test-secret".to_string())
+        .base_url(mock_server.uri())
+        .build()
+        .unwrap();
+
+    let handler = FixedDatabaseHandler::new(client);
+    let result = handler.get_traffic(123, 456).await.unwrap();
+
+    assert_eq!(result.bdb_id, Some(456));
+    assert_eq!(result.traffic_status.as_deref(), Some("active"));
+    assert_eq!(result.can_resume, Some(false));
+}
+
+#[tokio::test]
+async fn test_resume_fixed_database_traffic() {
+    let mock_server = MockServer::start().await;
+
+    // The resume endpoint returns 204 No Content (empty body).
+    Mock::given(method("POST"))
+        .and(path(
+            "/fixed/subscriptions/123/databases/456/traffic/resume",
+        ))
+        .and(header("x-api-key", "test-key"))
+        .and(header("x-api-secret-key", "test-secret"))
+        .respond_with(ResponseTemplate::new(204))
+        .mount(&mock_server)
+        .await;
+
+    let client = CloudClient::builder()
+        .api_key("test-key".to_string())
+        .api_secret("test-secret".to_string())
+        .base_url(mock_server.uri())
+        .build()
+        .unwrap();
+
+    let handler = FixedDatabaseHandler::new(client);
+    // Empty 204 body must deserialize cleanly into `()`.
+    handler.resume_traffic(123, 456).await.unwrap();
+}

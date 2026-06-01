@@ -26,8 +26,8 @@
 //! - `PUT    /subscriptions/{subscriptionId}/peerings/{peeringId}`
 //! - `DELETE /subscriptions/{subscriptionId}/peerings/{peeringId}`
 //!
-//! Active-Active subscriptions expose the same surface scoped to a
-//! region under `/subscriptions/{subscriptionId}/regions/{regionId}/...`.
+//! Active-Active subscriptions peer each region independently under
+//! `/subscriptions/{subscriptionId}/regions/peerings[/{peeringId}]`.
 //!
 //! # Example
 //!
@@ -153,6 +153,109 @@ impl VpcPeeringCreateRequest {
 
 /// Base VPC peering creation request (for backward compatibility)
 pub type VpcPeeringCreateBaseRequest = VpcPeeringCreateRequest;
+
+/// Active-Active VPC peering creation request.
+///
+/// The Redis Cloud API documents this as a `oneOf` between an AWS-shaped body
+/// (requiring `sourceRegion`, `destinationRegion`, `awsAccountId`, `vpcId`) and
+/// a GCP-shaped body (requiring `sourceRegion`, `vpcProjectUid`,
+/// `vpcNetworkName`). Like [`VpcPeeringCreateRequest`], both providers live in
+/// one struct and use `#[serde(rename = ...)]` so each field serializes to the
+/// **exact wire name the spec requires**. Use [`Self::for_aws`] or
+/// [`Self::for_gcp`] to construct provider-targeted bodies that avoid mixing
+/// fields.
+///
+/// A type-safe enum split that prevents AWS+GCP field mixing at compile time is
+/// tracked as a follow-on under #65.
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ActiveActiveVpcPeeringCreateRequest {
+    /// Cloud provider discriminator (e.g. "AWS", "GCP").
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub provider: Option<String>,
+
+    /// Read-only on the response; populated by the server.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub command_type: Option<String>,
+
+    /// Name of the region to create the VPC peering from. Required for both
+    /// providers.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub source_region: Option<String>,
+
+    // ------- AWS body -------
+    /// Name of the region to create the VPC peering to. AWS only; required.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub destination_region: Option<String>,
+
+    /// AWS account ID (spec required for AWS).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub aws_account_id: Option<String>,
+
+    /// AWS VPC ID (spec required for AWS).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub vpc_id: Option<String>,
+
+    /// VPC CIDR. AWS only; optional.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub vpc_cidr: Option<String>,
+
+    /// List of VPC CIDRs. AWS only; optional.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub vpc_cidrs: Option<Vec<String>>,
+
+    // ------- GCP body -------
+    /// GCP project UID. Wire name: `vpcProjectUid` (spec required for GCP).
+    #[serde(rename = "vpcProjectUid", skip_serializing_if = "Option::is_none")]
+    pub gcp_project_id: Option<String>,
+
+    /// GCP network name. Wire name: `vpcNetworkName` (spec required for GCP).
+    #[serde(rename = "vpcNetworkName", skip_serializing_if = "Option::is_none")]
+    pub network_name: Option<String>,
+}
+
+impl ActiveActiveVpcPeeringCreateRequest {
+    /// Construct an AWS-targeted Active-Active VPC peering creation body.
+    ///
+    /// Pre-populates `provider = "AWS"` and the four required AWS fields
+    /// (`sourceRegion`, `destinationRegion`, `awsAccountId`, `vpcId`). Optional
+    /// CIDR fields can be set directly on the returned struct.
+    #[must_use]
+    pub fn for_aws(
+        source_region: impl Into<String>,
+        destination_region: impl Into<String>,
+        aws_account_id: impl Into<String>,
+        vpc_id: impl Into<String>,
+    ) -> Self {
+        Self {
+            provider: Some("AWS".to_string()),
+            source_region: Some(source_region.into()),
+            destination_region: Some(destination_region.into()),
+            aws_account_id: Some(aws_account_id.into()),
+            vpc_id: Some(vpc_id.into()),
+            ..Self::default()
+        }
+    }
+
+    /// Construct a GCP-targeted Active-Active VPC peering creation body.
+    ///
+    /// Pre-populates `provider = "GCP"` and the three required GCP fields
+    /// (`sourceRegion`, `vpcProjectUid`, `vpcNetworkName`).
+    #[must_use]
+    pub fn for_gcp(
+        source_region: impl Into<String>,
+        project_uid: impl Into<String>,
+        network_name: impl Into<String>,
+    ) -> Self {
+        Self {
+            provider: Some("GCP".to_string()),
+            source_region: Some(source_region.into()),
+            gcp_project_id: Some(project_uid.into()),
+            network_name: Some(network_name.into()),
+            ..Self::default()
+        }
+    }
+}
 
 /// VPC peering update request for AWS
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -424,48 +527,70 @@ impl VpcPeeringHandler {
     // Active-Active VPC Peering
     // ========================================================================
     //
-    // Note: Active-Active VPC peering uses the same API endpoints as standard
-    // VPC peering. These methods are provided for API consistency and to match
-    // the naming convention used by other connectivity handlers.
+    // Active-Active subscriptions peer each region independently under
+    // `/subscriptions/{subscriptionId}/regions/peerings`, a distinct surface
+    // from the standard VPC peering endpoints above.
 
-    /// Get Active-Active VPC peerings
+    /// Get Active-Active VPC peerings for a subscription.
     ///
-    /// Note: Uses the same endpoint as standard VPC peering.
+    /// GET /subscriptions/{subscriptionId}/regions/peerings
     pub async fn get_active_active(&self, subscription_id: i32) -> Result<TaskStateUpdate> {
-        self.get(subscription_id).await
+        self.client
+            .get(&format!(
+                "/subscriptions/{subscription_id}/regions/peerings"
+            ))
+            .await
     }
 
-    /// Create Active-Active VPC peering
+    /// Create an Active-Active VPC peering.
     ///
-    /// Note: Uses the same endpoint as standard VPC peering.
+    /// POST /subscriptions/{subscriptionId}/regions/peerings
+    ///
+    /// Use [`ActiveActiveVpcPeeringCreateRequest::for_aws`] or
+    /// [`ActiveActiveVpcPeeringCreateRequest::for_gcp`] to build a
+    /// provider-targeted body with the spec's required fields.
     pub async fn create_active_active(
         &self,
         subscription_id: i32,
-        request: &VpcPeeringCreateRequest,
+        request: &ActiveActiveVpcPeeringCreateRequest,
     ) -> Result<TaskStateUpdate> {
-        self.create(subscription_id, request).await
+        self.client
+            .post(
+                &format!("/subscriptions/{subscription_id}/regions/peerings"),
+                request,
+            )
+            .await
     }
 
-    /// Delete Active-Active VPC peering
+    /// Update an Active-Active VPC peering's CIDR list.
     ///
-    /// Note: Uses the same endpoint as standard VPC peering.
+    /// PUT /subscriptions/{subscriptionId}/regions/peerings/{peeringId}
+    pub async fn update_active_active(
+        &self,
+        subscription_id: i32,
+        peering_id: i32,
+        request: &VpcPeeringUpdateAwsRequest,
+    ) -> Result<TaskStateUpdate> {
+        self.client
+            .put(
+                &format!("/subscriptions/{subscription_id}/regions/peerings/{peering_id}"),
+                request,
+            )
+            .await
+    }
+
+    /// Delete an Active-Active VPC peering by its peering ID.
+    ///
+    /// DELETE /subscriptions/{subscriptionId}/regions/peerings/{peeringId}
     pub async fn delete_active_active(
         &self,
         subscription_id: i32,
         peering_id: i32,
     ) -> Result<TaskStateUpdate> {
-        self.delete(subscription_id, peering_id).await
-    }
-
-    /// Update Active-Active VPC peering
-    ///
-    /// Note: Uses the same endpoint as standard VPC peering.
-    pub async fn update_active_active(
-        &self,
-        subscription_id: i32,
-        peering_id: i32,
-        request: &VpcPeeringCreateRequest,
-    ) -> Result<TaskStateUpdate> {
-        self.update(subscription_id, peering_id, request).await
+        self.client
+            .delete_typed(&format!(
+                "/subscriptions/{subscription_id}/regions/peerings/{peering_id}"
+            ))
+            .await
     }
 }

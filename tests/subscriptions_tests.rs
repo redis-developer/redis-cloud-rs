@@ -668,3 +668,59 @@ async fn test_error_handling_500() {
         _ => panic!("Expected InternalServerError error"),
     }
 }
+
+#[tokio::test]
+async fn test_update_resource_tags() {
+    let mock_server = MockServer::start().await;
+
+    // The request must serialize tags under the `resourceTags` wire key.
+    let expected_body = json!({
+        "resourceTags": [
+            { "key": "env", "value": "prod" },
+            { "key": "team", "value": "data" }
+        ]
+    });
+
+    Mock::given(method("PUT"))
+        .and(path("/subscriptions/123/resource-tags"))
+        .and(body_json(&expected_body))
+        .and(header("x-api-key", "test-key"))
+        .and(header("x-api-secret-key", "test-secret"))
+        .respond_with(ResponseTemplate::new(202).set_body_json(json!({
+            "taskId": "task-update-tags",
+            "commandType": "SUBSCRIPTION_RESOURCE_TAGS_UPDATE",
+            "status": "processing-in-progress",
+            "description": "Updating resource tags"
+        })))
+        .mount(&mock_server)
+        .await;
+
+    let client = CloudClient::builder()
+        .api_key("test-key".to_string())
+        .api_secret("test-secret".to_string())
+        .base_url(mock_server.uri())
+        .build()
+        .unwrap();
+
+    let handler = SubscriptionsHandler::new(client);
+    let request = redis_cloud::subscriptions::SubscriptionResourceTagsUpdateRequest {
+        subscription_id: None,
+        resource_tags: vec![
+            redis_cloud::types::Tag {
+                key: "env".to_string(),
+                value: "prod".to_string(),
+                command_type: None,
+            },
+            redis_cloud::types::Tag {
+                key: "team".to_string(),
+                value: "data".to_string(),
+                command_type: None,
+            },
+        ],
+        command_type: None,
+    };
+
+    let result = handler.update_resource_tags(123, &request).await.unwrap();
+    assert_eq!(result.task_id.as_deref(), Some("task-update-tags"));
+    assert_eq!(result.status, Some(TaskStatus::ProcessingInProgress));
+}

@@ -35,7 +35,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `ConnectivityHandler::create_psc_endpoint` and `update_psc_service_endpoint`
     gained the corresponding `psc_service_id` parameter.
 
+- **Breaking:** the Active-Active VPC peering methods on `VpcPeeringHandler`
+  (`get_active_active`, `create_active_active`, `update_active_active`,
+  `delete_active_active`) previously delegated to the standard
+  `/subscriptions/{id}/peerings` endpoints; they now target the correct
+  `/subscriptions/{id}/regions/peerings[/{peeringId}]` spec surface
+  ([#72](https://github.com/redis-developer/redis-cloud-rs/issues/72)).
+  `create_active_active` now takes `&ActiveActiveVpcPeeringCreateRequest`
+  (was `&VpcPeeringCreateRequest`); `update_active_active` now takes
+  `&VpcPeeringUpdateAwsRequest`.
+
 ### Added
+
+- Implemented every remaining uncovered spec route, raising route coverage to
+  **155/155 (100%)** and emptying the unsupported-route allowlist
+  ([#72](https://github.com/redis-developer/redis-cloud-rs/issues/72)). New
+  typed handler methods and request/response types:
+  - Active-Active VPC peering CRUD on `VpcPeeringHandler` (see the Changed note
+    above), with a new `ActiveActiveVpcPeeringCreateRequest`
+    (`for_aws` / `for_gcp` constructors).
+  - `PrivateLinkHandler::disassociate_connections`, `delete_active_active`, and
+    `disassociate_connections_active_active`, with new
+    `PrivateLinkConnectionsDisassociateRequest`,
+    `PrivateLinkActiveActiveConnectionsDisassociateRequest`, and
+    `PrivateLinkConnectionDisassociate` types.
+  - `PscHandler::get_endpoints` and `get_endpoints_active_active`
+    (`GET .../private-service-connect/{pscServiceId}`).
+  - `get_traffic` and `resume_traffic` on both the Pro and Essentials database
+    handlers, with a shared `types::DatabaseTrafficStateResponse`.
+  - `SubscriptionHandler::update_resource_tags`
+    (`PUT /subscriptions/{id}/resource-tags`) with a new
+    `SubscriptionResourceTagsUpdateRequest`.
 
 - Executable route-coverage checks between the typed client handlers and the
   bundled OpenAPI spec

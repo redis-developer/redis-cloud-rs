@@ -256,6 +256,21 @@ impl PscHandler {
             .await
     }
 
+    /// Get the endpoints of a Private Service Connect service.
+    ///
+    /// GET /subscriptions/{subscriptionId}/private-service-connect/{pscServiceId}
+    pub async fn get_endpoints(
+        &self,
+        subscription_id: i32,
+        psc_service_id: i32,
+    ) -> Result<TaskStateUpdate> {
+        self.client
+            .get(&format!(
+                "/subscriptions/{subscription_id}/private-service-connect/{psc_service_id}"
+            ))
+            .await
+    }
+
     /// Delete Private Service Connect endpoint
     pub async fn delete_endpoint(
         &self,
@@ -378,6 +393,23 @@ impl PscHandler {
                 ),
                 request,
             )
+            .await
+    }
+
+    /// Get the endpoints of an Active-Active Private Service Connect service
+    /// for a region.
+    ///
+    /// GET /subscriptions/{subscriptionId}/regions/{regionId}/private-service-connect/{pscServiceId}
+    pub async fn get_endpoints_active_active(
+        &self,
+        subscription_id: i32,
+        region_id: i32,
+        psc_service_id: i32,
+    ) -> Result<TaskStateUpdate> {
+        self.client
+            .get(&format!(
+                "/subscriptions/{subscription_id}/regions/{region_id}/private-service-connect/{psc_service_id}"
+            ))
             .await
     }
 

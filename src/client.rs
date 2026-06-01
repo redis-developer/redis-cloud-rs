@@ -791,8 +791,13 @@ impl CloudClient {
                 .await
                 .map_err(|e| RestError::ConnectionError(format!("Failed to read response: {e}")))?;
 
+            // Treat an empty success body (e.g. HTTP 204 No Content from the
+            // traffic-resume endpoints) as JSON `null` so it deserializes
+            // cleanly into `()`, `Option<T>`, or `serde_json::Value::Null`.
+            let bytes: &[u8] = if bytes.is_empty() { b"null" } else { &bytes };
+
             // Use serde_path_to_error for better deserialization error messages
-            let deserializer = &mut serde_json::Deserializer::from_slice(&bytes);
+            let deserializer = &mut serde_json::Deserializer::from_slice(bytes);
             serde_path_to_error::deserialize(deserializer).map_err(|err| {
                 let path = err.path().to_string();
                 // Use ConnectionError to provide detailed error message with field path
