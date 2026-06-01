@@ -146,9 +146,9 @@ impl ConnectivityHandler {
     /// Delete a VPC peering by its peering ID.
     ///
     /// `DELETE /subscriptions/{subscriptionId}/peerings/{peeringId}`.
-    /// Delegates to [`VpcPeeringHandler::delete`], which currently returns
-    /// `serde_json::Value::Null`. Typing the deletion response is tracked as
-    /// a follow-on under #78.
+    /// Delegates to [`VpcPeeringHandler::delete`]. The deletion is asynchronous;
+    /// the returned [`TaskStateUpdate`](crate::types::TaskStateUpdate) carries a
+    /// `task_id` that can be polled to completion.
     ///
     /// # Errors
     ///
@@ -158,7 +158,7 @@ impl ConnectivityHandler {
         &self,
         subscription_id: i32,
         peering_id: i32,
-    ) -> crate::Result<serde_json::Value> {
+    ) -> crate::Result<crate::types::TaskStateUpdate> {
         self.vpc_peering.delete(subscription_id, peering_id).await
     }
 
@@ -230,9 +230,10 @@ impl ConnectivityHandler {
     /// Delete the Private Service Connect service for a Pro subscription.
     ///
     /// `DELETE /subscriptions/{subscriptionId}/private-service-connect`.
-    /// Delegates to [`PscHandler::delete_service`]. Currently returns
-    /// `serde_json::Value::Null`; typing the deletion response is tracked
-    /// under #78.
+    /// Delegates to [`PscHandler::delete_service`]. The deletion is
+    /// asynchronous; the returned
+    /// [`TaskStateUpdate`](crate::types::TaskStateUpdate) carries a `task_id`
+    /// that can be polled to completion.
     ///
     /// # Errors
     ///
@@ -240,7 +241,7 @@ impl ConnectivityHandler {
     pub async fn delete_psc_service(
         &self,
         subscription_id: i32,
-    ) -> crate::Result<serde_json::Value> {
+    ) -> crate::Result<crate::types::TaskStateUpdate> {
         self.psc.delete_service(subscription_id).await
     }
 
@@ -303,9 +304,10 @@ impl ConnectivityHandler {
     /// Delete a Transit Gateway attachment by attachment ID.
     ///
     /// `DELETE /subscriptions/{subscriptionId}/transitGateways/{tgwId}`.
-    /// Delegates to [`TransitGatewayHandler::delete_attachment`]. Currently
-    /// returns `serde_json::Value::Null`; typing the deletion response is
-    /// tracked under #78.
+    /// Delegates to [`TransitGatewayHandler::delete_attachment`]. The deletion
+    /// is asynchronous; the returned
+    /// [`TaskStateUpdate`](crate::types::TaskStateUpdate) carries a `task_id`
+    /// that can be polled to completion.
     ///
     /// # Errors
     ///
@@ -315,7 +317,7 @@ impl ConnectivityHandler {
         &self,
         subscription_id: i32,
         attachment_id: i32,
-    ) -> crate::Result<serde_json::Value> {
+    ) -> crate::Result<crate::types::TaskStateUpdate> {
         self.transit_gateway
             .delete_attachment(subscription_id, attachment_id.to_string())
             .await

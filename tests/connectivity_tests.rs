@@ -97,8 +97,9 @@ async fn test_delete_vpc_peering() {
     let handler = ConnectivityHandler::new(client);
     let result = handler.delete_vpc_peering(123, 456).await.unwrap();
 
-    // Delete methods now return serde_json::Value::Null
-    assert_eq!(result, serde_json::Value::Null);
+    // Deletes are asynchronous and return the task to poll.
+    assert_eq!(result.task_id.as_deref(), Some("task-delete-peering"));
+    assert_eq!(result.command_type.as_deref(), Some("DELETE_VPC_PEERING"));
 }
 
 #[tokio::test]
@@ -398,8 +399,9 @@ async fn test_delete_psc_service() {
     let handler = ConnectivityHandler::new(client);
     let result = handler.delete_psc_service(123).await.unwrap();
 
-    // Delete methods now return serde_json::Value::Null
-    assert_eq!(result, serde_json::Value::Null);
+    // Deletes are asynchronous and return the task to poll.
+    assert_eq!(result.task_id.as_deref(), Some("task-delete-psc"));
+    assert_eq!(result.command_type.as_deref(), Some("DELETE_PSC_SERVICE"));
 }
 
 #[tokio::test]
@@ -517,8 +519,12 @@ async fn test_delete_tgw() {
     let handler = ConnectivityHandler::new(client);
     let result = handler.delete_tgw_attachment(123, 456).await.unwrap();
 
-    // Delete methods now return serde_json::Value::Null
-    assert_eq!(result, serde_json::Value::Null);
+    // Deletes are asynchronous and return the task to poll.
+    assert_eq!(result.task_id.as_deref(), Some("task-delete-tgw"));
+    assert_eq!(
+        result.command_type.as_deref(),
+        Some("DELETE_TGW_ATTACHMENT")
+    );
 }
 
 #[tokio::test]

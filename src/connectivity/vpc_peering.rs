@@ -397,13 +397,12 @@ impl VpcPeeringHandler {
     }
 
     /// Delete VPC peering
-    pub async fn delete(&self, subscription_id: i32, peering_id: i32) -> Result<serde_json::Value> {
+    pub async fn delete(&self, subscription_id: i32, peering_id: i32) -> Result<TaskStateUpdate> {
         self.client
-            .delete(&format!(
+            .delete_typed(&format!(
                 "/subscriptions/{subscription_id}/peerings/{peering_id}"
             ))
-            .await?;
-        Ok(serde_json::Value::Null)
+            .await
     }
 
     /// Update VPC peering
@@ -454,7 +453,7 @@ impl VpcPeeringHandler {
         &self,
         subscription_id: i32,
         peering_id: i32,
-    ) -> Result<serde_json::Value> {
+    ) -> Result<TaskStateUpdate> {
         self.delete(subscription_id, peering_id).await
     }
 

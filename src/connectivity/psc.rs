@@ -212,13 +212,12 @@ impl PscHandler {
     // ========================================================================
 
     /// Delete Private Service Connect service
-    pub async fn delete_service(&self, subscription_id: i32) -> Result<serde_json::Value> {
+    pub async fn delete_service(&self, subscription_id: i32) -> Result<TaskStateUpdate> {
         self.client
-            .delete(&format!(
+            .delete_typed(&format!(
                 "/subscriptions/{subscription_id}/private-service-connect"
             ))
-            .await?;
-        Ok(serde_json::Value::Null)
+            .await
     }
 
     /// Get Private Service Connect service
@@ -268,13 +267,12 @@ impl PscHandler {
         &self,
         subscription_id: i32,
         endpoint_id: i32,
-    ) -> Result<serde_json::Value> {
+    ) -> Result<TaskStateUpdate> {
         self.client
-            .delete(&format!(
+            .delete_typed(&format!(
                 "/subscriptions/{subscription_id}/private-service-connect/endpoints/{endpoint_id}"
             ))
-            .await?;
-        Ok(serde_json::Value::Null)
+            .await
     }
 
     /// Update Private Service Connect endpoint
@@ -330,13 +328,12 @@ impl PscHandler {
     pub async fn delete_service_active_active(
         &self,
         subscription_id: i32,
-    ) -> Result<serde_json::Value> {
+    ) -> Result<TaskStateUpdate> {
         self.client
-            .delete(&format!(
+            .delete_typed(&format!(
                 "/subscriptions/{subscription_id}/regions/private-service-connect"
             ))
-            .await?;
-        Ok(serde_json::Value::Null)
+            .await
     }
 
     /// Get Active-Active PSC service
@@ -395,13 +392,10 @@ impl PscHandler {
         subscription_id: i32,
         region_id: i32,
         endpoint_id: i32,
-    ) -> Result<serde_json::Value> {
-        self.client
-            .delete(&format!(
+    ) -> Result<TaskStateUpdate> {
+        self.client.delete_typed(&format!(
                 "/subscriptions/{subscription_id}/regions/{region_id}/private-service-connect/endpoints/{endpoint_id}"
-            ))
-            .await?;
-        Ok(serde_json::Value::Null)
+            )).await
     }
 
     /// Update Active-Active PSC endpoint
