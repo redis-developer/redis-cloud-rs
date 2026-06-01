@@ -49,7 +49,8 @@
 //! # }
 //! ```
 
-use crate::types::{Link, ProcessorResponse};
+use crate::types::Link;
+pub use crate::types::TaskStateUpdate;
 use crate::{CloudClient, Result};
 use serde::{Deserialize, Serialize};
 use typed_builder::TypedBuilder;
@@ -414,40 +415,6 @@ pub struct FixedSubscription {
     /// Aggregate status of databases in this subscription.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub database_status: Option<String>,
-
-    /// HATEOAS links
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub links: Option<Vec<Link>>,
-}
-
-/// `TaskStateUpdate`
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct TaskStateUpdate {
-    /// Task identifier.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub task_id: Option<String>,
-
-    /// Read-only on the response; populated by the server with the
-    /// operation type (e.g. `"CREATE_FIXED_SUBSCRIPTION"`).
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub command_type: Option<String>,
-
-    /// Current task status (e.g. `"processing-in-progress"`, `"processing-completed"`).
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub status: Option<String>,
-
-    /// Human-readable description of the current task state.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub description: Option<String>,
-
-    /// Timestamp of the latest task state update.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub timestamp: Option<String>,
-
-    /// Task response payload from the processor.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub response: Option<ProcessorResponse>,
 
     /// HATEOAS links
     #[serde(skip_serializing_if = "Option::is_none")]

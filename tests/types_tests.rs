@@ -12,6 +12,7 @@ fn test_task_state_update_serialization() {
         status: Some(TaskStatus::ProcessingInProgress),
         description: Some("Creating database".to_string()),
         timestamp: Some("2023-12-01T10:00:00Z".to_string()),
+        progress: None,
         response: None,
         links: None,
     };
@@ -104,26 +105,46 @@ fn test_processor_response_with_resource() {
 }
 
 #[test]
-fn test_cloud_tags() {
-    let tags = CloudTags {
-        tags: vec![
-            CloudTag {
-                key: "environment".to_string(),
-                value: "production".to_string(),
-            },
-            CloudTag {
-                key: "team".to_string(),
-                value: "platform".to_string(),
-            },
-        ],
+fn test_tag_round_trip() {
+    // `Tag` is the key/value pair used in request bodies.
+    let tag = Tag {
+        key: "environment".to_string(),
+        value: "production".to_string(),
+        command_type: None,
     };
 
-    let json_str = serde_json::to_string(&tags).unwrap();
-    let parsed: CloudTags = serde_json::from_str(&json_str).unwrap();
+    let json_str = serde_json::to_string(&tag).unwrap();
+    // command_type is skipped when absent.
+    assert_eq!(json_str, r#"{"key":"environment","value":"production"}"#);
 
-    assert_eq!(parsed.tags.len(), 2);
-    assert_eq!(parsed.tags[0].key, "environment");
-    assert_eq!(parsed.tags[0].value, "production");
+    let parsed: Tag = serde_json::from_str(&json_str).unwrap();
+    assert_eq!(parsed.key, "environment");
+    assert_eq!(parsed.value, "production");
+}
+
+#[test]
+fn test_cloud_tag_response_shape() {
+    // `CloudTag` is the richer shape the database tag endpoints return.
+    let json = json!({
+        "key": "team",
+        "value": "platform",
+        "createdAt": "2023-12-01T10:00:00Z",
+        "updatedAt": "2023-12-02T10:00:00Z",
+        "links": []
+    });
+    let tag: CloudTag = serde_json::from_value(json).unwrap();
+    assert_eq!(tag.key.as_deref(), Some("team"));
+    assert_eq!(tag.value.as_deref(), Some("platform"));
+    assert_eq!(tag.created_at.as_deref(), Some("2023-12-01T10:00:00Z"));
+    assert_eq!(tag.updated_at.as_deref(), Some("2023-12-02T10:00:00Z"));
+
+    // `CloudTags` is the HATEOAS envelope returned by the listing endpoint.
+    let tags: CloudTags = serde_json::from_value(json!({
+        "accountId": 42,
+        "links": []
+    }))
+    .unwrap();
+    assert_eq!(tags.account_id, Some(42));
 }
 
 #[test]
@@ -266,16 +287,13 @@ fn test_deserialize_real_task_response() {
 #[test]
 fn test_extra_fields_ignored() {
     let json = json!({
-        "tags": [
-            {"key": "env", "value": "prod"}
-        ],
+        "accountId": 7,
+        "links": [],
         "unknownField": "someValue",
         "anotherField": 123
     });
 
     // Unknown fields should be ignored without causing errors
     let tags: CloudTags = serde_json::from_value(json).unwrap();
-    assert_eq!(tags.tags.len(), 1);
-    assert_eq!(tags.tags[0].key, "env");
-    assert_eq!(tags.tags[0].value, "prod");
+    assert_eq!(tags.account_id, Some(7));
 }

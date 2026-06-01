@@ -51,7 +51,8 @@
 //! # }
 //! ```
 
-use crate::types::{Link, ProcessorResponse};
+use crate::types::Link;
+pub use crate::types::{CloudTag, CloudTags, Tag, TaskStateUpdate};
 use crate::{CloudClient, Result};
 use async_stream::try_stream;
 use futures_core::Stream;
@@ -173,22 +174,6 @@ pub struct DatabaseTagUpdateRequest {
     pub command_type: Option<String>,
 }
 
-/// Database tag
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct Tag {
-    /// Database tag key.
-    pub key: String,
-
-    /// Database tag value.
-    pub value: String,
-
-    /// Read-only on the response; populated by the server with the
-    /// operation type (e.g. `"CREATE_DATABASE_TAG"`).
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub command_type: Option<String>,
-}
-
 /// Active-Active database flush request message
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -259,31 +244,6 @@ pub struct DatabaseSyncSourceSpec {
 pub struct DatabaseCertificateSpec {
     /// Client certificate public key in PEM format, with new line characters replaced with '\n'.
     pub public_certificate_pem_string: String,
-}
-
-/// Database tag
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct CloudTag {
-    /// Database tag key.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub key: Option<String>,
-
-    /// Database tag value.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub value: Option<String>,
-
-    /// Timestamp when the tag was created.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub created_at: Option<String>,
-
-    /// Timestamp when the tag was last updated.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub updated_at: Option<String>,
-
-    /// HATEOAS links
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub links: Option<Vec<Link>>,
 }
 
 /// `BdbVersionUpgradeStatus`
@@ -1216,19 +1176,6 @@ pub struct DatabaseImportRequest {
     pub command_type: Option<String>,
 }
 
-/// Redis list of database tags
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct CloudTags {
-    /// Account ID owning the tags.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub account_id: Option<i32>,
-
-    /// HATEOAS links
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub links: Option<Vec<Link>>,
-}
-
 /// Upgrades the specified Pro database to a later Redis version.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -1297,40 +1244,6 @@ pub struct LocalRegionProperties {
     /// Optional. Redis Serialization Protocol version for this region. Must be compatible with Redis version.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub resp_version: Option<String>,
-}
-
-/// `TaskStateUpdate`
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct TaskStateUpdate {
-    /// Task identifier.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub task_id: Option<String>,
-
-    /// Read-only on the response; populated by the server with the
-    /// operation type (e.g. `"CREATE_DATABASE"`).
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub command_type: Option<String>,
-
-    /// Current task status (e.g. `"processing-in-progress"`, `"processing-completed"`).
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub status: Option<String>,
-
-    /// Human-readable description of the current task state.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub description: Option<String>,
-
-    /// Timestamp of the latest task state update.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub timestamp: Option<String>,
-
-    /// Task response payload from the processor.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub response: Option<ProcessorResponse>,
-
-    /// HATEOAS links
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub links: Option<Vec<Link>>,
 }
 
 /// Database update request

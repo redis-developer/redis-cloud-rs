@@ -14,6 +14,7 @@
 //! Pass `--watch` after the task id to poll every 5 seconds until the task
 //! reaches a terminal state.
 
+use redis_cloud::types::TaskStatus;
 use redis_cloud::{CloudClient, CloudError};
 
 #[tokio::main]
@@ -44,8 +45,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     println!("  {desc}");
                 }
                 let terminal = matches!(
-                    task.status.as_deref(),
-                    Some("completed") | Some("failed") | Some("error")
+                    task.status,
+                    Some(TaskStatus::ProcessingCompleted | TaskStatus::ProcessingError)
                 );
                 if !watch || terminal {
                     break;

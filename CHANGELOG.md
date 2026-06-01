@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Breaking:** consolidated shared task and tag models onto canonical types in
+  `crate::types` ([#64](https://github.com/redis-developer/redis-cloud-rs/issues/64)).
+  The per-module `TaskStateUpdate` copies (in `tasks`, `users`, `cloud_accounts`,
+  `acl`, `flexible::{subscriptions,databases}`, `fixed::{subscriptions,databases}`)
+  are now re-exports of `types::TaskStateUpdate`.
+  - `TaskStateUpdate::status` is now the typed `Option<TaskStatus>` enum instead
+    of `Option<String>`. Unrecognized wire values deserialize to
+    `TaskStatus::Unknown` rather than failing. `TaskStateUpdate` also gains a
+    `progress: Option<f64>` field.
+  - `types::CloudTag` and `types::CloudTags` now match the wire shapes the
+    database tag endpoints actually return (`CloudTag` carries
+    `created_at`/`updated_at`/`links`; `CloudTags` is the `account_id`/`links`
+    HATEOAS envelope). The key/value request pair is now `types::Tag`.
+    `flexible::databases` and `fixed::databases` re-export these.
+
 ## [0.9.5](https://github.com/redis-developer/redis-cloud-rs/compare/v0.9.4...v0.9.5) - 2026-02-06
 
 ### Fixed

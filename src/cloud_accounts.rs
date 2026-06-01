@@ -53,7 +53,8 @@
 //! # }
 //! ```
 
-use crate::types::{Link, ProcessorResponse};
+use crate::types::Link;
+pub use crate::types::TaskStateUpdate;
 use crate::{CloudClient, Result};
 use serde::{Deserialize, Serialize};
 
@@ -195,39 +196,6 @@ pub struct CloudAccounts {
     pub cloud_accounts: Option<Vec<CloudAccount>>,
 
     /// HATEOAS links for API navigation
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub links: Option<Vec<Link>>,
-}
-
-/// Task state update response
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct TaskStateUpdate {
-    /// Task ID (UUID)
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub task_id: Option<String>,
-
-    /// Command type
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub command_type: Option<String>,
-
-    /// Task status
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub status: Option<String>,
-
-    /// Task description
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub description: Option<String>,
-
-    /// Timestamp
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub timestamp: Option<String>,
-
-    /// Task response with resource info
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub response: Option<ProcessorResponse>,
-
-    /// HATEOAS links
     #[serde(skip_serializing_if = "Option::is_none")]
     pub links: Option<Vec<Link>>,
 }

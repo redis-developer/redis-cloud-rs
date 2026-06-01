@@ -1,3 +1,4 @@
+use redis_cloud::types::TaskStatus;
 use redis_cloud::{CloudClient, DatabaseHandler};
 use serde_json::json;
 use wiremock::matchers::{body_json, header, method, path, query_param};
@@ -62,7 +63,7 @@ async fn test_create_database() {
         .respond_with(ResponseTemplate::new(202).set_body_json(json!({
             "taskId": "task-create-db-123",
             "commandType": "CREATE_DATABASE",
-            "status": "processing",
+            "status": "processing-in-progress",
             "description": "Creating database",
             "timestamp": "2024-01-01T00:00:00Z",
             "response": {
@@ -119,7 +120,7 @@ async fn test_create_database() {
     let result = handler.create_database(123, &request).await.unwrap();
     assert_eq!(result.task_id, Some("task-create-db-123".to_string()));
     assert_eq!(result.command_type, Some("CREATE_DATABASE".to_string()));
-    assert_eq!(result.status, Some("processing".to_string()));
+    assert_eq!(result.status, Some(TaskStatus::ProcessingInProgress));
 }
 
 #[tokio::test]
@@ -692,7 +693,7 @@ async fn test_task_response_with_error() {
         .respond_with(ResponseTemplate::new(202).set_body_json(json!({
             "taskId": "task-failed-create",
             "commandType": "CREATE_DATABASE",
-            "status": "failed",
+            "status": "processing-error",
             "description": "Failed to create database",
             "response": {
                 "error": "Insufficient memory quota",
@@ -748,7 +749,7 @@ async fn test_task_response_with_error() {
 
     let result = handler.create_database(123, &request).await.unwrap();
     assert_eq!(result.task_id, Some("task-failed-create".to_string()));
-    assert_eq!(result.status, Some("failed".to_string()));
+    assert_eq!(result.status, Some(TaskStatus::ProcessingError));
     assert!(result.response.is_some());
 }
 

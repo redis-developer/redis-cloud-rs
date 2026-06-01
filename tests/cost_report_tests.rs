@@ -6,6 +6,7 @@
 //! (POST /cost-report) and `download_cost_report` (GET /cost-report/{id}).
 
 use redis_cloud::cost_report::CostReportCreateRequest;
+use redis_cloud::types::TaskStatus;
 use redis_cloud::{CloudClient, CostReportFormat, CostReportHandler, SubscriptionType};
 use serde_json::json;
 use wiremock::matchers::{body_json, header, method, path};
@@ -42,7 +43,7 @@ async fn test_generate_cost_report_happy_path() {
         .respond_with(ResponseTemplate::new(202).set_body_json(json!({
             "taskId": "cost-report-task-1",
             "commandType": "GENERATE_COST_REPORT",
-            "status": "processing",
+            "status": "processing-in-progress",
             "description": "Generating cost report",
             "timestamp": "2025-02-01T00:00:00Z"
         })))
@@ -53,7 +54,7 @@ async fn test_generate_cost_report_happy_path() {
     let task = handler.generate_cost_report(request).await.unwrap();
 
     assert_eq!(task.task_id, Some("cost-report-task-1".to_string()));
-    assert_eq!(task.status, Some("processing".to_string()));
+    assert_eq!(task.status, Some(TaskStatus::ProcessingInProgress));
     assert_eq!(task.command_type, Some("GENERATE_COST_REPORT".to_string()));
 }
 

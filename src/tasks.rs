@@ -32,6 +32,7 @@
 //!
 //! ```no_run
 //! use redis_cloud::{CloudClient, TaskHandler};
+//! use redis_cloud::types::TaskStatus;
 //!
 //! # async fn example() -> Result<(), Box<dyn std::error::Error>> {
 //! let client = CloudClient::builder()
@@ -45,7 +46,7 @@
 //! let task = handler.get_task_by_id("task-123".to_string()).await?;
 //!
 //! // Check if task is complete
-//! if task.status == Some("completed".to_string()) {
+//! if matches!(task.status, Some(TaskStatus::ProcessingCompleted)) {
 //!     println!("Task completed successfully");
 //!     if let Some(response) = task.response {
 //!         println!("Result: {:?}", response);
@@ -56,62 +57,12 @@
 //! ```
 
 use crate::error::CloudError;
-use crate::types::{Link, ProcessorResponse};
 use crate::{CloudClient, Result};
-use serde::{Deserialize, Serialize};
 
-// ============================================================================
-// Models
-// ============================================================================
-
-/// Wrapper response for `GET /tasks` per the OpenAPI spec (`TasksStateUpdate`).
-///
-/// Kept private because [`TasksHandler::get_all_tasks`] unwraps to the inner
-/// `Vec<TaskStateUpdate>` for caller ergonomics.
-#[derive(Debug, Clone, Deserialize)]
-struct TasksStateUpdate {
-    #[serde(default)]
-    tasks: Vec<TaskStateUpdate>,
-}
-
-/// Task state update
-///
-/// Represents the state and result of an asynchronous task
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct TaskStateUpdate {
-    /// Unique task identifier
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub task_id: Option<String>,
-
-    /// Type of command being executed (e.g., "`CREATE_DATABASE`", "`DELETE_SUBSCRIPTION`")
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub command_type: Option<String>,
-
-    /// Current task status (e.g., "processing", "completed", "failed")
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub status: Option<String>,
-
-    /// Human-readable description of the task
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub description: Option<String>,
-
-    /// Timestamp of last task update
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub timestamp: Option<String>,
-
-    /// Task completion percentage (0-100)
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub progress: Option<f64>,
-
-    /// Result data once task is completed
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub response: Option<ProcessorResponse>,
-
-    /// HATEOAS links for API navigation
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub links: Option<Vec<Link>>,
-}
+// Canonical task models live in `crate::types` (#64). Re-exported here so the
+// historical `tasks::TaskStateUpdate` path keeps resolving.
+pub use crate::types::TaskStateUpdate;
+use crate::types::TasksStateUpdate;
 
 // ============================================================================
 // Handler

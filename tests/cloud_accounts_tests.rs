@@ -1,3 +1,4 @@
+use redis_cloud::types::TaskStatus;
 use redis_cloud::{CloudAccountHandler, CloudClient};
 use serde_json::json;
 use wiremock::matchers::{header, method, path};
@@ -91,7 +92,7 @@ async fn test_create_cloud_account() {
         .respond_with(ResponseTemplate::new(202).set_body_json(json!({
             "taskId": "task-create-123",
             "commandType": "CREATE_CLOUD_ACCOUNT",
-            "status": "processing",
+            "status": "processing-in-progress",
             "description": "Creating cloud account",
             "timestamp": "2024-01-01T00:00:00Z",
             "response": {
@@ -126,7 +127,7 @@ async fn test_create_cloud_account() {
         result.command_type,
         Some("CREATE_CLOUD_ACCOUNT".to_string())
     );
-    assert_eq!(result.status, Some("processing".to_string()));
+    assert_eq!(result.status, Some(TaskStatus::ProcessingInProgress));
 }
 
 #[tokio::test]
@@ -262,7 +263,7 @@ async fn test_create_gcp_cloud_account() {
         .respond_with(ResponseTemplate::new(202).set_body_json(json!({
             "taskId": "task-gcp-123",
             "commandType": "CREATE_CLOUD_ACCOUNT",
-            "status": "processing",
+            "status": "processing-in-progress",
             "description": "Creating GCP cloud account",
             "timestamp": "2024-01-02T10:00:00Z",
             "response": {
@@ -298,7 +299,7 @@ async fn test_create_gcp_cloud_account() {
         result.command_type,
         Some("CREATE_CLOUD_ACCOUNT".to_string())
     );
-    assert_eq!(result.status, Some("processing".to_string()));
+    assert_eq!(result.status, Some(TaskStatus::ProcessingInProgress));
     assert!(result.response.is_some());
 
     let response = result.response.unwrap();
@@ -610,7 +611,7 @@ async fn test_task_state_update_with_failed_status() {
         .respond_with(ResponseTemplate::new(202).set_body_json(json!({
             "taskId": "task-failed-123",
             "commandType": "CREATE_CLOUD_ACCOUNT",
-            "status": "failed",
+            "status": "processing-error",
             "description": "Failed to create cloud account",
             "timestamp": "2024-01-01T15:00:00Z",
             "response": {
@@ -642,7 +643,7 @@ async fn test_task_state_update_with_failed_status() {
 
     let result = handler.create_cloud_account(&request).await.unwrap();
     assert_eq!(result.task_id, Some("task-failed-123".to_string()));
-    assert_eq!(result.status, Some("failed".to_string()));
+    assert_eq!(result.status, Some(TaskStatus::ProcessingError));
     assert_eq!(
         result.description,
         Some("Failed to create cloud account".to_string())
