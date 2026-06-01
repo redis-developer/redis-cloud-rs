@@ -222,13 +222,12 @@ impl TransitGatewayHandler {
         &self,
         subscription_id: i32,
         attachment_id: String,
-    ) -> Result<serde_json::Value> {
+    ) -> Result<TaskStateUpdate> {
         self.client
-            .delete(&format!(
+            .delete_typed(&format!(
                 "/subscriptions/{subscription_id}/transitGateways/{attachment_id}/attachment"
             ))
-            .await?;
-        Ok(serde_json::Value::Null)
+            .await
     }
 
     /// Create Transit Gateway attachment with `tgw_id` in path
@@ -350,13 +349,10 @@ impl TransitGatewayHandler {
         subscription_id: i32,
         region_id: i32,
         attachment_id: String,
-    ) -> Result<serde_json::Value> {
-        self.client
-            .delete(&format!(
+    ) -> Result<TaskStateUpdate> {
+        self.client.delete_typed(&format!(
                 "/subscriptions/{subscription_id}/regions/{region_id}/tgw/attachments/{attachment_id}"
-            ))
-            .await?;
-        Ok(serde_json::Value::Null)
+            )).await
     }
 
     /// Create Active-Active Transit Gateway attachment

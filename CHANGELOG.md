@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Breaking:** connectivity handlers now return `TaskStateUpdate` instead of
+  `serde_json::Value` for every endpoint the spec marks task-returning
+  ([#78](https://github.com/redis-developer/redis-cloud-rs/issues/78)). This
+  covers all 11 `private_link` methods, the PSC/Transit Gateway/VPC peering
+  deletes (which previously discarded the body and returned `Value::Null`), and
+  the corresponding `ConnectivityHandler` façade deletes. Callers can now poll
+  the returned `task_id` to completion instead of dropping to raw HTTP. Added
+  `CloudClient::delete_typed` for bodyless DELETEs that return a parsed body.
+
 - **Breaking:** consolidated shared task and tag models onto canonical types in
   `crate::types` ([#64](https://github.com/redis-developer/redis-cloud-rs/issues/64)).
   The per-module `TaskStateUpdate` copies (in `tasks`, `users`, `cloud_accounts`,

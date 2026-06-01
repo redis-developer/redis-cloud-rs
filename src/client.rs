@@ -589,6 +589,29 @@ impl CloudClient {
         }
     }
 
+    /// Execute a bodyless DELETE request, deserializing the response body.
+    ///
+    /// Unlike [`Self::delete`] (which discards the body) this parses the
+    /// response into `T`. Connectivity deletes are asynchronous and the spec
+    /// returns a [`TaskStateUpdate`](crate::types::TaskStateUpdate) so callers
+    /// can poll the resulting task to completion.
+    #[instrument(skip(self), fields(method = "DELETE"))]
+    pub async fn delete_typed<T: serde::de::DeserializeOwned>(&self, path: &str) -> Result<T> {
+        let url = self.normalize_url(path);
+        debug!("DELETE {}", url);
+
+        let response = self
+            .client
+            .delete(&url)
+            .header("x-api-key", &self.api_key)
+            .header("x-api-secret-key", &self.api_secret)
+            .send()
+            .await?;
+
+        trace!("Response status: {}", response.status());
+        self.handle_response(response).await
+    }
+
     /// Execute raw GET request returning JSON Value
     #[instrument(skip(self), fields(method = "GET"))]
     pub async fn get_raw(&self, path: &str) -> Result<serde_json::Value> {
