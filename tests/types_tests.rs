@@ -45,7 +45,7 @@ fn test_processor_response_with_error() {
         resource_id: None,
         additional_resource_id: None,
         resource: None,
-        error: Some("UNAUTHORIZED".to_string()),
+        error: Some(json!("UNAUTHORIZED")),
         additional_info: None,
     };
 
@@ -53,7 +53,27 @@ fn test_processor_response_with_error() {
     assert!(json_str.contains("\"UNAUTHORIZED\""));
 
     let parsed: ProcessorResponse = serde_json::from_str(&json_str).unwrap();
-    assert_eq!(parsed.error, Some("UNAUTHORIZED".to_string()));
+    assert_eq!(parsed.error, Some(json!("UNAUTHORIZED")));
+    assert_eq!(parsed.error_message().as_deref(), Some("UNAUTHORIZED"));
+}
+
+#[test]
+fn test_processor_response_with_error_object() {
+    // The Cloud API returns a structured error object on some task failures.
+    let parsed: ProcessorResponse = serde_json::from_value(json!({
+        "error": {
+            "type": "BACKUP_FAILED",
+            "status": "400 BAD_REQUEST",
+            "description": "Remote backup location is not configured"
+        }
+    }))
+    .unwrap();
+
+    assert!(parsed.error.as_ref().unwrap().is_object());
+    assert_eq!(
+        parsed.error_message().as_deref(),
+        Some("Remote backup location is not configured")
+    );
 }
 
 #[test]

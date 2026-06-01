@@ -650,7 +650,7 @@ async fn test_task_state_update_with_failed_status() {
     assert!(result.response.is_some());
 
     let response = result.response.unwrap();
-    assert_eq!(response.error, Some("Invalid credentials".to_string()));
+    assert_eq!(response.error, Some(json!("Invalid credentials")));
     assert_eq!(
         response.additional_info,
         Some("Access key validation failed".to_string())

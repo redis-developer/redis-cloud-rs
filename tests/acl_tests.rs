@@ -690,7 +690,7 @@ async fn test_task_state_update_with_error() {
     assert!(result.response.is_some());
 
     let response = result.response.unwrap();
-    assert_eq!(response.error, Some("Invalid rule pattern".to_string()));
+    assert_eq!(response.error, Some(json!("Invalid rule pattern")));
     assert_eq!(
         response.additional_info,
         Some("Rule pattern '+invalid' is not valid".to_string())
