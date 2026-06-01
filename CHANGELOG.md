@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Breaking:** reconciled the connectivity (Transit Gateway + Private Service
+  Connect) handler paths with the refreshed OpenAPI spec
+  ([#72](https://github.com/redis-developer/redis-cloud-rs/issues/72)). This
+  clears the entire non-spec route allowlist (22 → 0) and raises spec coverage
+  to 141/155. Signature/behavior changes:
+  - TGW invitation accept/reject now issue `PUT .../transitGateways/invitations/{id}/{accept,reject}`
+    (previously `POST .../tgw/shared-invitations/...`); `get_shared_invitations`
+    now hits `.../transitGateways/invitations`.
+  - Active-Active TGW methods (`get_attachments_active_active`,
+    `get_shared_invitations_active_active`) gained a `region_id` parameter, and
+    `create_attachment_active_active` / `update_attachment_cidrs_active_active` /
+    `delete_attachment_active_active` now use the spec
+    `.../regions/{regionId}/transitGateways/{tgwId}/attachment` shape (with a
+    `tgw_id` parameter where required).
+  - Removed `TransitGatewayHandler::create_attachment` (the no-id variant that
+    posted to the non-spec `.../transitGateways/attachments`); use
+    `create_attachment_with_id`.
+  - PSC endpoint operations (`create_endpoint`, `delete_endpoint`,
+    `update_endpoint`, creation/deletion scripts, and their Active-Active
+    variants) now take an explicit `psc_service_id` and target the spec
+    `.../private-service-connect/{pscServiceId}/endpoints/{endpointId}` shape;
+    the Active-Active service methods gained a `region_id` parameter. Removed
+    the non-spec `get_endpoints` / `get_endpoints_active_active` list methods.
+  - `ConnectivityHandler::create_psc_endpoint` and `update_psc_service_endpoint`
+    gained the corresponding `psc_service_id` parameter.
+
 ### Added
 
 - Executable route-coverage checks between the typed client handlers and the
