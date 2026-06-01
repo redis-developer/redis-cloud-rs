@@ -1,8 +1,21 @@
 # Redis Cloud API Fixtures
 
+## Contents
+
+- `cloud_openapi.json` — bundled Redis Cloud OpenAPI specification.
+- `openapi_unsupported_routes.txt` — spec routes with no typed client handler
+  yet (intentionally deferred). Enforced by `tests/openapi_route_coverage.rs`.
+- `openapi_non_spec_routes.txt` — typed client routes that don't match any spec
+  path (known drift). Also enforced by `tests/openapi_route_coverage.rs`.
+
+Both allowlists are intentional-exception lists: the coverage test fails if a
+new gap appears without an entry, **and** if an entry goes stale (the route got
+covered or the path was fixed). Shrinking them is tracked in #72.
+
 ## Current Status
 
-The Cloud API fixtures directory currently only contains the OpenAPI specification.
+Beyond the OpenAPI spec and route-coverage allowlists above, there are no
+captured response fixtures yet.
 
 ## Why No Real Fixtures Yet?
 

@@ -10,7 +10,7 @@ A comprehensive Rust client library for the Redis Cloud REST API, with Python bi
 
 ## Features
 
-- Complete coverage of Redis Cloud REST API endpoints
+- Broad coverage of Redis Cloud REST API endpoints, checked against the bundled OpenAPI spec in CI
 - Async/await support with tokio
 - Strong typing for API requests and responses
 - Comprehensive error handling
@@ -142,8 +142,14 @@ the Python surface as experimental for now.
 
 ## API Coverage
 
-The crate aims for comprehensive coverage of the documented Redis Cloud REST
-API surface. Handler organization:
+The crate covers most of the documented Redis Cloud REST API surface. Route
+coverage is enforced by an executable check
+([`tests/openapi_route_coverage.rs`](tests/openapi_route_coverage.rs)) that
+diffs the typed handlers against the bundled OpenAPI spec; the remaining
+deferred routes are tracked explicitly in
+[`tests/fixtures/openapi_unsupported_routes.txt`](tests/fixtures/openapi_unsupported_routes.txt).
+
+Handler organization:
 
 | Handler | Description |
 |---------|-------------|

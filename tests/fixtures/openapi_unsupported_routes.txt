@@ -1,0 +1,42 @@
+# Unsupported spec routes — OpenAPI operations not yet covered by a typed client handler.
+#
+# Each line is `METHOD /normalized/path` where `{}` is a path parameter.
+# The route-coverage test (tests/openapi_route_coverage.rs) treats these as
+# INTENTIONALLY deferred: a spec route is allowed to be uncovered only if it is
+# listed here. Reconciling and shrinking this list is tracked in #72.
+#
+# To remove an entry: implement the handler, then delete the line — the test
+# will fail if a listed route is actually covered (no stale entries allowed).
+DELETE /subscriptions/{}/private-service-connect/{}/endpoints/{}
+DELETE /subscriptions/{}/regions/peerings/{}
+DELETE /subscriptions/{}/regions/{}/private-link
+DELETE /subscriptions/{}/regions/{}/private-service-connect
+DELETE /subscriptions/{}/regions/{}/private-service-connect/{}/endpoints/{}
+DELETE /subscriptions/{}/regions/{}/transitGateways/{}/attachment
+GET /fixed/subscriptions/{}/databases/{}/traffic
+GET /subscriptions/{}/databases/{}/traffic
+GET /subscriptions/{}/private-service-connect/{}
+GET /subscriptions/{}/private-service-connect/{}/endpoints/{}/creationScripts
+GET /subscriptions/{}/private-service-connect/{}/endpoints/{}/deletionScripts
+GET /subscriptions/{}/regions/peerings
+GET /subscriptions/{}/regions/{}/private-service-connect
+GET /subscriptions/{}/regions/{}/private-service-connect/{}
+GET /subscriptions/{}/regions/{}/transitGateways
+GET /subscriptions/{}/regions/{}/transitGateways/invitations
+GET /subscriptions/{}/transitGateways/invitations
+POST /fixed/subscriptions/{}/databases/{}/traffic/resume
+POST /subscriptions/{}/databases/{}/traffic/resume
+POST /subscriptions/{}/private-link/connections/disassociate
+POST /subscriptions/{}/private-service-connect/{}
+POST /subscriptions/{}/regions/peerings
+POST /subscriptions/{}/regions/{}/private-link/connections/disassociate
+POST /subscriptions/{}/regions/{}/private-service-connect
+POST /subscriptions/{}/regions/{}/private-service-connect/{}
+POST /subscriptions/{}/regions/{}/transitGateways/{}/attachment
+PUT /subscriptions/{}/regions/peerings/{}
+PUT /subscriptions/{}/regions/{}/transitGateways/invitations/{}/accept
+PUT /subscriptions/{}/regions/{}/transitGateways/invitations/{}/reject
+PUT /subscriptions/{}/regions/{}/transitGateways/{}/attachment
+PUT /subscriptions/{}/resource-tags
+PUT /subscriptions/{}/transitGateways/invitations/{}/accept
+PUT /subscriptions/{}/transitGateways/invitations/{}/reject
