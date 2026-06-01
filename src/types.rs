@@ -108,13 +108,41 @@ pub struct ProcessorResponse {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub resource: Option<std::collections::HashMap<String, Value>>,
 
-    /// Error message, populated only when the task failed.
+    /// Error detail, populated only when the task failed.
+    ///
+    /// The Redis Cloud API returns this in two shapes depending on the
+    /// failure: sometimes a plain string, and sometimes a structured object
+    /// (e.g. `{"type": ..., "status": ..., "description": ...}`). It is kept
+    /// as a [`Value`] so both deserialize cleanly; use
+    /// [`ProcessorResponse::error_message`] to extract a human-readable string.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub error: Option<String>,
+    pub error: Option<Value>,
 
     /// Free-form additional context attached by the processor.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub additional_info: Option<String>,
+}
+
+impl ProcessorResponse {
+    /// Extract a human-readable error message from [`Self::error`], regardless
+    /// of whether the server returned a plain string or a structured object.
+    ///
+    /// For the object shape, prefers the `description`, then `message`, then
+    /// `error` keys; falls back to the compact JSON encoding if none are
+    /// present. Returns `None` when no error is set.
+    pub fn error_message(&self) -> Option<String> {
+        let error = self.error.as_ref()?;
+        match error {
+            Value::String(s) => Some(s.clone()),
+            Value::Object(map) => {
+                let field = ["description", "message", "error"]
+                    .iter()
+                    .find_map(|key| map.get(*key).and_then(Value::as_str));
+                Some(field.map_or_else(|| error.to_string(), str::to_string))
+            }
+            other => Some(other.to_string()),
+        }
+    }
 }
 
 /// Coarse subset of Redis Cloud's processor error codes.

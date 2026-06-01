@@ -237,7 +237,7 @@ pub struct TaskFixture {
     status: String,
     description: Option<String>,
     resource_id: Option<i32>,
-    error: Option<String>,
+    error: Option<Value>,
 }
 
 impl TaskFixture {
@@ -273,7 +273,7 @@ impl TaskFixture {
             status: "processing-error".to_string(),
             description: Some("Task failed".to_string()),
             resource_id: None,
-            error: Some(error.into()),
+            error: Some(Value::String(error.into())),
         }
     }
 
@@ -303,7 +303,14 @@ impl TaskFixture {
 
     /// Set an error message
     pub fn error(mut self, error: impl Into<String>) -> Self {
-        self.error = Some(error.into());
+        self.error = Some(Value::String(error.into()));
+        self
+    }
+
+    /// Set a structured error object, mirroring the shape Redis Cloud returns
+    /// for some task failures (e.g. `{"type", "status", "description"}`).
+    pub fn error_object(mut self, error: Value) -> Self {
+        self.error = Some(error);
         self
     }
 
@@ -326,7 +333,7 @@ impl TaskFixture {
             response["resourceId"] = json!(rid);
         }
         if let Some(err) = self.error {
-            response["error"] = json!(err);
+            response["error"] = err;
         }
         if !response.as_object().unwrap().is_empty() {
             task["response"] = response;

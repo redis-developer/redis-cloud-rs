@@ -254,6 +254,53 @@ async fn test_get_task_by_id_failed() {
     assert!(result.response.is_some());
 }
 
+// Regression: some task failures return `response.error` as a structured
+// object rather than a string (e.g. a failed `database backup`). Previously
+// `ProcessorResponse.error` was typed `Option<String>`, so deserializing the
+// task poll response blew up with "invalid type: map, expected a string",
+// masking the real failure. The field is now `Option<Value>`.
+#[tokio::test]
+async fn test_get_task_by_id_failed_with_error_object() {
+    let mock_server = MockServer::start().await;
+
+    Mock::given(method("GET"))
+        .and(path("/tasks/task-backup"))
+        .and(header("x-api-key", "test-key"))
+        .and(header("x-api-secret-key", "test-secret"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "taskId": "task-backup",
+            "commandType": "DATABASE_BACKUP",
+            "status": "processing-error",
+            "description": "Failed to backup database",
+            "timestamp": "2024-01-01T00:00:00Z",
+            "response": {
+                "error": {
+                    "type": "BACKUP_FAILED",
+                    "status": "400 BAD_REQUEST",
+                    "description": "Remote backup location is not configured"
+                }
+            }
+        })))
+        .mount(&mock_server)
+        .await;
+
+    let handler = TasksHandler::new(test_client(mock_server.uri()));
+    // Must not panic on deserialization.
+    let result = handler
+        .get_task_by_id("task-backup".to_string())
+        .await
+        .unwrap();
+
+    assert_eq!(result.status, Some("processing-error".to_string()));
+    let response = result.response.expect("response present");
+    // The structured object is preserved and a readable message is extracted.
+    assert!(response.error.as_ref().unwrap().is_object());
+    assert_eq!(
+        response.error_message().as_deref(),
+        Some("Remote backup location is not configured")
+    );
+}
+
 #[tokio::test]
 async fn test_error_handling_401() {
     let mock_server = MockServer::start().await;
