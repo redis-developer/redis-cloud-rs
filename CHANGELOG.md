@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Executable route-coverage checks between the typed client handlers and the
+  bundled OpenAPI spec
+  ([#67](https://github.com/redis-developer/redis-cloud-rs/issues/67)). A new
+  `tests/openapi_route_coverage.rs` extracts the client's routes from source and
+  diffs them against the spec; intentional gaps are tracked in two allowlists
+  (`tests/fixtures/openapi_unsupported_routes.txt`,
+  `openapi_non_spec_routes.txt`). CI now fails when a spec route becomes
+  uncovered — or a handler route goes off-spec — without an explicit entry, and
+  when an allowlist entry goes stale.
+
 ### Changed
 
 - **Breaking:** consolidated shared task and tag models onto canonical types in
