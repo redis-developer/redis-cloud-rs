@@ -239,24 +239,18 @@ impl PscHandler {
             .await
     }
 
-    /// Get Private Service Connect endpoints
-    pub async fn get_endpoints(&self, subscription_id: i32) -> Result<TaskStateUpdate> {
-        self.client
-            .get(&format!(
-                "/subscriptions/{subscription_id}/private-service-connect/endpoints"
-            ))
-            .await
-    }
-
-    /// Create Private Service Connect endpoint
+    /// Create a Private Service Connect endpoint under the given service.
     pub async fn create_endpoint(
         &self,
         subscription_id: i32,
+        psc_service_id: i32,
         request: &PscEndpointUpdateRequest,
     ) -> Result<TaskStateUpdate> {
         self.client
             .post(
-                &format!("/subscriptions/{subscription_id}/private-service-connect/endpoints"),
+                &format!(
+                    "/subscriptions/{subscription_id}/private-service-connect/{psc_service_id}"
+                ),
                 request,
             )
             .await
@@ -266,11 +260,12 @@ impl PscHandler {
     pub async fn delete_endpoint(
         &self,
         subscription_id: i32,
+        psc_service_id: i32,
         endpoint_id: i32,
     ) -> Result<TaskStateUpdate> {
         self.client
             .delete_typed(&format!(
-                "/subscriptions/{subscription_id}/private-service-connect/endpoints/{endpoint_id}"
+                "/subscriptions/{subscription_id}/private-service-connect/{psc_service_id}/endpoints/{endpoint_id}"
             ))
             .await
     }
@@ -279,11 +274,10 @@ impl PscHandler {
     pub async fn update_endpoint(
         &self,
         subscription_id: i32,
+        psc_service_id: i32,
         endpoint_id: i32,
         request: &PscEndpointUpdateRequest,
     ) -> Result<TaskStateUpdate> {
-        // Use psc_service_id from request
-        let psc_service_id = request.psc_service_id;
         self.client
             .put(
                 &format!(
@@ -298,11 +292,12 @@ impl PscHandler {
     pub async fn get_endpoint_creation_script(
         &self,
         subscription_id: i32,
+        psc_service_id: i32,
         endpoint_id: i32,
     ) -> Result<String> {
         self.client
             .get(&format!(
-                "/subscriptions/{subscription_id}/private-service-connect/endpoints/{endpoint_id}/creationScripts"
+                "/subscriptions/{subscription_id}/private-service-connect/{psc_service_id}/endpoints/{endpoint_id}/creationScripts"
             ))
             .await
     }
@@ -311,11 +306,12 @@ impl PscHandler {
     pub async fn get_endpoint_deletion_script(
         &self,
         subscription_id: i32,
+        psc_service_id: i32,
         endpoint_id: i32,
     ) -> Result<String> {
         self.client
             .get(&format!(
-                "/subscriptions/{subscription_id}/private-service-connect/endpoints/{endpoint_id}/deletionScripts"
+                "/subscriptions/{subscription_id}/private-service-connect/{psc_service_id}/endpoints/{endpoint_id}/deletionScripts"
             ))
             .await
     }
@@ -324,62 +320,61 @@ impl PscHandler {
     // Active-Active PSC Operations
     // ========================================================================
 
-    /// Delete Active-Active PSC service
+    /// Delete Active-Active PSC service for a region
     pub async fn delete_service_active_active(
         &self,
         subscription_id: i32,
+        region_id: i32,
     ) -> Result<TaskStateUpdate> {
         self.client
             .delete_typed(&format!(
-                "/subscriptions/{subscription_id}/regions/private-service-connect"
+                "/subscriptions/{subscription_id}/regions/{region_id}/private-service-connect"
             ))
             .await
     }
 
-    /// Get Active-Active PSC service
-    pub async fn get_service_active_active(&self, subscription_id: i32) -> Result<TaskStateUpdate> {
+    /// Get Active-Active PSC service for a region
+    pub async fn get_service_active_active(
+        &self,
+        subscription_id: i32,
+        region_id: i32,
+    ) -> Result<TaskStateUpdate> {
         self.client
             .get(&format!(
-                "/subscriptions/{subscription_id}/regions/private-service-connect"
+                "/subscriptions/{subscription_id}/regions/{region_id}/private-service-connect"
             ))
             .await
     }
 
-    /// Create Active-Active PSC service
+    /// Create Active-Active PSC service for a region
     pub async fn create_service_active_active(
         &self,
         subscription_id: i32,
+        region_id: i32,
     ) -> Result<TaskStateUpdate> {
         self.client
             .post(
-                &format!("/subscriptions/{subscription_id}/regions/private-service-connect"),
+                &format!(
+                    "/subscriptions/{subscription_id}/regions/{region_id}/private-service-connect"
+                ),
                 &serde_json::json!({}),
             )
             .await
     }
 
-    /// Get Active-Active PSC endpoints
-    pub async fn get_endpoints_active_active(
-        &self,
-        subscription_id: i32,
-    ) -> Result<TaskStateUpdate> {
-        self.client
-            .get(&format!(
-                "/subscriptions/{subscription_id}/regions/private-service-connect/endpoints"
-            ))
-            .await
-    }
-
-    /// Create Active-Active PSC endpoint
+    /// Create an Active-Active Private Service Connect endpoint under the
+    /// given service for a region.
     pub async fn create_endpoint_active_active(
         &self,
         subscription_id: i32,
+        region_id: i32,
+        psc_service_id: i32,
         request: &PscEndpointUpdateRequest,
     ) -> Result<TaskStateUpdate> {
         self.client
             .post(
                 &format!(
-                    "/subscriptions/{subscription_id}/regions/private-service-connect/endpoints"
+                    "/subscriptions/{subscription_id}/regions/{region_id}/private-service-connect/{psc_service_id}"
                 ),
                 request,
             )
@@ -391,10 +386,11 @@ impl PscHandler {
         &self,
         subscription_id: i32,
         region_id: i32,
+        psc_service_id: i32,
         endpoint_id: i32,
     ) -> Result<TaskStateUpdate> {
         self.client.delete_typed(&format!(
-                "/subscriptions/{subscription_id}/regions/{region_id}/private-service-connect/endpoints/{endpoint_id}"
+                "/subscriptions/{subscription_id}/regions/{region_id}/private-service-connect/{psc_service_id}/endpoints/{endpoint_id}"
             )).await
     }
 
@@ -403,13 +399,14 @@ impl PscHandler {
         &self,
         subscription_id: i32,
         region_id: i32,
+        psc_service_id: i32,
         endpoint_id: i32,
         request: &PscEndpointUpdateRequest,
     ) -> Result<TaskStateUpdate> {
         self.client
             .put(
                 &format!(
-                    "/subscriptions/{subscription_id}/regions/{region_id}/private-service-connect/{subscription_id}/endpoints/{endpoint_id}"
+                    "/subscriptions/{subscription_id}/regions/{region_id}/private-service-connect/{psc_service_id}/endpoints/{endpoint_id}"
                 ),
                 request,
             )

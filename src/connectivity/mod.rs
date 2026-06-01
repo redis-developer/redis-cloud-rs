@@ -257,9 +257,12 @@ impl ConnectivityHandler {
     pub async fn create_psc_endpoint(
         &self,
         subscription_id: i32,
+        psc_service_id: i32,
         request: &PscEndpointUpdateRequest,
     ) -> crate::Result<crate::types::TaskStateUpdate> {
-        self.psc.create_endpoint(subscription_id, request).await
+        self.psc
+            .create_endpoint(subscription_id, psc_service_id, request)
+            .await
     }
 
     // ========================================================================
@@ -377,11 +380,12 @@ impl ConnectivityHandler {
     pub async fn update_psc_service_endpoint(
         &self,
         subscription_id: i32,
+        psc_service_id: i32,
         endpoint_id: i32,
         request: &PscEndpointUpdateRequest,
     ) -> crate::Result<crate::types::TaskStateUpdate> {
         self.psc
-            .update_endpoint(subscription_id, endpoint_id, request)
+            .update_endpoint(subscription_id, psc_service_id, endpoint_id, request)
             .await
     }
 

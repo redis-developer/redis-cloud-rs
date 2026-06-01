@@ -365,7 +365,7 @@ async fn test_update_psc_service() {
     };
 
     let result = handler
-        .update_psc_service_endpoint(123, 1, &request)
+        .update_psc_service_endpoint(123, 789, 1, &request)
         .await
         .unwrap();
     assert_eq!(result.task_id, Some("task-update-psc".to_string()));

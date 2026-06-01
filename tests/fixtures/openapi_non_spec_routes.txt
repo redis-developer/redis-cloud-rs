@@ -4,29 +4,8 @@
 # Each line is `METHOD /normalized/path` where `{}` is a path parameter.
 # The route-coverage test (tests/openapi_route_coverage.rs) treats these as
 # KNOWN drift: a client route is allowed to be off-spec only if it is listed
-# here. Most are legacy path shapes pending reconciliation under #72.
+# here.
 #
-# To remove an entry: fix the handler path to match the spec, then delete the
-# line — the test will fail if a listed route actually matches the spec.
-DELETE /subscriptions/{}/private-service-connect/endpoints/{}
-DELETE /subscriptions/{}/regions/private-service-connect
-DELETE /subscriptions/{}/regions/{}/private-service-connect/endpoints/{}
-DELETE /subscriptions/{}/regions/{}/tgw/attachments/{}
-GET /subscriptions/{}/private-service-connect/endpoints
-GET /subscriptions/{}/private-service-connect/endpoints/{}/creationScripts
-GET /subscriptions/{}/private-service-connect/endpoints/{}/deletionScripts
-GET /subscriptions/{}/regions/private-service-connect
-GET /subscriptions/{}/regions/private-service-connect/endpoints
-GET /subscriptions/{}/regions/tgw/shared-invitations
-GET /subscriptions/{}/regions/transitGateways
-GET /subscriptions/{}/tgw/shared-invitations
-POST /subscriptions/{}/private-service-connect/endpoints
-POST /subscriptions/{}/regions/private-service-connect
-POST /subscriptions/{}/regions/private-service-connect/endpoints
-POST /subscriptions/{}/regions/{}/tgw/attachments
-POST /subscriptions/{}/regions/{}/tgw/shared-invitations/{}/accept
-POST /subscriptions/{}/regions/{}/tgw/shared-invitations/{}/reject
-POST /subscriptions/{}/tgw/shared-invitations/{}/accept
-POST /subscriptions/{}/tgw/shared-invitations/{}/reject
-POST /subscriptions/{}/transitGateways/attachments
-PUT /subscriptions/{}/regions/{}/tgw/attachments/{}/cidrs
+# Currently empty — the connectivity path reconciliation (#72) brought every
+# client route in line with the spec. Add an entry only for a deliberate,
+# documented exception.
