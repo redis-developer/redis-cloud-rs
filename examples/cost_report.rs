@@ -19,6 +19,7 @@
 
 use redis_cloud::CloudClient;
 use redis_cloud::cost_report::CostReportCreateRequest;
+use redis_cloud::types::TaskStatus;
 use std::time::Duration;
 
 #[tokio::main]
@@ -54,8 +55,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         tokio::time::sleep(Duration::from_secs(5)).await;
         let state = client.tasks().get_task_by_id(task_id.clone()).await?;
         println!("  status={:?} progress={:?}", state.status, state.progress);
-        match state.status.as_deref() {
-            Some("completed") => {
+        match state.status {
+            Some(TaskStatus::ProcessingCompleted) => {
                 // ProcessorResponse shape varies; raw JSON is the safest read.
                 let raw = serde_json::to_value(&state.response)?;
                 break raw
@@ -69,7 +70,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     })
                     .ok_or("task completed but did not return a costReportId")?;
             }
-            Some("failed") | Some("error") => {
+            Some(TaskStatus::ProcessingError) => {
                 return Err(format!(
                     "task ended with status {:?}: {}",
                     state.status,

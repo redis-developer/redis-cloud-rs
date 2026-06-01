@@ -1,3 +1,4 @@
+use redis_cloud::types::TaskStatus;
 use redis_cloud::{CloudClient, tasks::TasksHandler};
 use serde_json::json;
 use wiremock::matchers::{header, method, path};
@@ -62,7 +63,7 @@ async fn test_get_all_tasks_canonical_wrapper() {
     assert_eq!(tasks.len(), 3);
     assert_eq!(tasks[0].task_id, Some("task-1".to_string()));
     assert_eq!(tasks[0].command_type, Some("CREATE_DATABASE".to_string()));
-    assert_eq!(tasks[1].status, Some("processing-in-progress".to_string()));
+    assert_eq!(tasks[1].status, Some(TaskStatus::ProcessingInProgress));
     assert_eq!(tasks[2].task_id, Some("task-3".to_string()));
 }
 
@@ -140,7 +141,7 @@ async fn test_get_task_by_id() {
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "taskId": "task-123",
             "commandType": "CREATE_DATABASE",
-            "status": "completed",
+            "status": "processing-completed",
             "description": "Database created successfully",
             "timestamp": "2024-01-01T00:00:00Z",
             "response": {
@@ -174,7 +175,7 @@ async fn test_get_task_by_id() {
 
     assert_eq!(result.task_id, Some("task-123".to_string()));
     assert_eq!(result.command_type, Some("CREATE_DATABASE".to_string()));
-    assert_eq!(result.status, Some("completed".to_string()));
+    assert_eq!(result.status, Some(TaskStatus::ProcessingCompleted));
     assert!(result.response.is_some());
 }
 
@@ -189,7 +190,7 @@ async fn test_get_task_by_id_processing() {
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "taskId": "task-456",
             "commandType": "UPDATE_SUBSCRIPTION",
-            "status": "processing",
+            "status": "processing-in-progress",
             "description": "Updating subscription configuration",
             "timestamp": "2024-01-01T00:00:00Z",
             "progress": 65
@@ -211,7 +212,7 @@ async fn test_get_task_by_id_processing() {
         .unwrap();
 
     assert_eq!(result.task_id, Some("task-456".to_string()));
-    assert_eq!(result.status, Some("processing".to_string()));
+    assert_eq!(result.status, Some(TaskStatus::ProcessingInProgress));
 }
 
 #[tokio::test]
@@ -225,7 +226,7 @@ async fn test_get_task_by_id_failed() {
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "taskId": "task-789",
             "commandType": "DELETE_DATABASE",
-            "status": "failed",
+            "status": "processing-error",
             "description": "Failed to delete database",
             "timestamp": "2024-01-01T00:00:00Z",
             "response": {
@@ -250,7 +251,7 @@ async fn test_get_task_by_id_failed() {
         .unwrap();
 
     assert_eq!(result.task_id, Some("task-789".to_string()));
-    assert_eq!(result.status, Some("failed".to_string()));
+    assert_eq!(result.status, Some(TaskStatus::ProcessingError));
     assert!(result.response.is_some());
 }
 
@@ -291,7 +292,7 @@ async fn test_get_task_by_id_failed_with_error_object() {
         .await
         .unwrap();
 
-    assert_eq!(result.status, Some("processing-error".to_string()));
+    assert_eq!(result.status, Some(TaskStatus::ProcessingError));
     let response = result.response.expect("response present");
     // The structured object is preserved and a readable message is extracted.
     assert!(response.error.as_ref().unwrap().is_object());

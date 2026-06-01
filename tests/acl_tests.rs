@@ -1,3 +1,4 @@
+use redis_cloud::types::TaskStatus;
 use redis_cloud::{AclHandler, CloudClient};
 use serde_json::json;
 use wiremock::matchers::{header, method, path};
@@ -49,7 +50,7 @@ async fn test_create_redis_rule() {
         .respond_with(ResponseTemplate::new(202).set_body_json(json!({
             "taskId": "task-123",
             "commandType": "CREATE_REDIS_RULE",
-            "status": "processing",
+            "status": "processing-in-progress",
             "description": "Creating Redis ACL rule",
             "timestamp": "2024-01-01T00:00:00Z",
             "response": {
@@ -75,7 +76,7 @@ async fn test_create_redis_rule() {
 
     let result = handler.create_redis_rule(&request).await.unwrap();
     assert_eq!(result.task_id, Some("task-123".to_string()));
-    assert_eq!(result.status, Some("processing".to_string()));
+    assert_eq!(result.status, Some(TaskStatus::ProcessingInProgress));
 }
 
 #[tokio::test]
@@ -222,7 +223,7 @@ async fn test_update_redis_rule() {
         .respond_with(ResponseTemplate::new(202).set_body_json(json!({
             "taskId": "task-update-123",
             "commandType": "UPDATE_REDIS_RULE",
-            "status": "processing",
+            "status": "processing-in-progress",
             "description": "Updating Redis ACL rule",
             "timestamp": "2024-01-01T12:00:00Z"
         })))
@@ -247,7 +248,7 @@ async fn test_update_redis_rule() {
     let result = handler.update_redis_rule(123, &request).await.unwrap();
     assert_eq!(result.task_id, Some("task-update-123".to_string()));
     assert_eq!(result.command_type, Some("UPDATE_REDIS_RULE".to_string()));
-    assert_eq!(result.status, Some("processing".to_string()));
+    assert_eq!(result.status, Some(TaskStatus::ProcessingInProgress));
 }
 
 #[tokio::test]
@@ -261,7 +262,7 @@ async fn test_create_role() {
         .respond_with(ResponseTemplate::new(202).set_body_json(json!({
             "taskId": "task-create-role-789",
             "commandType": "CREATE_ROLE",
-            "status": "processing",
+            "status": "processing-in-progress",
             "description": "Creating ACL role",
             "timestamp": "2024-01-01T13:00:00Z",
             "response": {
@@ -295,7 +296,7 @@ async fn test_create_role() {
     let result = handler.create_role(&request).await.unwrap();
     assert_eq!(result.task_id, Some("task-create-role-789".to_string()));
     assert_eq!(result.command_type, Some("CREATE_ROLE".to_string()));
-    assert_eq!(result.status, Some("processing".to_string()));
+    assert_eq!(result.status, Some(TaskStatus::ProcessingInProgress));
 }
 
 #[tokio::test]
@@ -309,7 +310,7 @@ async fn test_delete_acl_role() {
         .respond_with(ResponseTemplate::new(202).set_body_json(json!({
             "taskId": "task-delete-role-456",
             "commandType": "DELETE_ROLE",
-            "status": "processing",
+            "status": "processing-in-progress",
             "description": "Deleting ACL role"
         })))
         .mount(&mock_server)
@@ -327,7 +328,7 @@ async fn test_delete_acl_role() {
 
     assert_eq!(result.task_id, Some("task-delete-role-456".to_string()));
     assert_eq!(result.command_type, Some("DELETE_ROLE".to_string()));
-    assert_eq!(result.status, Some("processing".to_string()));
+    assert_eq!(result.status, Some(TaskStatus::ProcessingInProgress));
 }
 
 #[tokio::test]
@@ -427,7 +428,7 @@ async fn test_delete_user() {
         .respond_with(ResponseTemplate::new(202).set_body_json(json!({
             "taskId": "task-delete-user-789",
             "commandType": "DELETE_USER",
-            "status": "processing",
+            "status": "processing-in-progress",
             "description": "Deleting ACL user"
         })))
         .mount(&mock_server)
@@ -445,7 +446,7 @@ async fn test_delete_user() {
 
     assert_eq!(result.task_id, Some("task-delete-user-789".to_string()));
     assert_eq!(result.command_type, Some("DELETE_USER".to_string()));
-    assert_eq!(result.status, Some("processing".to_string()));
+    assert_eq!(result.status, Some(TaskStatus::ProcessingInProgress));
 }
 
 #[tokio::test]
@@ -459,7 +460,7 @@ async fn test_update_user() {
         .respond_with(ResponseTemplate::new(202).set_body_json(json!({
             "taskId": "task-update-user-456",
             "commandType": "UPDATE_USER",
-            "status": "processing",
+            "status": "processing-in-progress",
             "description": "Updating ACL user",
             "timestamp": "2024-01-01T14:00:00Z"
         })))
@@ -484,7 +485,7 @@ async fn test_update_user() {
     let result = handler.update_acl_user(456, &request).await.unwrap();
     assert_eq!(result.task_id, Some("task-update-user-456".to_string()));
     assert_eq!(result.command_type, Some("UPDATE_USER".to_string()));
-    assert_eq!(result.status, Some("processing".to_string()));
+    assert_eq!(result.status, Some(TaskStatus::ProcessingInProgress));
 }
 
 #[tokio::test]
@@ -655,7 +656,7 @@ async fn test_task_state_update_with_error() {
         .respond_with(ResponseTemplate::new(202).set_body_json(json!({
             "taskId": "task-error-123",
             "commandType": "CREATE_REDIS_RULE",
-            "status": "failed",
+            "status": "processing-error",
             "description": "Failed to create Redis ACL rule",
             "timestamp": "2024-01-01T15:00:00Z",
             "response": {
@@ -682,7 +683,7 @@ async fn test_task_state_update_with_error() {
 
     let result = handler.create_redis_rule(&request).await.unwrap();
     assert_eq!(result.task_id, Some("task-error-123".to_string()));
-    assert_eq!(result.status, Some("failed".to_string()));
+    assert_eq!(result.status, Some(TaskStatus::ProcessingError));
     assert_eq!(
         result.description,
         Some("Failed to create Redis ACL rule".to_string())
@@ -809,7 +810,7 @@ async fn test_create_user_with_full_response() {
         .respond_with(ResponseTemplate::new(202).set_body_json(json!({
             "taskId": "task-789",
             "commandType": "CREATE_USER",
-            "status": "processing",
+            "status": "processing-in-progress",
             "description": "Creating ACL user",
             "timestamp": "2024-01-01T16:00:00Z",
             "response": {
@@ -845,7 +846,7 @@ async fn test_create_user_with_full_response() {
     let result = handler.create_user(&request).await.unwrap();
     assert_eq!(result.task_id, Some("task-789".to_string()));
     assert_eq!(result.command_type, Some("CREATE_USER".to_string()));
-    assert_eq!(result.status, Some("processing".to_string()));
+    assert_eq!(result.status, Some(TaskStatus::ProcessingInProgress));
     assert_eq!(result.timestamp, Some("2024-01-01T16:00:00Z".to_string()));
     assert!(result.links.is_some());
 

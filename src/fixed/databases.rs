@@ -45,7 +45,8 @@
 //! # }
 //! ```
 
-use crate::types::{Link, ProcessorResponse};
+use crate::types::Link;
+pub use crate::types::{CloudTag, CloudTags, Tag, TaskStateUpdate};
 use crate::{CloudClient, Result};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -165,22 +166,6 @@ pub struct DynamicEndpoints {
     pub private: Option<String>,
 }
 
-/// Database tag
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct Tag {
-    /// Database tag key.
-    pub key: String,
-
-    /// Database tag value.
-    pub value: String,
-
-    /// Read-only on the response; populated by the server with the
-    /// operation type (e.g. `"CREATE_DATABASE_TAG"`).
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub command_type: Option<String>,
-}
-
 /// Database tags update request message
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -224,31 +209,6 @@ pub struct DatabaseSyncSourceSpec {
 pub struct DatabaseCertificateSpec {
     /// Client certificate public key in PEM format, with new line characters replaced with '\n'.
     pub public_certificate_pem_string: String,
-}
-
-/// Database tag
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct CloudTag {
-    /// Database tag key.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub key: Option<String>,
-
-    /// Database tag value.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub value: Option<String>,
-
-    /// Timestamp when the tag was created.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub created_at: Option<String>,
-
-    /// Timestamp when the tag was last updated.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub updated_at: Option<String>,
-
-    /// HATEOAS links
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub links: Option<Vec<Link>>,
 }
 
 /// Database slowlog entry
@@ -371,19 +331,6 @@ pub struct DatabaseAlertSpec {
 
     /// Value over which an alert will be sent. Default values and range depend on the alert type. See [Configure alerts](https://redis.io/docs/latest/operate/rc/databases/monitor-performance/#configure-metric-alerts) for more information.
     pub value: i32,
-}
-
-/// Redis list of database tags
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct CloudTags {
-    /// Account ID owning the tags.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub account_id: Option<i32>,
-
-    /// HATEOAS links
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub links: Option<Vec<Link>>,
 }
 
 /// `FixedDatabase`
@@ -565,40 +512,6 @@ pub struct DatabaseSlowLogEntries {
     /// Slowlog entries returned for the database.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub entries: Option<Vec<DatabaseSlowLogEntry>>,
-
-    /// HATEOAS links
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub links: Option<Vec<Link>>,
-}
-
-/// `TaskStateUpdate`
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct TaskStateUpdate {
-    /// Task identifier.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub task_id: Option<String>,
-
-    /// Read-only on the response; populated by the server with the
-    /// operation type (e.g. `"CREATE_DATABASE"`).
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub command_type: Option<String>,
-
-    /// Current task status (e.g. `"processing-in-progress"`, `"processing-completed"`).
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub status: Option<String>,
-
-    /// Human-readable description of the current task state.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub description: Option<String>,
-
-    /// Timestamp of the latest task state update.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub timestamp: Option<String>,
-
-    /// Task response payload from the processor.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub response: Option<ProcessorResponse>,
 
     /// HATEOAS links
     #[serde(skip_serializing_if = "Option::is_none")]

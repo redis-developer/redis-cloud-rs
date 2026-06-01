@@ -49,7 +49,8 @@
 //! # }
 //! ```
 
-use crate::types::{Link, ProcessorResponse};
+use crate::types::Link;
+pub use crate::types::TaskStateUpdate;
 use crate::{CloudClient, Result};
 use serde::{Deserialize, Serialize};
 
@@ -113,42 +114,6 @@ pub struct AccountUserOptions {
     /// Whether multi-factor authentication is enabled for this user.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub mfa_enabled: Option<bool>,
-}
-
-/// Task state update response for user operations.
-///
-/// Local copy duplicating [`crate::types::TaskStateUpdate`]. Consolidation
-/// onto the canonical type is tracked in #64.
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct TaskStateUpdate {
-    /// UUID of the task. Use with `TasksHandler::get_task_by_id` to poll.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub task_id: Option<String>,
-
-    /// Type of command being executed (e.g. `"DELETE_ACCOUNT_USER"`).
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub command_type: Option<String>,
-
-    /// Current task status (kebab-case, e.g. `"processing-completed"`).
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub status: Option<String>,
-
-    /// Human-readable description of the task.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub description: Option<String>,
-
-    /// Timestamp of the last task update (ISO-8601).
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub timestamp: Option<String>,
-
-    /// Result of the task once it has completed. See [`ProcessorResponse`].
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub response: Option<ProcessorResponse>,
-
-    /// HATEOAS links
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub links: Option<Vec<Link>>,
 }
 
 /// User information

@@ -10,17 +10,18 @@
 //!   completion.
 //! - **HATEOAS navigation** — [`Link`] and [`Links`] capture the `links`
 //!   arrays the API returns alongside most resources.
-//! - **Tagging** — [`CloudTag`] and [`CloudTags`] model the key/value tag
-//!   pairs used for billing and resource filtering.
+//! - **Tagging** — [`Tag`] is the key/value pair used in request bodies;
+//!   [`CloudTag`] and [`CloudTags`] model the richer shapes the database tag
+//!   endpoints return.
 //! - **Common enums** — [`CloudProvider`], [`Protocol`],
 //!   [`DataPersistence`], [`SubscriptionStatus`], [`DatabaseStatus`] are
 //!   shared across the database, subscription, and connectivity modules.
 //! - **Generic wrappers** — [`PaginatedResponse`], [`EmptyResponse`],
 //!   [`ErrorResponse`] for cross-cutting response shapes.
 //!
-//! Consolidating these shared models into a single canonical location
-//! is the goal of #64 (currently several endpoint modules redefine their
-//! own copies of `TaskStateUpdate` and tag types).
+//! These models are the single canonical location for shared shapes (#64):
+//! endpoint modules import them rather than redefining their own copies of
+//! `TaskStateUpdate` and the tag types.
 
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -59,6 +60,10 @@ pub struct TaskStateUpdate {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timestamp: Option<String>,
 
+    /// Task completion percentage (0-100), when the processor reports it.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub progress: Option<f64>,
+
     /// Result of the task once it has completed. See [`ProcessorResponse`].
     #[serde(skip_serializing_if = "Option::is_none")]
     pub response: Option<ProcessorResponse>,
@@ -86,6 +91,14 @@ pub enum TaskStatus {
     ProcessingCompleted,
     /// Task failed during processing. See `response.error` for details.
     ProcessingError,
+    /// A status value not recognized by this client.
+    ///
+    /// The wire format is a free-form string and the server may introduce
+    /// new states; unknown values deserialize here rather than failing the
+    /// whole response. Note this variant does not round-trip — serializing it
+    /// emits `"unknown"`, not the original wire value.
+    #[serde(other)]
+    Unknown,
 }
 
 /// Result payload included on a completed [`TaskStateUpdate`].
@@ -178,6 +191,7 @@ pub enum ProcessorError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TasksStateUpdate {
     /// Tasks returned by the server.
+    #[serde(default)]
     pub tasks: Vec<TaskStateUpdate>,
 }
 
@@ -185,20 +199,68 @@ pub struct TasksStateUpdate {
 // Tag Types (Used in database and subscription endpoints)
 // ============================================================================
 
-/// Key-value tag attached to a database or subscription.
+/// Key-value tag used in create/update request bodies and embedded tag lists.
+///
+/// Matches the `Tag` schema (`key`/`value` required). `command_type` is a
+/// server-populated read-only field that appears on some responses; it is
+/// skipped on serialization when absent.
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct CloudTag {
-    /// Tag name.
+#[serde(rename_all = "camelCase")]
+pub struct Tag {
+    /// Tag key.
     pub key: String,
+
     /// Tag value.
     pub value: String,
+
+    /// Read-only on the response; populated by the server with the
+    /// operation type (e.g. `"CREATE_DATABASE_TAG"`).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub command_type: Option<String>,
 }
 
-/// Collection wrapper for a list of [`CloudTag`].
+/// A single tag as returned by the database tag endpoints.
+///
+/// Matches the `CloudTag` schema: all fields optional, with creation/update
+/// timestamps and HATEOAS links alongside the key/value pair.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CloudTag {
+    /// Tag key.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub key: Option<String>,
+
+    /// Tag value.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub value: Option<String>,
+
+    /// Timestamp when the tag was created.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub created_at: Option<String>,
+
+    /// Timestamp when the tag was last updated.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub updated_at: Option<String>,
+
+    /// HATEOAS links.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub links: Option<Vec<Link>>,
+}
+
+/// Collection wrapper returned by the database tags listing endpoints.
+///
+/// Matches the `CloudTags` schema, which is a HATEOAS envelope carrying the
+/// owning account ID and links rather than an inline tag array.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct CloudTags {
-    /// Tags in the collection.
-    pub tags: Vec<CloudTag>,
+    /// Account ID owning the tags.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub account_id: Option<i32>,
+
+    /// HATEOAS links.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub links: Option<Vec<Link>>,
 }
 
 // ============================================================================

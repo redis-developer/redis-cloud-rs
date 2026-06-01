@@ -1,3 +1,4 @@
+use redis_cloud::types::TaskStatus;
 use redis_cloud::{CloudClient, SubscriptionsHandler};
 use serde_json::json;
 use wiremock::matchers::{body_json, header, method, path, query_param};
@@ -442,7 +443,7 @@ async fn test_delete_regions_from_active_active_subscription() {
         .respond_with(ResponseTemplate::new(202).set_body_json(json!({
             "taskId": "task-delete-region",
             "commandType": "DELETE_REGION",
-            "status": "processing"
+            "status": "processing-in-progress"
         })))
         .mount(&mock_server)
         .await;
@@ -473,7 +474,7 @@ async fn test_delete_regions_from_active_active_subscription() {
 
     assert_eq!(result.task_id.as_deref(), Some("task-delete-region"));
     assert_eq!(result.command_type.as_deref(), Some("DELETE_REGION"));
-    assert_eq!(result.status.as_deref(), Some("processing"));
+    assert_eq!(result.status, Some(TaskStatus::ProcessingInProgress));
 }
 
 #[tokio::test]
