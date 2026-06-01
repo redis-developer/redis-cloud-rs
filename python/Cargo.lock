@@ -895,7 +895,7 @@ dependencies = [
 
 [[package]]
 name = "redis-cloud"
-version = "0.8.0"
+version = "0.9.5"
 dependencies = [
  "anyhow",
  "async-stream",
@@ -916,7 +916,7 @@ dependencies = [
 
 [[package]]
 name = "redis-cloud-py"
-version = "0.1.0"
+version = "0.9.5"
 dependencies = [
  "pyo3",
  "pyo3-async-runtimes",
