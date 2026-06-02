@@ -9,7 +9,7 @@ Rust client for the Redis Cloud REST API.
 operations across all major API domains — the methods you reach for when
 scripting, building dashboards, or doing field-engineering work. Write
 operations (create, update, delete) are available via the raw HTTP helpers
-(`post`, `put`, `patch`, `delete`) or the full-featured Rust client.
+(`post`, `delete`) or the full-featured Rust client.
 
 Every domain method comes in two flavors:
 
@@ -42,8 +42,9 @@ parity round. They are fully supported by the Rust client, and most can be
 reached from Python via the raw HTTP helpers when needed:
 
 - **Write operations** (create / update / delete of subscriptions, databases,
-  users, etc.) — use `post`, `put`, `patch`, and `delete` with the relevant API
-  path, or the Rust client for typed request bodies.
+  users, etc.) — use `post` and `delete` with the relevant API path for simple
+  operations, or the full-featured Rust client for typed `put`/`patch` request
+  bodies and structured responses.
 - **Connectivity handlers** — VPC peering, Transit Gateway, Private Service
   Connect (PSC), and Private Link. These are complex, write-heavy networking
   flows better served by the Rust client.

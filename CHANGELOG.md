@@ -7,6 +7,54 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Simplified alias methods across all domain handlers for a concise, ergonomic
+  API surface ([#65](https://github.com/redis-developer/redis-cloud-rs/issues/65)).
+  Every handler that previously exposed only verbose `get_all_X` / `get_X_by_id` /
+  `create_X` style methods now also exposes short `list` / `get` / `create` /
+  `update` / `delete` aliases. The verbose forms are retained for backward
+  compatibility. Accessible via `client.subscriptions().list()`,
+  `client.databases().list(sub_id)`, `client.acl().list_redis_rules()`, etc.
+
+- Python bindings expanded to cover all major read domains: Account, Tasks,
+  Users, ACL (redis rules, roles, users), Cloud Accounts, Essentials
+  Subscriptions, and Essentials Databases, in addition to the previously covered
+  Pro subscriptions and databases
+  ([#66](https://github.com/redis-developer/redis-cloud-rs/issues/66)).
+  Every domain method is available in both async and `_sync` blocking variants.
+  Coverage table and parity-scope documentation updated in `python/README.md`.
+
+- Implemented every remaining uncovered spec route, raising route coverage to
+  **155/155 (100%)** and emptying the unsupported-route allowlist
+  ([#72](https://github.com/redis-developer/redis-cloud-rs/issues/72)). New
+  typed handler methods and request/response types:
+  - Active-Active VPC peering CRUD on `VpcPeeringHandler` (see the Changed note
+    above), with a new `ActiveActiveVpcPeeringCreateRequest`
+    (`for_aws` / `for_gcp` constructors).
+  - `PrivateLinkHandler::disassociate_connections`, `delete_active_active`, and
+    `disassociate_connections_active_active`, with new
+    `PrivateLinkConnectionsDisassociateRequest`,
+    `PrivateLinkActiveActiveConnectionsDisassociateRequest`, and
+    `PrivateLinkConnectionDisassociate` types.
+  - `PscHandler::get_endpoints` and `get_endpoints_active_active`
+    (`GET .../private-service-connect/{pscServiceId}`).
+  - `get_traffic` and `resume_traffic` on both the Pro and Essentials database
+    handlers, with a shared `types::DatabaseTrafficStateResponse`.
+  - `SubscriptionHandler::update_resource_tags`
+    (`PUT /subscriptions/{id}/resource-tags`) with a new
+    `SubscriptionResourceTagsUpdateRequest`.
+
+- Executable route-coverage checks between the typed client handlers and the
+  bundled OpenAPI spec
+  ([#67](https://github.com/redis-developer/redis-cloud-rs/issues/67)). A new
+  `tests/openapi_route_coverage.rs` extracts the client's routes from source and
+  diffs them against the spec; intentional gaps are tracked in two allowlists
+  (`tests/fixtures/openapi_unsupported_routes.txt`,
+  `openapi_non_spec_routes.txt`). CI now fails when a spec route becomes
+  uncovered — or a handler route goes off-spec — without an explicit entry, and
+  when an allowlist entry goes stale.
+
 ### Changed
 
 - **Breaking:** reconciled the connectivity (Transit Gateway + Private Service
@@ -44,40 +92,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `create_active_active` now takes `&ActiveActiveVpcPeeringCreateRequest`
   (was `&VpcPeeringCreateRequest`); `update_active_active` now takes
   `&VpcPeeringUpdateAwsRequest`.
-
-### Added
-
-- Implemented every remaining uncovered spec route, raising route coverage to
-  **155/155 (100%)** and emptying the unsupported-route allowlist
-  ([#72](https://github.com/redis-developer/redis-cloud-rs/issues/72)). New
-  typed handler methods and request/response types:
-  - Active-Active VPC peering CRUD on `VpcPeeringHandler` (see the Changed note
-    above), with a new `ActiveActiveVpcPeeringCreateRequest`
-    (`for_aws` / `for_gcp` constructors).
-  - `PrivateLinkHandler::disassociate_connections`, `delete_active_active`, and
-    `disassociate_connections_active_active`, with new
-    `PrivateLinkConnectionsDisassociateRequest`,
-    `PrivateLinkActiveActiveConnectionsDisassociateRequest`, and
-    `PrivateLinkConnectionDisassociate` types.
-  - `PscHandler::get_endpoints` and `get_endpoints_active_active`
-    (`GET .../private-service-connect/{pscServiceId}`).
-  - `get_traffic` and `resume_traffic` on both the Pro and Essentials database
-    handlers, with a shared `types::DatabaseTrafficStateResponse`.
-  - `SubscriptionHandler::update_resource_tags`
-    (`PUT /subscriptions/{id}/resource-tags`) with a new
-    `SubscriptionResourceTagsUpdateRequest`.
-
-- Executable route-coverage checks between the typed client handlers and the
-  bundled OpenAPI spec
-  ([#67](https://github.com/redis-developer/redis-cloud-rs/issues/67)). A new
-  `tests/openapi_route_coverage.rs` extracts the client's routes from source and
-  diffs them against the spec; intentional gaps are tracked in two allowlists
-  (`tests/fixtures/openapi_unsupported_routes.txt`,
-  `openapi_non_spec_routes.txt`). CI now fails when a spec route becomes
-  uncovered — or a handler route goes off-spec — without an explicit entry, and
-  when an allowlist entry goes stale.
-
-### Changed
 
 - **Breaking:** connectivity handlers now return `TaskStateUpdate` instead of
   `serde_json::Value` for every endpoint the spec marks task-returning

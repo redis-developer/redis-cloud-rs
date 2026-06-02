@@ -24,7 +24,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         Some(id) => id,
         None => {
             // Get first Pro subscription
-            let subs = client.subscriptions().get_all_subscriptions().await?;
+            let subs = client.subscriptions().list().await?;
             subs.subscriptions
                 .and_then(|s| s.first().and_then(|sub| sub.id))
                 .expect("No subscriptions found. Pass subscription ID as argument.")
@@ -35,25 +35,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // List databases in subscription
     println!("\nFetching databases...");
-    let response = client
-        .databases()
-        .get_subscription_databases(subscription_id, None, None)
-        .await?;
+    let dbs = client.databases().list(subscription_id).await?;
 
-    for sub_info in &response.subscription {
-        let dbs = &sub_info.databases;
-        println!("Found {} databases:", dbs.len());
-        for db in dbs {
-            println!(
-                "  - ID: {:?}, Name: {:?}, Status: {:?}",
-                db.database_id, db.name, db.status
-            );
-            if let Some(endpoint) = &db.public_endpoint {
-                println!("    Endpoint: {endpoint}");
-            }
-            if let Some(memory) = db.memory_limit_in_gb {
-                println!("    Memory: {memory} GB");
-            }
+    println!("Found {} databases:", dbs.len());
+    for db in &dbs {
+        println!(
+            "  - ID: {:?}, Name: {:?}, Status: {:?}",
+            db.database_id, db.name, db.status
+        );
+        if let Some(endpoint) = &db.public_endpoint {
+            println!("    Endpoint: {endpoint}");
+        }
+        if let Some(memory) = db.memory_limit_in_gb {
+            println!("    Memory: {memory} GB");
         }
     }
 

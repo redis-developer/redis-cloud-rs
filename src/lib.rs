@@ -109,7 +109,7 @@
 //! let sub_handler = SubscriptionHandler::new(client.clone());
 //!
 //! // List subscriptions
-//! let subscriptions = sub_handler.get_all_subscriptions().await?;
+//! let subscriptions = sub_handler.list().await?;
 //!
 //! // Create a new subscription using raw API
 //! let new_subscription = json!({
@@ -268,7 +268,11 @@
 //! | [`AccountHandler`] | Account management | info, API keys, payment methods, SSO |
 //! | [`UserHandler`] | User management | create, update, delete, invite, roles |
 //! | [`AclHandler`] | Access control | users, roles, Redis rules, database ACLs |
-//! | [`ConnectivityHandler`] | Network connectivity | VPC peering, Transit Gateway, PSC |
+//! | [`VpcPeeringHandler`] | VPC peering | standard and Active-Active peering |
+//! | [`TransitGatewayHandler`] | AWS Transit Gateway | attachments, invitations, CIDR updates |
+//! | [`PscHandler`] | GCP Private Service Connect | endpoints (standard and Active-Active) |
+//! | [`PrivateLinkHandler`] | AWS PrivateLink | services, connections, endpoints |
+//! | [`CostReportHandler`] | Cost reports | FOCUS-format billing exports |
 //! | [`CloudAccountHandler`] | Cloud providers | AWS, GCP, Azure account integration |
 //! | [`TaskHandler`] | Async operations | track long-running operations |
 //!
