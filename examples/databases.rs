@@ -35,10 +35,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // List databases in subscription
     println!("\nFetching databases...");
-    let dbs = client
-        .databases()
-        .list(subscription_id)
-        .await?;
+    let dbs = client.databases().list(subscription_id).await?;
 
     println!("Found {} databases:", dbs.len());
     for db in &dbs {
