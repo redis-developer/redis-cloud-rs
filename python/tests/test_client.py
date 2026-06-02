@@ -1,6 +1,10 @@
 """Tests for the Redis Cloud Python client."""
 
+import json
 import os
+import threading
+from http.server import BaseHTTPRequestHandler, HTTPServer
+
 import pytest
 from redis_cloud import CloudClient, RedisCloudError
 
@@ -252,3 +256,130 @@ class TestModuleExports:
 
         assert hasattr(redis_cloud, "__version__")
         assert isinstance(redis_cloud.__version__, str)
+
+
+class _JsonMockHandler(BaseHTTPRequestHandler):
+    """Dispatch GET requests to pre-registered JSON routes."""
+
+    routes: dict = {}
+
+    def do_GET(self):
+        body = self.routes.get(self.path)
+        if body is None:
+            self.send_response(404)
+            self.end_headers()
+            return
+        data = json.dumps(body).encode()
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(data)))
+        self.end_headers()
+        self.wfile.write(data)
+
+    def log_message(self, *_args):
+        pass  # silence
+
+
+@pytest.fixture(scope="class")
+def mock_server():
+    # NOTE: list endpoints (/fixed/subscriptions, .../databases) deserialize
+    # into wrapper *objects* on the Rust side, not bare arrays, so their
+    # fixtures are `{}` rather than `[]`.
+    routes = {
+        "/tasks": {"tasks": []},
+        "/tasks/task-1": {"taskId": "task-1", "status": "processing-completed"},
+        "/users": {"account": 1},
+        "/users/1": {"id": 1, "name": "Test User", "email": "t@example.com"},
+        "/acl/redisRules": {},
+        "/acl/roles": {},
+        "/acl/users": {},
+        "/acl/users/1": {"id": 1},
+        "/cloud-accounts": {"accountId": 1},
+        "/cloud-accounts/1": {
+            "id": 1,
+            "name": "test",
+            "accessKeyId": "AKID",
+            "status": "active",
+            "provider": "AWS",
+        },
+        "/fixed/subscriptions": {},
+        "/fixed/subscriptions/1": {"id": 1, "name": "test-fixed"},
+        "/fixed/subscriptions/1/databases": {},
+        "/fixed/subscriptions/1/databases/1": {"id": 1, "name": "test-db"},
+    }
+
+    class _Handler(_JsonMockHandler):
+        pass
+
+    _Handler.routes = routes
+
+    server = HTTPServer(("127.0.0.1", 0), _Handler)
+    port = server.server_address[1]
+    t = threading.Thread(target=server.serve_forever, daemon=True)
+    t.start()
+    yield f"http://127.0.0.1:{port}"
+    server.shutdown()
+
+
+class TestDomainCallsSync:
+    """Smoke: each new domain binding makes a real HTTP call through the Rust layer."""
+
+    @pytest.fixture
+    def client(self, mock_server):
+        return CloudClient(
+            api_key="test-key",
+            api_secret="test-secret",
+            base_url=mock_server,
+        )
+
+    def test_tasks_list_sync(self, client):
+        result = client.tasks_sync()
+        assert isinstance(result, list)
+
+    def test_task_get_sync(self, client):
+        result = client.task_sync("task-1")
+        assert result is not None
+
+    def test_users_list_sync(self, client):
+        result = client.users_sync()
+        assert result is not None
+
+    def test_user_get_sync(self, client):
+        result = client.user_sync(1)
+        assert result is not None
+
+    def test_acl_redis_rules_sync(self, client):
+        result = client.acl_redis_rules_sync()
+        assert result is not None
+
+    def test_acl_roles_sync(self, client):
+        result = client.acl_roles_sync()
+        assert result is not None
+
+    def test_acl_users_sync(self, client):
+        result = client.acl_users_sync()
+        assert result is not None
+
+    def test_cloud_accounts_sync(self, client):
+        result = client.cloud_accounts_sync()
+        assert result is not None
+
+    def test_cloud_account_get_sync(self, client):
+        result = client.cloud_account_sync(1)
+        assert result is not None
+
+    def test_fixed_subscriptions_sync(self, client):
+        result = client.fixed_subscriptions_sync()
+        assert result is not None
+
+    def test_fixed_subscription_get_sync(self, client):
+        result = client.fixed_subscription_sync(1)
+        assert result is not None
+
+    def test_fixed_databases_sync(self, client):
+        result = client.fixed_databases_sync(1)
+        assert result is not None
+
+    def test_fixed_database_get_sync(self, client):
+        result = client.fixed_database_sync(1, 1)
+        assert result is not None
