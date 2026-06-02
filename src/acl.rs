@@ -564,4 +564,104 @@ impl AclHandler {
             .put(&format!("/acl/users/{acl_user_id}"), request)
             .await
     }
+
+    // ============================================================================
+    // Simplified aliases
+    // ============================================================================
+
+    /// List Redis ACL rules (simplified)
+    ///
+    /// Alias for [`get_all_redis_rules`](Self::get_all_redis_rules).
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use redis_cloud::CloudClient;
+    ///
+    /// # async fn example() -> redis_cloud::Result<()> {
+    /// let client = CloudClient::builder()
+    ///     .api_key("your-api-key")
+    ///     .api_secret("your-api-secret")
+    ///     .build()?;
+    ///
+    /// let rules = client.acl().list_redis_rules().await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn list_redis_rules(&self) -> Result<AccountACLRedisRules> {
+        self.get_all_redis_rules().await
+    }
+
+    /// List database access roles (simplified)
+    ///
+    /// Alias for [`get_roles`](Self::get_roles).
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use redis_cloud::CloudClient;
+    ///
+    /// # async fn example() -> redis_cloud::Result<()> {
+    /// let client = CloudClient::builder()
+    ///     .api_key("your-api-key")
+    ///     .api_secret("your-api-secret")
+    ///     .build()?;
+    ///
+    /// let roles = client.acl().list_roles().await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn list_roles(&self) -> Result<AccountACLRoles> {
+        self.get_roles().await
+    }
+
+    /// List access control users (simplified)
+    ///
+    /// Alias for [`get_all_acl_users`](Self::get_all_acl_users).
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use redis_cloud::CloudClient;
+    ///
+    /// # async fn example() -> redis_cloud::Result<()> {
+    /// let client = CloudClient::builder()
+    ///     .api_key("your-api-key")
+    ///     .api_secret("your-api-secret")
+    ///     .build()?;
+    ///
+    /// let users = client.acl().list_acl_users().await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn list_acl_users(&self) -> Result<AccountACLUsers> {
+        self.get_all_acl_users().await
+    }
+
+    /// Get a single access control user (simplified)
+    ///
+    /// Alias for [`get_user_by_id`](Self::get_user_by_id).
+    ///
+    /// # Arguments
+    ///
+    /// * `acl_user_id` - The access control user ID
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use redis_cloud::CloudClient;
+    ///
+    /// # async fn example() -> redis_cloud::Result<()> {
+    /// let client = CloudClient::builder()
+    ///     .api_key("your-api-key")
+    ///     .api_secret("your-api-secret")
+    ///     .build()?;
+    ///
+    /// let user = client.acl().get_acl_user(123).await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn get_acl_user(&self, acl_user_id: i32) -> Result<ACLUser> {
+        self.get_user_by_id(acl_user_id).await
+    }
 }

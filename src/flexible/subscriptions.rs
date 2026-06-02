@@ -1174,4 +1174,318 @@ impl SubscriptionHandler {
             )
             .await
     }
+
+    // ============================================================================
+    // Simplified aliases
+    // ============================================================================
+
+    /// List Pro subscriptions (simplified)
+    ///
+    /// Alias for [`get_all_subscriptions`](Self::get_all_subscriptions).
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use redis_cloud::CloudClient;
+    ///
+    /// # async fn example() -> redis_cloud::Result<()> {
+    /// let client = CloudClient::builder()
+    ///     .api_key("your-api-key")
+    ///     .api_secret("your-api-secret")
+    ///     .build()?;
+    ///
+    /// let subscriptions = client.subscriptions().list().await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn list(&self) -> Result<AccountSubscriptions> {
+        self.get_all_subscriptions().await
+    }
+
+    /// Create a Pro subscription (simplified)
+    ///
+    /// Alias for [`create_subscription`](Self::create_subscription).
+    ///
+    /// # Arguments
+    ///
+    /// * `request` - The subscription creation request
+    pub async fn create(&self, request: &SubscriptionCreateRequest) -> Result<TaskStateUpdate> {
+        self.create_subscription(request).await
+    }
+
+    /// Delete a Pro subscription (simplified)
+    ///
+    /// Alias for [`delete_subscription_by_id`](Self::delete_subscription_by_id).
+    ///
+    /// # Arguments
+    ///
+    /// * `subscription_id` - The subscription ID
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use redis_cloud::CloudClient;
+    ///
+    /// # async fn example() -> redis_cloud::Result<()> {
+    /// let client = CloudClient::builder()
+    ///     .api_key("your-api-key")
+    ///     .api_secret("your-api-secret")
+    ///     .build()?;
+    ///
+    /// let task = client.subscriptions().delete(123).await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn delete(&self, subscription_id: i32) -> Result<TaskStateUpdate> {
+        self.delete_subscription_by_id(subscription_id).await
+    }
+
+    /// Get a Pro subscription by ID (simplified)
+    ///
+    /// Alias for [`get_subscription_by_id`](Self::get_subscription_by_id).
+    ///
+    /// # Arguments
+    ///
+    /// * `subscription_id` - The subscription ID
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use redis_cloud::CloudClient;
+    ///
+    /// # async fn example() -> redis_cloud::Result<()> {
+    /// let client = CloudClient::builder()
+    ///     .api_key("your-api-key")
+    ///     .api_secret("your-api-secret")
+    ///     .build()?;
+    ///
+    /// let subscription = client.subscriptions().get(123).await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn get(&self, subscription_id: i32) -> Result<Subscription> {
+        self.get_subscription_by_id(subscription_id).await
+    }
+
+    /// Update a Pro subscription (simplified)
+    ///
+    /// Alias for [`update_subscription`](Self::update_subscription).
+    ///
+    /// # Arguments
+    ///
+    /// * `subscription_id` - The subscription ID
+    /// * `request` - The subscription update request
+    pub async fn update(
+        &self,
+        subscription_id: i32,
+        request: &BaseSubscriptionUpdateRequest,
+    ) -> Result<TaskStateUpdate> {
+        self.update_subscription(subscription_id, request).await
+    }
+
+    /// Get a Pro subscription's CIDR allowlist (simplified)
+    ///
+    /// Alias for [`get_cidr_allowlist`](Self::get_cidr_allowlist).
+    ///
+    /// # Arguments
+    ///
+    /// * `subscription_id` - The subscription ID
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use redis_cloud::CloudClient;
+    ///
+    /// # async fn example() -> redis_cloud::Result<()> {
+    /// let client = CloudClient::builder()
+    ///     .api_key("your-api-key")
+    ///     .api_secret("your-api-secret")
+    ///     .build()?;
+    ///
+    /// let allowlist = client.subscriptions().cidr_allowlist(123).await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn cidr_allowlist(&self, subscription_id: i32) -> Result<TaskStateUpdate> {
+        self.get_cidr_allowlist(subscription_id).await
+    }
+
+    /// Update a Pro subscription's CIDR allowlist (simplified)
+    ///
+    /// Alias for
+    /// [`update_subscription_cidr_allowlist`](Self::update_subscription_cidr_allowlist).
+    ///
+    /// # Arguments
+    ///
+    /// * `subscription_id` - The subscription ID
+    /// * `request` - The CIDR allowlist update request
+    pub async fn update_cidr_allowlist(
+        &self,
+        subscription_id: i32,
+        request: &CidrAllowlistUpdateRequest,
+    ) -> Result<TaskStateUpdate> {
+        self.update_subscription_cidr_allowlist(subscription_id, request)
+            .await
+    }
+
+    /// Get a Pro subscription's maintenance windows (simplified)
+    ///
+    /// Alias for
+    /// [`get_subscription_maintenance_windows`](Self::get_subscription_maintenance_windows).
+    ///
+    /// # Arguments
+    ///
+    /// * `subscription_id` - The subscription ID
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use redis_cloud::CloudClient;
+    ///
+    /// # async fn example() -> redis_cloud::Result<()> {
+    /// let client = CloudClient::builder()
+    ///     .api_key("your-api-key")
+    ///     .api_secret("your-api-secret")
+    ///     .build()?;
+    ///
+    /// let windows = client.subscriptions().maintenance_windows(123).await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn maintenance_windows(
+        &self,
+        subscription_id: i32,
+    ) -> Result<SubscriptionMaintenanceWindows> {
+        self.get_subscription_maintenance_windows(subscription_id)
+            .await
+    }
+
+    /// Update a Pro subscription's maintenance windows (simplified)
+    ///
+    /// Alias for
+    /// [`update_subscription_maintenance_windows`](Self::update_subscription_maintenance_windows).
+    ///
+    /// # Arguments
+    ///
+    /// * `subscription_id` - The subscription ID
+    /// * `request` - The maintenance windows specification
+    pub async fn update_maintenance_windows(
+        &self,
+        subscription_id: i32,
+        request: &SubscriptionMaintenanceWindowsSpec,
+    ) -> Result<TaskStateUpdate> {
+        self.update_subscription_maintenance_windows(subscription_id, request)
+            .await
+    }
+
+    /// Get a Pro subscription's pricing (simplified)
+    ///
+    /// Alias for [`get_subscription_pricing`](Self::get_subscription_pricing).
+    ///
+    /// # Arguments
+    ///
+    /// * `subscription_id` - The subscription ID
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use redis_cloud::CloudClient;
+    ///
+    /// # async fn example() -> redis_cloud::Result<()> {
+    /// let client = CloudClient::builder()
+    ///     .api_key("your-api-key")
+    ///     .api_secret("your-api-secret")
+    ///     .build()?;
+    ///
+    /// let pricing = client.subscriptions().pricing(123).await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn pricing(&self, subscription_id: i32) -> Result<SubscriptionPricings> {
+        self.get_subscription_pricing(subscription_id).await
+    }
+
+    /// Get the regions of an Active-Active subscription (simplified)
+    ///
+    /// Alias for
+    /// [`get_regions_from_active_active_subscription`](Self::get_regions_from_active_active_subscription).
+    ///
+    /// # Arguments
+    ///
+    /// * `subscription_id` - The subscription ID
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use redis_cloud::CloudClient;
+    ///
+    /// # async fn example() -> redis_cloud::Result<()> {
+    /// let client = CloudClient::builder()
+    ///     .api_key("your-api-key")
+    ///     .api_secret("your-api-secret")
+    ///     .build()?;
+    ///
+    /// let regions = client.subscriptions().active_active_regions(123).await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn active_active_regions(
+        &self,
+        subscription_id: i32,
+    ) -> Result<ActiveActiveSubscriptionRegions> {
+        self.get_regions_from_active_active_subscription(subscription_id)
+            .await
+    }
+
+    /// Add a region to an Active-Active subscription (simplified)
+    ///
+    /// Alias for
+    /// [`add_new_region_to_active_active_subscription`](Self::add_new_region_to_active_active_subscription).
+    ///
+    /// # Arguments
+    ///
+    /// * `subscription_id` - The subscription ID
+    /// * `request` - The region creation request
+    pub async fn add_active_active_region(
+        &self,
+        subscription_id: i32,
+        request: &ActiveActiveRegionCreateRequest,
+    ) -> Result<TaskStateUpdate> {
+        self.add_new_region_to_active_active_subscription(subscription_id, request)
+            .await
+    }
+
+    /// Delete regions from an Active-Active subscription (simplified)
+    ///
+    /// Alias for
+    /// [`delete_regions_from_active_active_subscription`](Self::delete_regions_from_active_active_subscription).
+    ///
+    /// # Arguments
+    ///
+    /// * `subscription_id` - The subscription ID
+    /// * `request` - The region deletion request
+    pub async fn delete_active_active_regions(
+        &self,
+        subscription_id: i32,
+        request: &ActiveActiveRegionDeleteRequest,
+    ) -> Result<TaskStateUpdate> {
+        self.delete_regions_from_active_active_subscription(subscription_id, request)
+            .await
+    }
+
+    /// Update a Pro subscription's resource tags (simplified)
+    ///
+    /// Alias for [`update_resource_tags`](Self::update_resource_tags).
+    ///
+    /// # Arguments
+    ///
+    /// * `subscription_id` - The subscription ID
+    /// * `request` - The resource tags update request
+    pub async fn update_tags(
+        &self,
+        subscription_id: i32,
+        request: &SubscriptionResourceTagsUpdateRequest,
+    ) -> Result<TaskStateUpdate> {
+        self.update_resource_tags(subscription_id, request).await
+    }
 }

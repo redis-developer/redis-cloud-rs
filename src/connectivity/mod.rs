@@ -406,4 +406,43 @@ impl ConnectivityHandler {
         self.update_tgw_cidrs(subscription_id, attachment_id, request)
             .await
     }
+
+    // ========================================================================
+    // Simplified aliases
+    // ========================================================================
+
+    /// List Transit Gateway attachments for a Pro subscription (simplified).
+    ///
+    /// Preferred alias for [`get_tgws`](Self::get_tgws), whose name is
+    /// ambiguous. `get_tgws` is retained as a backward-compatibility shim.
+    ///
+    /// `GET /subscriptions/{subscriptionId}/transitGateways`.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`crate::CloudError`] for transport, auth, or 4xx/5xx
+    /// responses.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use redis_cloud::{CloudClient, ConnectivityHandler};
+    ///
+    /// # async fn example() -> redis_cloud::Result<()> {
+    /// let client = CloudClient::builder()
+    ///     .api_key("your-api-key")
+    ///     .api_secret("your-api-secret")
+    ///     .build()?;
+    ///
+    /// let connectivity = ConnectivityHandler::new(client);
+    /// let attachments = connectivity.list_tgw_attachments(123).await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn list_tgw_attachments(
+        &self,
+        subscription_id: i32,
+    ) -> crate::Result<crate::types::TaskStateUpdate> {
+        self.get_tgws(subscription_id).await
+    }
 }

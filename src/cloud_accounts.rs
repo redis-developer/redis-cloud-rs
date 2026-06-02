@@ -298,4 +298,168 @@ impl CloudAccountsHandler {
             .put(&format!("/cloud-accounts/{cloud_account_id}"), request)
             .await
     }
+
+    // ============================================================================
+    // Simplified aliases
+    // ============================================================================
+
+    /// List cloud accounts (simplified)
+    ///
+    /// Alias for [`get_cloud_accounts`](Self::get_cloud_accounts).
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use redis_cloud::CloudClient;
+    ///
+    /// # async fn example() -> redis_cloud::Result<()> {
+    /// let client = CloudClient::builder()
+    ///     .api_key("your-api-key")
+    ///     .api_secret("your-api-secret")
+    ///     .build()?;
+    ///
+    /// let accounts = client.cloud_accounts().list().await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn list(&self) -> Result<CloudAccounts> {
+        self.get_cloud_accounts().await
+    }
+
+    /// Create a cloud account (simplified)
+    ///
+    /// Alias for [`create_cloud_account`](Self::create_cloud_account).
+    ///
+    /// # Arguments
+    ///
+    /// * `request` - The cloud account creation request
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use redis_cloud::CloudClient;
+    /// use redis_cloud::cloud_accounts::CloudAccountCreateRequest;
+    ///
+    /// # async fn example() -> redis_cloud::Result<()> {
+    /// let client = CloudClient::builder()
+    ///     .api_key("your-api-key")
+    ///     .api_secret("your-api-secret")
+    ///     .build()?;
+    ///
+    /// let request = CloudAccountCreateRequest {
+    ///     name: "my-aws-account".to_string(),
+    ///     provider: Some("AWS".to_string()),
+    ///     access_key_id: "key".to_string(),
+    ///     access_secret_key: "secret".to_string(),
+    ///     console_username: "user".to_string(),
+    ///     console_password: "pass".to_string(),
+    ///     sign_in_login_url: "https://console.aws.amazon.com".to_string(),
+    ///     command_type: None,
+    /// };
+    ///
+    /// let task = client.cloud_accounts().create(&request).await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn create(&self, request: &CloudAccountCreateRequest) -> Result<TaskStateUpdate> {
+        self.create_cloud_account(request).await
+    }
+
+    /// Delete a cloud account (simplified)
+    ///
+    /// Alias for [`delete_cloud_account`](Self::delete_cloud_account).
+    ///
+    /// # Arguments
+    ///
+    /// * `cloud_account_id` - The cloud account ID
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use redis_cloud::CloudClient;
+    ///
+    /// # async fn example() -> redis_cloud::Result<()> {
+    /// let client = CloudClient::builder()
+    ///     .api_key("your-api-key")
+    ///     .api_secret("your-api-secret")
+    ///     .build()?;
+    ///
+    /// let task = client.cloud_accounts().delete(123).await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn delete(&self, cloud_account_id: i32) -> Result<TaskStateUpdate> {
+        self.delete_cloud_account(cloud_account_id).await
+    }
+
+    /// Get a cloud account by ID (simplified)
+    ///
+    /// Alias for [`get_cloud_account_by_id`](Self::get_cloud_account_by_id).
+    ///
+    /// # Arguments
+    ///
+    /// * `cloud_account_id` - The cloud account ID
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use redis_cloud::CloudClient;
+    ///
+    /// # async fn example() -> redis_cloud::Result<()> {
+    /// let client = CloudClient::builder()
+    ///     .api_key("your-api-key")
+    ///     .api_secret("your-api-secret")
+    ///     .build()?;
+    ///
+    /// let account = client.cloud_accounts().get(123).await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn get(&self, cloud_account_id: i32) -> Result<CloudAccount> {
+        self.get_cloud_account_by_id(cloud_account_id).await
+    }
+
+    /// Update a cloud account (simplified)
+    ///
+    /// Alias for [`update_cloud_account`](Self::update_cloud_account).
+    ///
+    /// # Arguments
+    ///
+    /// * `cloud_account_id` - The cloud account ID
+    /// * `request` - The cloud account update request
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use redis_cloud::CloudClient;
+    /// use redis_cloud::cloud_accounts::CloudAccountUpdateRequest;
+    ///
+    /// # async fn example() -> redis_cloud::Result<()> {
+    /// let client = CloudClient::builder()
+    ///     .api_key("your-api-key")
+    ///     .api_secret("your-api-secret")
+    ///     .build()?;
+    ///
+    /// let request = CloudAccountUpdateRequest {
+    ///     name: Some("renamed-account".to_string()),
+    ///     cloud_account_id: None,
+    ///     access_key_id: "key".to_string(),
+    ///     access_secret_key: "secret".to_string(),
+    ///     console_username: "user".to_string(),
+    ///     console_password: "pass".to_string(),
+    ///     sign_in_login_url: None,
+    ///     command_type: None,
+    /// };
+    ///
+    /// let task = client.cloud_accounts().update(123, &request).await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn update(
+        &self,
+        cloud_account_id: i32,
+        request: &CloudAccountUpdateRequest,
+    ) -> Result<TaskStateUpdate> {
+        self.update_cloud_account(cloud_account_id, request).await
+    }
 }

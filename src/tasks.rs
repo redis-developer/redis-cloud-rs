@@ -147,4 +147,58 @@ impl TasksHandler {
     pub async fn get_task_by_id(&self, task_id: String) -> Result<TaskStateUpdate> {
         self.client.get(&format!("/tasks/{task_id}")).await
     }
+
+    // ============================================================================
+    // Simplified aliases
+    // ============================================================================
+
+    /// List tasks (simplified)
+    ///
+    /// Alias for [`get_all_tasks`](Self::get_all_tasks).
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use redis_cloud::CloudClient;
+    ///
+    /// # async fn example() -> redis_cloud::Result<()> {
+    /// let client = CloudClient::builder()
+    ///     .api_key("your-api-key")
+    ///     .api_secret("your-api-secret")
+    ///     .build()?;
+    ///
+    /// let tasks = client.tasks().list().await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn list(&self) -> Result<Vec<TaskStateUpdate>> {
+        self.get_all_tasks().await
+    }
+
+    /// Get a task by ID (simplified)
+    ///
+    /// Alias for [`get_task_by_id`](Self::get_task_by_id).
+    ///
+    /// # Arguments
+    ///
+    /// * `task_id` - The task ID
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use redis_cloud::CloudClient;
+    ///
+    /// # async fn example() -> redis_cloud::Result<()> {
+    /// let client = CloudClient::builder()
+    ///     .api_key("your-api-key")
+    ///     .api_secret("your-api-secret")
+    ///     .build()?;
+    ///
+    /// let task = client.tasks().get("task-id".to_string()).await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn get(&self, task_id: String) -> Result<TaskStateUpdate> {
+        self.get_task_by_id(task_id).await
+    }
 }

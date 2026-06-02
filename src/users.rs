@@ -213,4 +213,125 @@ impl UsersHandler {
     ) -> Result<TaskStateUpdate> {
         self.client.put(&format!("/users/{user_id}"), request).await
     }
+
+    // ============================================================================
+    // Simplified aliases
+    // ============================================================================
+
+    /// List users (simplified)
+    ///
+    /// Alias for [`get_all_users`](Self::get_all_users).
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use redis_cloud::CloudClient;
+    ///
+    /// # async fn example() -> redis_cloud::Result<()> {
+    /// let client = CloudClient::builder()
+    ///     .api_key("your-api-key")
+    ///     .api_secret("your-api-secret")
+    ///     .build()?;
+    ///
+    /// let users = client.users().list().await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn list(&self) -> Result<AccountUsers> {
+        self.get_all_users().await
+    }
+
+    /// Get a user by ID (simplified)
+    ///
+    /// Alias for [`get_user_by_id`](Self::get_user_by_id).
+    ///
+    /// # Arguments
+    ///
+    /// * `user_id` - The user ID
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use redis_cloud::CloudClient;
+    ///
+    /// # async fn example() -> redis_cloud::Result<()> {
+    /// let client = CloudClient::builder()
+    ///     .api_key("your-api-key")
+    ///     .api_secret("your-api-secret")
+    ///     .build()?;
+    ///
+    /// let user = client.users().get(123).await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn get(&self, user_id: i32) -> Result<AccountUser> {
+        self.get_user_by_id(user_id).await
+    }
+
+    /// Update a user (simplified)
+    ///
+    /// Alias for [`update_user`](Self::update_user).
+    ///
+    /// # Arguments
+    ///
+    /// * `user_id` - The user ID
+    /// * `request` - The user update request
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use redis_cloud::CloudClient;
+    /// use redis_cloud::users::AccountUserUpdateRequest;
+    ///
+    /// # async fn example() -> redis_cloud::Result<()> {
+    /// let client = CloudClient::builder()
+    ///     .api_key("your-api-key")
+    ///     .api_secret("your-api-secret")
+    ///     .build()?;
+    ///
+    /// let request = AccountUserUpdateRequest {
+    ///     user_id: None,
+    ///     name: "Updated Name".to_string(),
+    ///     role: Some("Manager".to_string()),
+    ///     command_type: None,
+    /// };
+    ///
+    /// let task = client.users().update(123, &request).await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn update(
+        &self,
+        user_id: i32,
+        request: &AccountUserUpdateRequest,
+    ) -> Result<TaskStateUpdate> {
+        self.update_user(user_id, request).await
+    }
+
+    /// Delete a user (simplified)
+    ///
+    /// Alias for [`delete_user_by_id`](Self::delete_user_by_id).
+    ///
+    /// # Arguments
+    ///
+    /// * `user_id` - The user ID
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use redis_cloud::CloudClient;
+    ///
+    /// # async fn example() -> redis_cloud::Result<()> {
+    /// let client = CloudClient::builder()
+    ///     .api_key("your-api-key")
+    ///     .api_secret("your-api-secret")
+    ///     .build()?;
+    ///
+    /// let task = client.users().delete(123).await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn delete(&self, user_id: i32) -> Result<TaskStateUpdate> {
+        self.delete_user_by_id(user_id).await
+    }
 }
