@@ -1,4 +1,5 @@
-use redis_cloud::{CloudClient, ConnectivityHandler};
+use redis_cloud::connectivity::{ActiveActiveVpcPeeringCreateRequest, VpcPeeringUpdateAwsRequest};
+use redis_cloud::{CloudClient, ConnectivityHandler, PscHandler, VpcPeeringHandler};
 use serde_json::json;
 use wiremock::matchers::{body_json, header, method, path};
 use wiremock::{Mock, MockServer, ResponseTemplate};
@@ -784,4 +785,185 @@ async fn test_vpc_peering_create_gcp_wire_keys() {
 
     let result = handler.create_vpc_peering(123, &request).await.unwrap();
     assert_eq!(result.task_id, Some("task-gcp-keys".to_string()));
+}
+
+// ---------------------------------------------------------------------------
+// Active-Active VPC peering (#72): distinct `/regions/peerings` surface, plus
+// PSC get-endpoints by service id. These exercise the specialized sub-handlers
+// directly (the facade does not expose the AA surface).
+// ---------------------------------------------------------------------------
+
+/// Build a `CloudClient` pointed at the mock server.
+fn test_client(uri: String) -> CloudClient {
+    CloudClient::builder()
+        .api_key("test-key")
+        .api_secret("test-secret")
+        .base_url(uri)
+        .build()
+        .unwrap()
+}
+
+/// A `TaskStateUpdate`-shaped body for the async connectivity operations.
+fn task_body(task_id: &str, command_type: &str) -> serde_json::Value {
+    json!({
+        "taskId": task_id,
+        "commandType": command_type,
+        "status": "processing-completed",
+        "description": "ok"
+    })
+}
+
+#[tokio::test]
+async fn test_get_active_active_vpc_peerings() {
+    let mock_server = MockServer::start().await;
+
+    Mock::given(method("GET"))
+        .and(path("/subscriptions/123/regions/peerings"))
+        .and(header("x-api-key", "test-key"))
+        .and(header("x-api-secret-key", "test-secret"))
+        .respond_with(
+            ResponseTemplate::new(200)
+                .set_body_json(task_body("task-aa-get-peerings", "GET_VPC_PEERING")),
+        )
+        .mount(&mock_server)
+        .await;
+
+    let handler = VpcPeeringHandler::new(test_client(mock_server.uri()));
+    let result = handler.get_active_active(123).await.unwrap();
+
+    assert_eq!(result.task_id.as_deref(), Some("task-aa-get-peerings"));
+}
+
+#[tokio::test]
+async fn test_create_active_active_vpc_peering_aws_wire_keys() {
+    let mock_server = MockServer::start().await;
+
+    // The AA AWS create body must serialize the spec's exact wire keys.
+    let expected_body = json!({
+        "provider": "AWS",
+        "sourceRegion": "us-east-1",
+        "destinationRegion": "us-west-2",
+        "awsAccountId": "123456789012",
+        "vpcId": "vpc-abcdef01",
+    });
+
+    Mock::given(method("POST"))
+        .and(path("/subscriptions/123/regions/peerings"))
+        .and(body_json(&expected_body))
+        .respond_with(
+            ResponseTemplate::new(200)
+                .set_body_json(task_body("task-aa-create-peering", "CREATE_VPC_PEERING")),
+        )
+        .mount(&mock_server)
+        .await;
+
+    let handler = VpcPeeringHandler::new(test_client(mock_server.uri()));
+    let request = ActiveActiveVpcPeeringCreateRequest::for_aws(
+        "us-east-1",
+        "us-west-2",
+        "123456789012",
+        "vpc-abcdef01",
+    );
+
+    let result = handler.create_active_active(123, &request).await.unwrap();
+    assert_eq!(result.task_id.as_deref(), Some("task-aa-create-peering"));
+}
+
+#[tokio::test]
+async fn test_update_active_active_vpc_peering() {
+    let mock_server = MockServer::start().await;
+
+    Mock::given(method("PUT"))
+        .and(path("/subscriptions/123/regions/peerings/456"))
+        .and(header("x-api-key", "test-key"))
+        .and(header("x-api-secret-key", "test-secret"))
+        .respond_with(
+            ResponseTemplate::new(200)
+                .set_body_json(task_body("task-aa-update-peering", "UPDATE_VPC_PEERING")),
+        )
+        .mount(&mock_server)
+        .await;
+
+    let handler = VpcPeeringHandler::new(test_client(mock_server.uri()));
+    let request = VpcPeeringUpdateAwsRequest {
+        subscription_id: None,
+        vpc_peering_id: None,
+        vpc_cidr: Some("10.0.0.0/16".to_string()),
+        vpc_cidrs: None,
+        command_type: None,
+    };
+
+    let result = handler
+        .update_active_active(123, 456, &request)
+        .await
+        .unwrap();
+    assert_eq!(result.task_id.as_deref(), Some("task-aa-update-peering"));
+}
+
+#[tokio::test]
+async fn test_delete_active_active_vpc_peering() {
+    let mock_server = MockServer::start().await;
+
+    Mock::given(method("DELETE"))
+        .and(path("/subscriptions/123/regions/peerings/456"))
+        .and(header("x-api-key", "test-key"))
+        .and(header("x-api-secret-key", "test-secret"))
+        .respond_with(
+            ResponseTemplate::new(200)
+                .set_body_json(task_body("task-aa-delete-peering", "DELETE_VPC_PEERING")),
+        )
+        .mount(&mock_server)
+        .await;
+
+    let handler = VpcPeeringHandler::new(test_client(mock_server.uri()));
+    let result = handler.delete_active_active(123, 456).await.unwrap();
+
+    assert_eq!(result.task_id.as_deref(), Some("task-aa-delete-peering"));
+}
+
+#[tokio::test]
+async fn test_get_psc_service_endpoints() {
+    let mock_server = MockServer::start().await;
+
+    Mock::given(method("GET"))
+        .and(path("/subscriptions/123/private-service-connect/789"))
+        .and(header("x-api-key", "test-key"))
+        .and(header("x-api-secret-key", "test-secret"))
+        .respond_with(
+            ResponseTemplate::new(202)
+                .set_body_json(task_body("task-get-psc-endpoints", "GET_PSC_ENDPOINTS")),
+        )
+        .mount(&mock_server)
+        .await;
+
+    let handler = PscHandler::new(test_client(mock_server.uri()));
+    let result = handler.get_endpoints(123, 789).await.unwrap();
+
+    assert_eq!(result.task_id.as_deref(), Some("task-get-psc-endpoints"));
+}
+
+#[tokio::test]
+async fn test_get_psc_service_endpoints_active_active() {
+    let mock_server = MockServer::start().await;
+
+    Mock::given(method("GET"))
+        .and(path(
+            "/subscriptions/123/regions/5/private-service-connect/789",
+        ))
+        .and(header("x-api-key", "test-key"))
+        .and(header("x-api-secret-key", "test-secret"))
+        .respond_with(
+            ResponseTemplate::new(202)
+                .set_body_json(task_body("task-aa-get-psc-endpoints", "GET_PSC_ENDPOINTS")),
+        )
+        .mount(&mock_server)
+        .await;
+
+    let handler = PscHandler::new(test_client(mock_server.uri()));
+    let result = handler
+        .get_endpoints_active_active(123, 5, 789)
+        .await
+        .unwrap();
+
+    assert_eq!(result.task_id.as_deref(), Some("task-aa-get-psc-endpoints"));
 }

@@ -51,8 +51,8 @@
 //! # }
 //! ```
 
-use crate::types::Link;
 pub use crate::types::TaskStateUpdate;
+use crate::types::{Link, Tag};
 use crate::{CloudClient, Result};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -889,6 +889,26 @@ pub struct SubscriptionMaintenanceWindows {
 // Handler
 // ============================================================================
 
+/// Request to replace the resource tags on a Pro subscription.
+///
+/// Matches the `SubscriptionResourceTagsUpdateRequest` schema. The supplied
+/// tags replace all existing tags on the subscription.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SubscriptionResourceTagsUpdateRequest {
+    /// Subscription to update. Server-populated from the path.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub subscription_id: Option<i32>,
+
+    /// Tags to apply to the subscription. Replaces all existing tags.
+    pub resource_tags: Vec<Tag>,
+
+    /// Read-only on the response; populated by the server with the operation
+    /// type.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub command_type: Option<String>,
+}
+
 /// Handler for Pro subscription operations
 ///
 /// Manages flexible subscriptions with auto-scaling, multi-region support,
@@ -1132,6 +1152,24 @@ impl SubscriptionHandler {
         self.client
             .post(
                 &format!("/subscriptions/{subscription_id}/regions"),
+                request,
+            )
+            .await
+    }
+
+    /// Update Pro subscription resource tags
+    /// Replaces all resource tags on the specified Pro subscription with the
+    /// supplied set.
+    ///
+    /// PUT /subscriptions/{subscriptionId}/resource-tags
+    pub async fn update_resource_tags(
+        &self,
+        subscription_id: i32,
+        request: &SubscriptionResourceTagsUpdateRequest,
+    ) -> Result<TaskStateUpdate> {
+        self.client
+            .put(
+                &format!("/subscriptions/{subscription_id}/resource-tags"),
                 request,
             )
             .await

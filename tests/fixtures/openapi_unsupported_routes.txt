@@ -7,17 +7,7 @@
 #
 # To remove an entry: implement the handler, then delete the line — the test
 # will fail if a listed route is actually covered (no stale entries allowed).
-DELETE /subscriptions/{}/regions/peerings/{}
-DELETE /subscriptions/{}/regions/{}/private-link
-GET /fixed/subscriptions/{}/databases/{}/traffic
-GET /subscriptions/{}/databases/{}/traffic
-GET /subscriptions/{}/private-service-connect/{}
-GET /subscriptions/{}/regions/peerings
-GET /subscriptions/{}/regions/{}/private-service-connect/{}
-POST /fixed/subscriptions/{}/databases/{}/traffic/resume
-POST /subscriptions/{}/databases/{}/traffic/resume
-POST /subscriptions/{}/private-link/connections/disassociate
-POST /subscriptions/{}/regions/peerings
-POST /subscriptions/{}/regions/{}/private-link/connections/disassociate
-PUT /subscriptions/{}/regions/peerings/{}
-PUT /subscriptions/{}/resource-tags
+#
+# As of #72 every advertised spec route is covered by a typed handler, so this
+# allowlist is intentionally empty. Add a `METHOD /path` line here only when a
+# new spec route is deliberately left unimplemented.

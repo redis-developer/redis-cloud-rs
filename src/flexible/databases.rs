@@ -52,7 +52,7 @@
 //! ```
 
 use crate::types::Link;
-pub use crate::types::{CloudTag, CloudTags, Tag, TaskStateUpdate};
+pub use crate::types::{CloudTag, CloudTags, DatabaseTrafficStateResponse, Tag, TaskStateUpdate};
 use crate::{CloudClient, Result};
 use async_stream::try_stream;
 use futures_core::Stream;
@@ -2214,6 +2214,36 @@ impl DatabaseHandler {
     /// ```
     pub async fn delete(&self, subscription_id: i32, database_id: i32) -> Result<TaskStateUpdate> {
         self.delete_database_by_id(subscription_id, database_id)
+            .await
+    }
+
+    /// Get Pro database traffic state
+    /// Gets the current traffic state for this Pro database, including whether
+    /// traffic is stopped and whether it can be resumed.
+    ///
+    /// GET /subscriptions/{subscriptionId}/databases/{databaseId}/traffic
+    pub async fn get_traffic(
+        &self,
+        subscription_id: i32,
+        database_id: i32,
+    ) -> Result<DatabaseTrafficStateResponse> {
+        self.client
+            .get(&format!(
+                "/subscriptions/{subscription_id}/databases/{database_id}/traffic"
+            ))
+            .await
+    }
+
+    /// Resume Pro database traffic
+    /// Resumes traffic to this Pro database after it has been stopped.
+    ///
+    /// POST /subscriptions/{subscriptionId}/databases/{databaseId}/traffic/resume
+    pub async fn resume_traffic(&self, subscription_id: i32, database_id: i32) -> Result<()> {
+        self.client
+            .post(
+                &format!("/subscriptions/{subscription_id}/databases/{database_id}/traffic/resume"),
+                &serde_json::json!({}),
+            )
             .await
     }
 }

@@ -29,7 +29,9 @@ pub use private_link::PrivateLinkHandler;
 
 // Re-export PrivateLink types
 pub use private_link::{
-    PrincipalType, PrivateLinkAddPrincipalRequest, PrivateLinkCreateRequest,
+    PrincipalType, PrivateLinkActiveActiveConnectionsDisassociateRequest,
+    PrivateLinkAddPrincipalRequest, PrivateLinkConnectionDisassociate,
+    PrivateLinkConnectionsDisassociateRequest, PrivateLinkCreateRequest,
     PrivateLinkRemovePrincipalRequest,
 };
 pub use psc::PscHandler;
@@ -40,9 +42,9 @@ pub use vpc_peering::VpcPeeringHandler;
 pub use psc::PscEndpointUpdateRequest;
 pub use transit_gateway::{Cidr, TgwAttachmentRequest, TgwUpdateCidrsRequest};
 pub use vpc_peering::{
-    ActiveActiveVpcPeering, ActiveActiveVpcPeeringList, ActiveActiveVpcRegion, VpcCidr, VpcPeering,
-    VpcPeeringCreateBaseRequest, VpcPeeringCreateRequest, VpcPeeringUpdateAwsRequest,
-    VpcPeeringUpdateRequest,
+    ActiveActiveVpcPeering, ActiveActiveVpcPeeringCreateRequest, ActiveActiveVpcPeeringList,
+    ActiveActiveVpcRegion, VpcCidr, VpcPeering, VpcPeeringCreateBaseRequest,
+    VpcPeeringCreateRequest, VpcPeeringUpdateAwsRequest, VpcPeeringUpdateRequest,
 };
 
 // For backward compatibility, provide a unified handler

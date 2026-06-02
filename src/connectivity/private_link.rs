@@ -121,6 +121,71 @@ pub struct PrivateLinkRemovePrincipalRequest {
     pub alias: Option<String>,
 }
 
+/// A single `PrivateLink` connection to disassociate.
+///
+/// Matches the `PrivateLinkConnectionDisassociate` schema. `associationId`,
+/// `type`, and `principalId` are required by the spec.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PrivateLinkConnectionDisassociate {
+    /// Resource share association ID.
+    pub association_id: String,
+
+    /// VPC endpoint connection ID.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub connection_id: Option<String>,
+
+    /// Type of the connection.
+    #[serde(rename = "type")]
+    pub connection_type: String,
+
+    /// Principal ID that owns the connection, e.g. AWS account ID.
+    pub principal_id: String,
+}
+
+/// Request to disassociate connections from a `PrivateLink`.
+///
+/// Matches the `PrivateLinkConnectionsDisassociateRequest` schema.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PrivateLinkConnectionsDisassociateRequest {
+    /// Subscription that owns the `PrivateLink`. Server-populated from the path.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub subscription_id: Option<i32>,
+
+    /// Connections to disassociate from the `PrivateLink`.
+    pub connections: Vec<PrivateLinkConnectionDisassociate>,
+
+    /// Read-only on the response; populated by the server with the operation
+    /// type.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub command_type: Option<String>,
+}
+
+/// Request to disassociate connections from an Active-Active `PrivateLink`.
+///
+/// Matches the `PrivateLinkActiveActiveConnectionsDisassociateRequest` schema.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PrivateLinkActiveActiveConnectionsDisassociateRequest {
+    /// Subscription that owns the `PrivateLink`. Server-populated from the path.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub subscription_id: Option<i32>,
+
+    /// Deployment region ID as defined by the cloud provider. Server-populated
+    /// from the path.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub region_id: Option<i32>,
+
+    /// Connections to disassociate from the `PrivateLink`.
+    pub connections: Vec<PrivateLinkConnectionDisassociate>,
+
+    /// Read-only on the response; populated by the server with the operation
+    /// type.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub command_type: Option<String>,
+}
+
 /// `PrivateLink` configuration response
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -544,6 +609,93 @@ impl PrivateLinkHandler {
             .get(&format!(
                 "/subscriptions/{subscription_id}/regions/{region_id}/private-link/endpoint-script"
             ))
+            .await
+    }
+
+    /// Disassociate connections from a `PrivateLink`
+    ///
+    /// Disassociates one or more VPC endpoint connections from the AWS
+    /// `PrivateLink` configuration for a subscription.
+    ///
+    /// POST /subscriptions/{subscriptionId}/private-link/connections/disassociate
+    ///
+    /// # Arguments
+    ///
+    /// * `subscription_id` - The subscription ID
+    /// * `request` - The connections to disassociate
+    ///
+    /// # Returns
+    ///
+    /// Returns a [`TaskStateUpdate`] to poll for completion.
+    pub async fn disassociate_connections(
+        &self,
+        subscription_id: i32,
+        request: &PrivateLinkConnectionsDisassociateRequest,
+    ) -> Result<TaskStateUpdate> {
+        self.client
+            .post(
+                &format!("/subscriptions/{subscription_id}/private-link/connections/disassociate"),
+                request,
+            )
+            .await
+    }
+
+    /// Delete Active-Active `PrivateLink`
+    ///
+    /// Deletes the AWS `PrivateLink` configuration for an Active-Active (CRDB)
+    /// subscription region.
+    ///
+    /// DELETE /subscriptions/{subscriptionId}/regions/{regionId}/private-link
+    ///
+    /// # Arguments
+    ///
+    /// * `subscription_id` - The subscription ID
+    /// * `region_id` - The region ID
+    ///
+    /// # Returns
+    ///
+    /// Returns a [`TaskStateUpdate`] to poll the asynchronous deletion.
+    pub async fn delete_active_active(
+        &self,
+        subscription_id: i32,
+        region_id: i32,
+    ) -> Result<TaskStateUpdate> {
+        self.client
+            .delete_typed(&format!(
+                "/subscriptions/{subscription_id}/regions/{region_id}/private-link"
+            ))
+            .await
+    }
+
+    /// Disassociate connections from an Active-Active `PrivateLink`
+    ///
+    /// Disassociates one or more VPC endpoint connections from the AWS
+    /// `PrivateLink` configuration for an Active-Active subscription region.
+    ///
+    /// POST /subscriptions/{subscriptionId}/regions/{regionId}/private-link/connections/disassociate
+    ///
+    /// # Arguments
+    ///
+    /// * `subscription_id` - The subscription ID
+    /// * `region_id` - The region ID
+    /// * `request` - The connections to disassociate
+    ///
+    /// # Returns
+    ///
+    /// Returns a [`TaskStateUpdate`] to poll for completion.
+    pub async fn disassociate_connections_active_active(
+        &self,
+        subscription_id: i32,
+        region_id: i32,
+        request: &PrivateLinkActiveActiveConnectionsDisassociateRequest,
+    ) -> Result<TaskStateUpdate> {
+        self.client
+            .post(
+                &format!(
+                    "/subscriptions/{subscription_id}/regions/{region_id}/private-link/connections/disassociate"
+                ),
+                request,
+            )
             .await
     }
 }

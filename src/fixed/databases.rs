@@ -46,7 +46,7 @@
 //! ```
 
 use crate::types::Link;
-pub use crate::types::{CloudTag, CloudTags, Tag, TaskStateUpdate};
+pub use crate::types::{CloudTag, CloudTags, DatabaseTrafficStateResponse, Tag, TaskStateUpdate};
 use crate::{CloudClient, Result};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -1143,6 +1143,38 @@ impl FixedDatabaseHandler {
             .post_raw(
                 &format!("/fixed/subscriptions/{subscription_id}/databases/{database_id}/upgrade"),
                 request,
+            )
+            .await
+    }
+
+    /// Get Essentials database traffic state
+    /// Gets the current traffic state for this Essentials database, including
+    /// whether traffic is stopped and whether it can be resumed.
+    ///
+    /// GET /fixed/subscriptions/{subscriptionId}/databases/{databaseId}/traffic
+    pub async fn get_traffic(
+        &self,
+        subscription_id: i32,
+        database_id: i32,
+    ) -> Result<DatabaseTrafficStateResponse> {
+        self.client
+            .get(&format!(
+                "/fixed/subscriptions/{subscription_id}/databases/{database_id}/traffic"
+            ))
+            .await
+    }
+
+    /// Resume Essentials database traffic
+    /// Resumes traffic to this Essentials database after it has been stopped.
+    ///
+    /// POST /fixed/subscriptions/{subscriptionId}/databases/{databaseId}/traffic/resume
+    pub async fn resume_traffic(&self, subscription_id: i32, database_id: i32) -> Result<()> {
+        self.client
+            .post(
+                &format!(
+                    "/fixed/subscriptions/{subscription_id}/databases/{database_id}/traffic/resume"
+                ),
+                &serde_json::json!({}),
             )
             .await
     }

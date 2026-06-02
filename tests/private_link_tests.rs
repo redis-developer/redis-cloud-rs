@@ -1,5 +1,7 @@
 use redis_cloud::connectivity::{
-    PrincipalType, PrivateLinkAddPrincipalRequest, PrivateLinkCreateRequest,
+    PrincipalType, PrivateLinkActiveActiveConnectionsDisassociateRequest,
+    PrivateLinkAddPrincipalRequest, PrivateLinkConnectionDisassociate,
+    PrivateLinkConnectionsDisassociateRequest, PrivateLinkCreateRequest,
     PrivateLinkRemovePrincipalRequest,
 };
 use redis_cloud::types::TaskStatus;
@@ -373,4 +375,107 @@ async fn test_error_handling_500() {
     let result = handler.create(123, &request).await;
 
     assert!(result.is_err());
+}
+
+#[tokio::test]
+async fn test_disassociate_connections() {
+    let mock_server = MockServer::start().await;
+
+    Mock::given(method("POST"))
+        .and(path(
+            "/subscriptions/123/private-link/connections/disassociate",
+        ))
+        .and(header("x-api-key", "test-key"))
+        .and(header("x-api-secret-key", "test-secret"))
+        .respond_with(ResponseTemplate::new(202).set_body_json(task_body(
+            "task-disassociate",
+            "PRIVATE_LINK_CONNECTIONS_DISASSOCIATE",
+            123456,
+        )))
+        .mount(&mock_server)
+        .await;
+
+    let handler = PrivateLinkHandler::new(test_client(mock_server.uri()));
+
+    let request = PrivateLinkConnectionsDisassociateRequest {
+        subscription_id: None,
+        connections: vec![PrivateLinkConnectionDisassociate {
+            association_id: "assoc-1".to_string(),
+            connection_id: Some("conn-1".to_string()),
+            connection_type: "GATEWAY_LOAD_BALANCER".to_string(),
+            principal_id: "123456789012".to_string(),
+        }],
+        command_type: None,
+    };
+
+    let result = handler
+        .disassociate_connections(123, &request)
+        .await
+        .unwrap();
+
+    assert_eq!(result.task_id.as_deref(), Some("task-disassociate"));
+    assert_eq!(result.status, Some(TaskStatus::ProcessingCompleted));
+}
+
+#[tokio::test]
+async fn test_delete_private_link_active_active() {
+    let mock_server = MockServer::start().await;
+
+    Mock::given(method("DELETE"))
+        .and(path("/subscriptions/123/regions/5/private-link"))
+        .and(header("x-api-key", "test-key"))
+        .and(header("x-api-secret-key", "test-secret"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(task_body(
+            "task-aa-delete",
+            "PRIVATE_LINK_DELETE",
+            123456,
+        )))
+        .mount(&mock_server)
+        .await;
+
+    let handler = PrivateLinkHandler::new(test_client(mock_server.uri()));
+    let result = handler.delete_active_active(123, 5).await.unwrap();
+
+    assert_eq!(result.task_id.as_deref(), Some("task-aa-delete"));
+    assert_eq!(result.command_type.as_deref(), Some("PRIVATE_LINK_DELETE"));
+}
+
+#[tokio::test]
+async fn test_disassociate_connections_active_active() {
+    let mock_server = MockServer::start().await;
+
+    Mock::given(method("POST"))
+        .and(path(
+            "/subscriptions/123/regions/5/private-link/connections/disassociate",
+        ))
+        .and(header("x-api-key", "test-key"))
+        .and(header("x-api-secret-key", "test-secret"))
+        .respond_with(ResponseTemplate::new(202).set_body_json(task_body(
+            "task-aa-disassociate",
+            "PRIVATE_LINK_CONNECTIONS_DISASSOCIATE",
+            123456,
+        )))
+        .mount(&mock_server)
+        .await;
+
+    let handler = PrivateLinkHandler::new(test_client(mock_server.uri()));
+
+    let request = PrivateLinkActiveActiveConnectionsDisassociateRequest {
+        subscription_id: None,
+        region_id: None,
+        connections: vec![PrivateLinkConnectionDisassociate {
+            association_id: "assoc-2".to_string(),
+            connection_id: None,
+            connection_type: "INTERFACE".to_string(),
+            principal_id: "123456789012".to_string(),
+        }],
+        command_type: None,
+    };
+
+    let result = handler
+        .disassociate_connections_active_active(123, 5, &request)
+        .await
+        .unwrap();
+
+    assert_eq!(result.task_id.as_deref(), Some("task-aa-disassociate"));
 }

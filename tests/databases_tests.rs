@@ -1172,3 +1172,63 @@ fn test_backup_config_wire_field_names_match_spec() {
     assert_eq!(parsed.time_utc.as_deref(), Some("09:00"));
     assert_eq!(parsed.database_backup_time_utc.as_deref(), Some("09:00"));
 }
+
+#[tokio::test]
+async fn test_get_database_traffic() {
+    let mock_server = MockServer::start().await;
+
+    Mock::given(method("GET"))
+        .and(path("/subscriptions/123/databases/456/traffic"))
+        .and(header("x-api-key", "test-key"))
+        .and(header("x-api-secret-key", "test-secret"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "bdbId": 456,
+            "trafficStatus": "stopped",
+            "canResume": true,
+            "resumeInProgress": false,
+            "stopReason": "manual",
+            "resumeEligibleAt": "2026-06-01T00:00:00Z"
+        })))
+        .mount(&mock_server)
+        .await;
+
+    let client = CloudClient::builder()
+        .api_key("test-key".to_string())
+        .api_secret("test-secret".to_string())
+        .base_url(mock_server.uri())
+        .build()
+        .unwrap();
+
+    let handler = DatabaseHandler::new(client);
+    let result = handler.get_traffic(123, 456).await.unwrap();
+
+    assert_eq!(result.bdb_id, Some(456));
+    assert_eq!(result.traffic_status.as_deref(), Some("stopped"));
+    assert_eq!(result.can_resume, Some(true));
+    assert_eq!(result.resume_in_progress, Some(false));
+}
+
+#[tokio::test]
+async fn test_resume_database_traffic() {
+    let mock_server = MockServer::start().await;
+
+    // The resume endpoint returns 204 No Content (empty body).
+    Mock::given(method("POST"))
+        .and(path("/subscriptions/123/databases/456/traffic/resume"))
+        .and(header("x-api-key", "test-key"))
+        .and(header("x-api-secret-key", "test-secret"))
+        .respond_with(ResponseTemplate::new(204))
+        .mount(&mock_server)
+        .await;
+
+    let client = CloudClient::builder()
+        .api_key("test-key".to_string())
+        .api_secret("test-secret".to_string())
+        .base_url(mock_server.uri())
+        .build()
+        .unwrap();
+
+    let handler = DatabaseHandler::new(client);
+    // Empty 204 body must deserialize cleanly into `()`.
+    handler.resume_traffic(123, 456).await.unwrap();
+}
