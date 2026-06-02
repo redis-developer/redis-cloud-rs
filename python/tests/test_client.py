@@ -145,6 +145,80 @@ class TestClientMethods:
         assert hasattr(client, "timeout")
 
 
+class TestNewDomainMethods:
+    """Tests that new domain methods are present on CloudClient."""
+
+    @pytest.fixture
+    def client(self):
+        """Create a client for testing."""
+        return CloudClient(api_key="test-key", api_secret="test-secret")
+
+    def test_client_has_tasks_methods(self, client):
+        """Test that client has tasks list method."""
+        assert hasattr(client, "tasks")
+        assert hasattr(client, "tasks_sync")
+
+    def test_client_has_task_method(self, client):
+        """Test that client has task get method."""
+        assert hasattr(client, "task")
+        assert hasattr(client, "task_sync")
+
+    def test_client_has_users_methods(self, client):
+        """Test that client has users list method."""
+        assert hasattr(client, "users")
+        assert hasattr(client, "users_sync")
+
+    def test_client_has_user_method(self, client):
+        """Test that client has user get method."""
+        assert hasattr(client, "user")
+        assert hasattr(client, "user_sync")
+
+    def test_client_has_acl_redis_rules_methods(self, client):
+        """Test that client has acl_redis_rules method."""
+        assert hasattr(client, "acl_redis_rules")
+        assert hasattr(client, "acl_redis_rules_sync")
+
+    def test_client_has_acl_roles_methods(self, client):
+        """Test that client has acl_roles method."""
+        assert hasattr(client, "acl_roles")
+        assert hasattr(client, "acl_roles_sync")
+
+    def test_client_has_acl_users_methods(self, client):
+        """Test that client has acl_users method."""
+        assert hasattr(client, "acl_users")
+        assert hasattr(client, "acl_users_sync")
+
+    def test_client_has_cloud_accounts_methods(self, client):
+        """Test that client has cloud_accounts list method."""
+        assert hasattr(client, "cloud_accounts")
+        assert hasattr(client, "cloud_accounts_sync")
+
+    def test_client_has_cloud_account_method(self, client):
+        """Test that client has cloud_account get method."""
+        assert hasattr(client, "cloud_account")
+        assert hasattr(client, "cloud_account_sync")
+
+    def test_client_has_fixed_subscriptions_methods(self, client):
+        """Test that client has fixed_subscriptions list method."""
+        assert hasattr(client, "fixed_subscriptions")
+        assert hasattr(client, "fixed_subscriptions_sync")
+
+    def test_client_has_fixed_subscription_method(self, client):
+        """Test that client has fixed_subscription get method."""
+        assert hasattr(client, "fixed_subscription")
+        assert hasattr(client, "fixed_subscription_sync")
+
+    def test_client_has_fixed_databases_methods(self, client):
+        """Test that client has fixed_databases list method."""
+        assert hasattr(client, "fixed_databases")
+        assert hasattr(client, "fixed_databases_sync")
+
+    def test_client_has_fixed_database_method(self, client):
+        """Test that client has fixed_database get method."""
+        assert hasattr(client, "fixed_database")
+        assert hasattr(client, "fixed_database_sync")
+
+
 class TestErrorHandling:
     """Tests for error handling."""
 

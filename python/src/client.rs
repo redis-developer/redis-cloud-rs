@@ -4,7 +4,10 @@ use crate::error::IntoPyResult;
 use crate::runtime::{block_on, future_into_py};
 use pyo3::prelude::*;
 use pyo3::types::{PyDict, PyList};
-use redis_cloud::{AccountHandler, CloudClient, DatabaseHandler, SubscriptionHandler};
+use redis_cloud::{
+    AccountHandler, AclHandler, CloudAccountHandler, CloudClient, DatabaseHandler,
+    FixedDatabaseHandler, FixedSubscriptionHandler, SubscriptionHandler, TaskHandler, UserHandler,
+};
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -349,6 +352,373 @@ impl PyCloudClient {
             let handler = DatabaseHandler::new((*client).clone());
             handler
                 .get_all_databases(subscription_id as i32)
+                .await
+                .into_py_result()
+        })?;
+        let json = serde_json::to_value(&result)
+            .map_err(|e| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))?;
+        Ok(json_to_py(py, json))
+    }
+
+    // Tasks API
+
+    /// List all tasks (async)
+    fn tasks<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
+        let client = self.client.clone();
+        future_into_py(py, async move {
+            let handler = TaskHandler::new((*client).clone());
+            let result = handler.list().await.into_py_result()?;
+            let json = serde_json::to_value(&result)
+                .map_err(|e| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))?;
+            Python::with_gil(|py| Ok(json_to_py(py, json)))
+        })
+    }
+
+    /// List all tasks (sync)
+    fn tasks_sync(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
+        let client = self.client.clone();
+        let result = block_on(py, async move {
+            let handler = TaskHandler::new((*client).clone());
+            handler.list().await.into_py_result()
+        })?;
+        let json = serde_json::to_value(&result)
+            .map_err(|e| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))?;
+        Ok(json_to_py(py, json))
+    }
+
+    /// Get a specific task by ID (async)
+    fn task<'py>(&self, py: Python<'py>, task_id: String) -> PyResult<Bound<'py, PyAny>> {
+        let client = self.client.clone();
+        future_into_py(py, async move {
+            let handler = TaskHandler::new((*client).clone());
+            let result = handler.get(task_id).await.into_py_result()?;
+            let json = serde_json::to_value(&result)
+                .map_err(|e| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))?;
+            Python::with_gil(|py| Ok(json_to_py(py, json)))
+        })
+    }
+
+    /// Get a specific task by ID (sync)
+    fn task_sync(&self, py: Python<'_>, task_id: String) -> PyResult<Py<PyAny>> {
+        let client = self.client.clone();
+        let result = block_on(py, async move {
+            let handler = TaskHandler::new((*client).clone());
+            handler.get(task_id).await.into_py_result()
+        })?;
+        let json = serde_json::to_value(&result)
+            .map_err(|e| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))?;
+        Ok(json_to_py(py, json))
+    }
+
+    // Users API
+
+    /// List all users (async)
+    fn users<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
+        let client = self.client.clone();
+        future_into_py(py, async move {
+            let handler = UserHandler::new((*client).clone());
+            let result = handler.list().await.into_py_result()?;
+            let json = serde_json::to_value(&result)
+                .map_err(|e| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))?;
+            Python::with_gil(|py| Ok(json_to_py(py, json)))
+        })
+    }
+
+    /// List all users (sync)
+    fn users_sync(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
+        let client = self.client.clone();
+        let result = block_on(py, async move {
+            let handler = UserHandler::new((*client).clone());
+            handler.list().await.into_py_result()
+        })?;
+        let json = serde_json::to_value(&result)
+            .map_err(|e| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))?;
+        Ok(json_to_py(py, json))
+    }
+
+    /// Get a specific user by ID (async)
+    fn user<'py>(&self, py: Python<'py>, user_id: i64) -> PyResult<Bound<'py, PyAny>> {
+        let client = self.client.clone();
+        future_into_py(py, async move {
+            let handler = UserHandler::new((*client).clone());
+            let result = handler.get(user_id as i32).await.into_py_result()?;
+            let json = serde_json::to_value(&result)
+                .map_err(|e| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))?;
+            Python::with_gil(|py| Ok(json_to_py(py, json)))
+        })
+    }
+
+    /// Get a specific user by ID (sync)
+    fn user_sync(&self, py: Python<'_>, user_id: i64) -> PyResult<Py<PyAny>> {
+        let client = self.client.clone();
+        let result = block_on(py, async move {
+            let handler = UserHandler::new((*client).clone());
+            handler.get(user_id as i32).await.into_py_result()
+        })?;
+        let json = serde_json::to_value(&result)
+            .map_err(|e| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))?;
+        Ok(json_to_py(py, json))
+    }
+
+    // ACL API
+
+    /// List ACL Redis rules (async)
+    fn acl_redis_rules<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
+        let client = self.client.clone();
+        future_into_py(py, async move {
+            let handler = AclHandler::new((*client).clone());
+            let result = handler.list_redis_rules().await.into_py_result()?;
+            let json = serde_json::to_value(&result)
+                .map_err(|e| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))?;
+            Python::with_gil(|py| Ok(json_to_py(py, json)))
+        })
+    }
+
+    /// List ACL Redis rules (sync)
+    fn acl_redis_rules_sync(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
+        let client = self.client.clone();
+        let result = block_on(py, async move {
+            let handler = AclHandler::new((*client).clone());
+            handler.list_redis_rules().await.into_py_result()
+        })?;
+        let json = serde_json::to_value(&result)
+            .map_err(|e| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))?;
+        Ok(json_to_py(py, json))
+    }
+
+    /// List ACL roles (async)
+    fn acl_roles<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
+        let client = self.client.clone();
+        future_into_py(py, async move {
+            let handler = AclHandler::new((*client).clone());
+            let result = handler.list_roles().await.into_py_result()?;
+            let json = serde_json::to_value(&result)
+                .map_err(|e| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))?;
+            Python::with_gil(|py| Ok(json_to_py(py, json)))
+        })
+    }
+
+    /// List ACL roles (sync)
+    fn acl_roles_sync(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
+        let client = self.client.clone();
+        let result = block_on(py, async move {
+            let handler = AclHandler::new((*client).clone());
+            handler.list_roles().await.into_py_result()
+        })?;
+        let json = serde_json::to_value(&result)
+            .map_err(|e| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))?;
+        Ok(json_to_py(py, json))
+    }
+
+    /// List ACL users (async)
+    fn acl_users<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
+        let client = self.client.clone();
+        future_into_py(py, async move {
+            let handler = AclHandler::new((*client).clone());
+            let result = handler.list_acl_users().await.into_py_result()?;
+            let json = serde_json::to_value(&result)
+                .map_err(|e| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))?;
+            Python::with_gil(|py| Ok(json_to_py(py, json)))
+        })
+    }
+
+    /// List ACL users (sync)
+    fn acl_users_sync(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
+        let client = self.client.clone();
+        let result = block_on(py, async move {
+            let handler = AclHandler::new((*client).clone());
+            handler.list_acl_users().await.into_py_result()
+        })?;
+        let json = serde_json::to_value(&result)
+            .map_err(|e| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))?;
+        Ok(json_to_py(py, json))
+    }
+
+    // Cloud accounts API
+
+    /// List all cloud accounts (async)
+    fn cloud_accounts<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
+        let client = self.client.clone();
+        future_into_py(py, async move {
+            let handler = CloudAccountHandler::new((*client).clone());
+            let result = handler.list().await.into_py_result()?;
+            let json = serde_json::to_value(&result)
+                .map_err(|e| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))?;
+            Python::with_gil(|py| Ok(json_to_py(py, json)))
+        })
+    }
+
+    /// List all cloud accounts (sync)
+    fn cloud_accounts_sync(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
+        let client = self.client.clone();
+        let result = block_on(py, async move {
+            let handler = CloudAccountHandler::new((*client).clone());
+            handler.list().await.into_py_result()
+        })?;
+        let json = serde_json::to_value(&result)
+            .map_err(|e| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))?;
+        Ok(json_to_py(py, json))
+    }
+
+    /// Get a specific cloud account by ID (async)
+    fn cloud_account<'py>(
+        &self,
+        py: Python<'py>,
+        cloud_account_id: i64,
+    ) -> PyResult<Bound<'py, PyAny>> {
+        let client = self.client.clone();
+        future_into_py(py, async move {
+            let handler = CloudAccountHandler::new((*client).clone());
+            let result = handler
+                .get(cloud_account_id as i32)
+                .await
+                .into_py_result()?;
+            let json = serde_json::to_value(&result)
+                .map_err(|e| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))?;
+            Python::with_gil(|py| Ok(json_to_py(py, json)))
+        })
+    }
+
+    /// Get a specific cloud account by ID (sync)
+    fn cloud_account_sync(&self, py: Python<'_>, cloud_account_id: i64) -> PyResult<Py<PyAny>> {
+        let client = self.client.clone();
+        let result = block_on(py, async move {
+            let handler = CloudAccountHandler::new((*client).clone());
+            handler.get(cloud_account_id as i32).await.into_py_result()
+        })?;
+        let json = serde_json::to_value(&result)
+            .map_err(|e| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))?;
+        Ok(json_to_py(py, json))
+    }
+
+    // Fixed (Essentials) subscriptions API
+
+    /// List all Essentials (fixed) subscriptions (async)
+    fn fixed_subscriptions<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
+        let client = self.client.clone();
+        future_into_py(py, async move {
+            let handler = FixedSubscriptionHandler::new((*client).clone());
+            let result = handler.list().await.into_py_result()?;
+            let json = serde_json::to_value(&result)
+                .map_err(|e| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))?;
+            Python::with_gil(|py| Ok(json_to_py(py, json)))
+        })
+    }
+
+    /// List all Essentials (fixed) subscriptions (sync)
+    fn fixed_subscriptions_sync(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
+        let client = self.client.clone();
+        let result = block_on(py, async move {
+            let handler = FixedSubscriptionHandler::new((*client).clone());
+            handler.list().await.into_py_result()
+        })?;
+        let json = serde_json::to_value(&result)
+            .map_err(|e| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))?;
+        Ok(json_to_py(py, json))
+    }
+
+    /// Get a specific Essentials (fixed) subscription by ID (async)
+    fn fixed_subscription<'py>(
+        &self,
+        py: Python<'py>,
+        subscription_id: i64,
+    ) -> PyResult<Bound<'py, PyAny>> {
+        let client = self.client.clone();
+        future_into_py(py, async move {
+            let handler = FixedSubscriptionHandler::new((*client).clone());
+            let result = handler
+                .get_by_id(subscription_id as i32)
+                .await
+                .into_py_result()?;
+            let json = serde_json::to_value(&result)
+                .map_err(|e| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))?;
+            Python::with_gil(|py| Ok(json_to_py(py, json)))
+        })
+    }
+
+    /// Get a specific Essentials (fixed) subscription by ID (sync)
+    fn fixed_subscription_sync(&self, py: Python<'_>, subscription_id: i64) -> PyResult<Py<PyAny>> {
+        let client = self.client.clone();
+        let result = block_on(py, async move {
+            let handler = FixedSubscriptionHandler::new((*client).clone());
+            handler
+                .get_by_id(subscription_id as i32)
+                .await
+                .into_py_result()
+        })?;
+        let json = serde_json::to_value(&result)
+            .map_err(|e| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))?;
+        Ok(json_to_py(py, json))
+    }
+
+    // Fixed (Essentials) databases API
+
+    /// List databases in an Essentials (fixed) subscription (async)
+    fn fixed_databases<'py>(
+        &self,
+        py: Python<'py>,
+        subscription_id: i64,
+    ) -> PyResult<Bound<'py, PyAny>> {
+        let client = self.client.clone();
+        future_into_py(py, async move {
+            let handler = FixedDatabaseHandler::new((*client).clone());
+            let result = handler
+                .list(subscription_id as i32, None, None)
+                .await
+                .into_py_result()?;
+            let json = serde_json::to_value(&result)
+                .map_err(|e| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))?;
+            Python::with_gil(|py| Ok(json_to_py(py, json)))
+        })
+    }
+
+    /// List databases in an Essentials (fixed) subscription (sync)
+    fn fixed_databases_sync(&self, py: Python<'_>, subscription_id: i64) -> PyResult<Py<PyAny>> {
+        let client = self.client.clone();
+        let result = block_on(py, async move {
+            let handler = FixedDatabaseHandler::new((*client).clone());
+            handler
+                .list(subscription_id as i32, None, None)
+                .await
+                .into_py_result()
+        })?;
+        let json = serde_json::to_value(&result)
+            .map_err(|e| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))?;
+        Ok(json_to_py(py, json))
+    }
+
+    /// Get a specific database in an Essentials (fixed) subscription (async)
+    fn fixed_database<'py>(
+        &self,
+        py: Python<'py>,
+        subscription_id: i64,
+        database_id: i64,
+    ) -> PyResult<Bound<'py, PyAny>> {
+        let client = self.client.clone();
+        future_into_py(py, async move {
+            let handler = FixedDatabaseHandler::new((*client).clone());
+            let result = handler
+                .get_by_id(subscription_id as i32, database_id as i32)
+                .await
+                .into_py_result()?;
+            let json = serde_json::to_value(&result)
+                .map_err(|e| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))?;
+            Python::with_gil(|py| Ok(json_to_py(py, json)))
+        })
+    }
+
+    /// Get a specific database in an Essentials (fixed) subscription (sync)
+    fn fixed_database_sync(
+        &self,
+        py: Python<'_>,
+        subscription_id: i64,
+        database_id: i64,
+    ) -> PyResult<Py<PyAny>> {
+        let client = self.client.clone();
+        let result = block_on(py, async move {
+            let handler = FixedDatabaseHandler::new((*client).clone());
+            handler
+                .get_by_id(subscription_id as i32, database_id as i32)
                 .await
                 .into_py_result()
         })?;

@@ -130,15 +130,16 @@ All examples read credentials from `REDIS_CLOUD_API_KEY` / `REDIS_CLOUD_API_SECR
 
 ## Python Bindings
 
-A thin PyO3 binding covering a subset of read operations is published at
+A PyO3 binding providing a convenience layer covering read operations across
+all major API domains is published at
 [redis-cloud on PyPI](https://pypi.org/project/redis-cloud/). See
-[`python/README.md`](python/README.md) for the supported API.
+[`python/README.md`](python/README.md) for the full supported API, the parity
+scope decision, and what is intentionally out of scope (connectivity handlers,
+cost reports, and write operations — all reachable via the raw HTTP helpers or
+the Rust client).
 
 The PyPI publish workflow has been failing since the `reqwest 0.13` upgrade
-([#48](https://github.com/redis-developer/redis-cloud-rs/issues/48)) and the
-overall scope is still being scoped under
-[#66](https://github.com/redis-developer/redis-cloud-rs/issues/66) — treat
-the Python surface as experimental for now.
+([#48](https://github.com/redis-developer/redis-cloud-rs/issues/48)).
 
 ## API Coverage
 
