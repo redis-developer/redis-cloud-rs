@@ -564,4 +564,118 @@ impl AccountHandler {
             .get(&format!("/session-logs{query_string}"))
             .await
     }
+
+    // ============================================================================
+    // Simplified aliases
+    // ============================================================================
+
+    /// Get the current account (simplified)
+    ///
+    /// Alias for [`get_current_account`](Self::get_current_account).
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use redis_cloud::CloudClient;
+    ///
+    /// # async fn example() -> redis_cloud::Result<()> {
+    /// let client = CloudClient::builder()
+    ///     .api_key("your-api-key")
+    ///     .api_secret("your-api-secret")
+    ///     .build()?;
+    ///
+    /// let root = client.account().get().await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn get(&self) -> Result<RootAccount> {
+        self.get_current_account().await
+    }
+
+    /// Get system logs (simplified)
+    ///
+    /// Alias for [`get_account_system_logs`](Self::get_account_system_logs).
+    ///
+    /// # Arguments
+    ///
+    /// * `offset` - Optional pagination offset
+    /// * `limit` - Optional page size limit
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use redis_cloud::CloudClient;
+    ///
+    /// # async fn example() -> redis_cloud::Result<()> {
+    /// let client = CloudClient::builder()
+    ///     .api_key("your-api-key")
+    ///     .api_secret("your-api-secret")
+    ///     .build()?;
+    ///
+    /// let logs = client.account().system_logs(None, None).await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn system_logs(
+        &self,
+        offset: Option<i32>,
+        limit: Option<i32>,
+    ) -> Result<AccountSystemLogEntries> {
+        self.get_account_system_logs(offset, limit).await
+    }
+
+    /// Get session logs (simplified)
+    ///
+    /// Alias for [`get_account_session_logs`](Self::get_account_session_logs).
+    ///
+    /// # Arguments
+    ///
+    /// * `offset` - Optional pagination offset
+    /// * `limit` - Optional page size limit
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use redis_cloud::CloudClient;
+    ///
+    /// # async fn example() -> redis_cloud::Result<()> {
+    /// let client = CloudClient::builder()
+    ///     .api_key("your-api-key")
+    ///     .api_secret("your-api-secret")
+    ///     .build()?;
+    ///
+    /// let logs = client.account().session_logs(None, None).await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn session_logs(
+        &self,
+        offset: Option<i32>,
+        limit: Option<i32>,
+    ) -> Result<AccountSessionLogEntries> {
+        self.get_account_session_logs(offset, limit).await
+    }
+
+    /// Get payment methods (simplified)
+    ///
+    /// Alias for [`get_account_payment_methods`](Self::get_account_payment_methods).
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use redis_cloud::CloudClient;
+    ///
+    /// # async fn example() -> redis_cloud::Result<()> {
+    /// let client = CloudClient::builder()
+    ///     .api_key("your-api-key")
+    ///     .api_secret("your-api-secret")
+    ///     .build()?;
+    ///
+    /// let methods = client.account().payment_methods().await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn payment_methods(&self) -> Result<PaymentMethods> {
+        self.get_account_payment_methods().await
+    }
 }
