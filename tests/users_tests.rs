@@ -1,3 +1,4 @@
+use redis_cloud::users::AccountUserUpdateRequest;
 use redis_cloud::{CloudClient, UserHandler};
 use serde_json::json;
 use wiremock::matchers::{header, method, path};
@@ -171,4 +172,102 @@ async fn test_error_handling_404() {
     } else {
         panic!("Expected NotFound error");
     }
+}
+
+// Helper: build a Cloud client wired to the given mock server URI.
+fn test_client(uri: String) -> CloudClient {
+    CloudClient::builder()
+        .api_key("test-key".to_string())
+        .api_secret("test-secret".to_string())
+        .base_url(uri)
+        .build()
+        .unwrap()
+}
+
+// Alias round-trip: `list()` delegates to `get_all_users()`.
+#[tokio::test]
+async fn test_users_list_alias() {
+    let mock_server = MockServer::start().await;
+
+    Mock::given(method("GET"))
+        .and(path("/users"))
+        .and(header("x-api-key", "test-key"))
+        .and(header("x-api-secret-key", "test-secret"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({ "account": 1 })))
+        .mount(&mock_server)
+        .await;
+
+    let handler = UserHandler::new(test_client(mock_server.uri()));
+    let result = handler.list().await.unwrap();
+
+    assert_eq!(result.account, Some(1));
+}
+
+// Alias round-trip: `get(id)` delegates to `get_user_by_id(id)`.
+#[tokio::test]
+async fn test_users_get_alias() {
+    let mock_server = MockServer::start().await;
+
+    Mock::given(method("GET"))
+        .and(path("/users/77"))
+        .and(header("x-api-key", "test-key"))
+        .and(header("x-api-secret-key", "test-secret"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({ "id": 77 })))
+        .mount(&mock_server)
+        .await;
+
+    let handler = UserHandler::new(test_client(mock_server.uri()));
+    let result = handler.get(77).await.unwrap();
+
+    assert_eq!(result.id, Some(77));
+}
+
+// Alias round-trip: `delete(id)` delegates to `delete_user_by_id(id)`.
+#[tokio::test]
+async fn test_users_delete_alias() {
+    let mock_server = MockServer::start().await;
+
+    Mock::given(method("DELETE"))
+        .and(path("/users/88"))
+        .and(header("x-api-key", "test-key"))
+        .and(header("x-api-secret-key", "test-secret"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "taskId": "task-del-user",
+            "status": "processing-completed"
+        })))
+        .mount(&mock_server)
+        .await;
+
+    let handler = UserHandler::new(test_client(mock_server.uri()));
+    let result = handler.delete(88).await.unwrap();
+
+    assert_eq!(result.task_id, Some("task-del-user".to_string()));
+}
+
+// Alias round-trip: `update(id, req)` delegates to `update_user(id, req)`.
+#[tokio::test]
+async fn test_users_update_alias() {
+    let mock_server = MockServer::start().await;
+
+    Mock::given(method("PUT"))
+        .and(path("/users/99"))
+        .and(header("x-api-key", "test-key"))
+        .and(header("x-api-secret-key", "test-secret"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "taskId": "task-upd-user",
+            "status": "processing-completed"
+        })))
+        .mount(&mock_server)
+        .await;
+
+    let handler = UserHandler::new(test_client(mock_server.uri()));
+    let request = AccountUserUpdateRequest {
+        user_id: None,
+        name: "Updated Name".to_string(),
+        role: None,
+        command_type: None,
+    };
+    let result = handler.update(99, &request).await.unwrap();
+
+    assert_eq!(result.task_id, Some("task-upd-user".to_string()));
 }

@@ -363,6 +363,47 @@ async fn test_error_handling_404() {
     }
 }
 
+// Alias round-trip: `list()` delegates to `get_all_tasks()`.
+#[tokio::test]
+async fn test_tasks_list_alias() {
+    let mock_server = MockServer::start().await;
+
+    Mock::given(method("GET"))
+        .and(path("/tasks"))
+        .and(header("x-api-key", "test-key"))
+        .and(header("x-api-secret-key", "test-secret"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({ "tasks": [] })))
+        .mount(&mock_server)
+        .await;
+
+    let handler = TasksHandler::new(test_client(mock_server.uri()));
+    let result = handler.list().await.unwrap();
+
+    assert!(result.is_empty());
+}
+
+// Alias round-trip: `get(id)` delegates to `get_task_by_id(id)`.
+#[tokio::test]
+async fn test_tasks_get_alias() {
+    let mock_server = MockServer::start().await;
+
+    Mock::given(method("GET"))
+        .and(path("/tasks/task-alias-1"))
+        .and(header("x-api-key", "test-key"))
+        .and(header("x-api-secret-key", "test-secret"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "taskId": "task-alias-1",
+            "status": "processing-completed"
+        })))
+        .mount(&mock_server)
+        .await;
+
+    let handler = TasksHandler::new(test_client(mock_server.uri()));
+    let result = handler.get("task-alias-1".to_string()).await.unwrap();
+
+    assert_eq!(result.task_id, Some("task-alias-1".to_string()));
+}
+
 #[tokio::test]
 async fn test_error_handling_500() {
     let mock_server = MockServer::start().await;

@@ -297,3 +297,12 @@ fn test_extra_fields_ignored() {
     let tags: CloudTags = serde_json::from_value(json).unwrap();
     assert_eq!(tags.account_id, Some(7));
 }
+
+// An unrecognized status string must map to `TaskStatus::Unknown` (via
+// `#[serde(other)]`) rather than failing deserialization — this keeps task
+// polling resilient to new server-side statuses.
+#[test]
+fn test_task_status_unknown_deserializes() {
+    let s: TaskStatus = serde_json::from_str("\"some-future-status\"").unwrap();
+    assert!(matches!(s, TaskStatus::Unknown));
+}

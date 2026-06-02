@@ -967,3 +967,25 @@ async fn test_get_psc_service_endpoints_active_active() {
 
     assert_eq!(result.task_id.as_deref(), Some("task-aa-get-psc-endpoints"));
 }
+
+// Alias round-trip: `list_tgw_attachments(id)` delegates to `get_tgws(id)`.
+#[tokio::test]
+async fn test_list_tgw_attachments_alias() {
+    let mock_server = MockServer::start().await;
+
+    Mock::given(method("GET"))
+        .and(path("/subscriptions/123/transitGateways"))
+        .and(header("x-api-key", "test-key"))
+        .and(header("x-api-secret-key", "test-secret"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "taskId": "task-tgw-list",
+            "status": "processing-completed"
+        })))
+        .mount(&mock_server)
+        .await;
+
+    let handler = ConnectivityHandler::new(test_client(mock_server.uri()));
+    let result = handler.list_tgw_attachments(123).await.unwrap();
+
+    assert_eq!(result.task_id, Some("task-tgw-list".to_string()));
+}

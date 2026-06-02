@@ -724,3 +724,79 @@ async fn test_update_resource_tags() {
     assert_eq!(result.task_id.as_deref(), Some("task-update-tags"));
     assert_eq!(result.status, Some(TaskStatus::ProcessingInProgress));
 }
+
+// Helper: build a Cloud client wired to the given mock server URI.
+fn test_client(uri: String) -> CloudClient {
+    CloudClient::builder()
+        .api_key("test-key".to_string())
+        .api_secret("test-secret".to_string())
+        .base_url(uri)
+        .build()
+        .unwrap()
+}
+
+// Alias round-trip: `list()` delegates to `get_all_subscriptions()`.
+#[tokio::test]
+async fn test_subscriptions_list_alias() {
+    let mock_server = MockServer::start().await;
+
+    Mock::given(method("GET"))
+        .and(path("/subscriptions"))
+        .and(header("x-api-key", "test-key"))
+        .and(header("x-api-secret-key", "test-secret"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "accountId": 5,
+            "subscriptions": []
+        })))
+        .mount(&mock_server)
+        .await;
+
+    let handler = SubscriptionsHandler::new(test_client(mock_server.uri()));
+    let result = handler.list().await.unwrap();
+
+    assert_eq!(result.account_id, Some(5));
+}
+
+// Alias round-trip: `get(id)` delegates to `get_subscription_by_id()`.
+#[tokio::test]
+async fn test_subscription_get_alias() {
+    let mock_server = MockServer::start().await;
+
+    Mock::given(method("GET"))
+        .and(path("/subscriptions/200"))
+        .and(header("x-api-key", "test-key"))
+        .and(header("x-api-secret-key", "test-secret"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "id": 200,
+            "name": "alias-sub"
+        })))
+        .mount(&mock_server)
+        .await;
+
+    let handler = SubscriptionsHandler::new(test_client(mock_server.uri()));
+    let result = handler.get(200).await.unwrap();
+
+    assert_eq!(result.id, Some(200));
+}
+
+// Alias round-trip: `delete(id)` delegates to `delete_subscription_by_id()`.
+#[tokio::test]
+async fn test_subscription_delete_alias() {
+    let mock_server = MockServer::start().await;
+
+    Mock::given(method("DELETE"))
+        .and(path("/subscriptions/201"))
+        .and(header("x-api-key", "test-key"))
+        .and(header("x-api-secret-key", "test-secret"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "taskId": "task-del-sub",
+            "status": "processing-completed"
+        })))
+        .mount(&mock_server)
+        .await;
+
+    let handler = SubscriptionsHandler::new(test_client(mock_server.uri()));
+    let result = handler.delete(201).await.unwrap();
+
+    assert_eq!(result.task_id, Some("task-del-sub".to_string()));
+}

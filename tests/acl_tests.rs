@@ -854,3 +854,89 @@ async fn test_create_user_with_full_response() {
     assert_eq!(response.resource_id, Some(999));
     assert_eq!(response.additional_resource_id, Some(888));
 }
+
+// Helper: build a Cloud client wired to the given mock server URI.
+fn test_client(uri: String) -> CloudClient {
+    CloudClient::builder()
+        .api_key("test-key".to_string())
+        .api_secret("test-secret".to_string())
+        .base_url(uri)
+        .build()
+        .unwrap()
+}
+
+// Alias round-trip: `list_redis_rules()` delegates to `get_all_redis_rules()`.
+#[tokio::test]
+async fn test_acl_list_redis_rules_alias() {
+    let mock_server = MockServer::start().await;
+
+    Mock::given(method("GET"))
+        .and(path("/acl/redisRules"))
+        .and(header("x-api-key", "test-key"))
+        .and(header("x-api-secret-key", "test-secret"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({})))
+        .mount(&mock_server)
+        .await;
+
+    let handler = AclHandler::new(test_client(mock_server.uri()));
+    let result = handler.list_redis_rules().await.unwrap();
+
+    assert_eq!(result.account_id, None);
+}
+
+// Alias round-trip: `list_roles()` delegates to `get_all_roles()`.
+#[tokio::test]
+async fn test_acl_list_roles_alias() {
+    let mock_server = MockServer::start().await;
+
+    Mock::given(method("GET"))
+        .and(path("/acl/roles"))
+        .and(header("x-api-key", "test-key"))
+        .and(header("x-api-secret-key", "test-secret"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({})))
+        .mount(&mock_server)
+        .await;
+
+    let handler = AclHandler::new(test_client(mock_server.uri()));
+    let result = handler.list_roles().await.unwrap();
+
+    assert_eq!(result.account_id, None);
+}
+
+// Alias round-trip: `list_acl_users()` delegates to `get_all_acl_users()`.
+#[tokio::test]
+async fn test_acl_list_acl_users_alias() {
+    let mock_server = MockServer::start().await;
+
+    Mock::given(method("GET"))
+        .and(path("/acl/users"))
+        .and(header("x-api-key", "test-key"))
+        .and(header("x-api-secret-key", "test-secret"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({})))
+        .mount(&mock_server)
+        .await;
+
+    let handler = AclHandler::new(test_client(mock_server.uri()));
+    let result = handler.list_acl_users().await.unwrap();
+
+    assert_eq!(result.account_id, None);
+}
+
+// Alias round-trip: `get_acl_user(id)` delegates to `get_acl_user_by_id()`.
+#[tokio::test]
+async fn test_acl_get_acl_user_alias() {
+    let mock_server = MockServer::start().await;
+
+    Mock::given(method("GET"))
+        .and(path("/acl/users/5"))
+        .and(header("x-api-key", "test-key"))
+        .and(header("x-api-secret-key", "test-secret"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({ "id": 5 })))
+        .mount(&mock_server)
+        .await;
+
+    let handler = AclHandler::new(test_client(mock_server.uri()));
+    let result = handler.get_acl_user(5).await.unwrap();
+
+    assert_eq!(result.id, Some(5));
+}

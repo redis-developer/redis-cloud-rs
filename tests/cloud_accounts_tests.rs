@@ -793,3 +793,79 @@ async fn test_error_handling_500() {
         _ => panic!("Expected InternalServerError error"),
     }
 }
+
+// Helper: build a Cloud client wired to the given mock server URI.
+fn test_client(uri: String) -> CloudClient {
+    CloudClient::builder()
+        .api_key("test-key".to_string())
+        .api_secret("test-secret".to_string())
+        .base_url(uri)
+        .build()
+        .unwrap()
+}
+
+// Alias round-trip: `list()` delegates to `get_cloud_accounts()`.
+#[tokio::test]
+async fn test_cloud_accounts_list_alias() {
+    let mock_server = MockServer::start().await;
+
+    Mock::given(method("GET"))
+        .and(path("/cloud-accounts"))
+        .and(header("x-api-key", "test-key"))
+        .and(header("x-api-secret-key", "test-secret"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({ "accountId": 1 })))
+        .mount(&mock_server)
+        .await;
+
+    let handler = CloudAccountHandler::new(test_client(mock_server.uri()));
+    let result = handler.list().await.unwrap();
+
+    assert_eq!(result.account_id, Some(1));
+}
+
+// Alias round-trip: `get(id)` delegates to `get_cloud_account_by_id()`.
+#[tokio::test]
+async fn test_cloud_account_get_alias() {
+    let mock_server = MockServer::start().await;
+
+    Mock::given(method("GET"))
+        .and(path("/cloud-accounts/42"))
+        .and(header("x-api-key", "test-key"))
+        .and(header("x-api-secret-key", "test-secret"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "id": 42,
+            "name": "my-account",
+            "accessKeyId": "AKID",
+            "status": "active",
+            "provider": "AWS"
+        })))
+        .mount(&mock_server)
+        .await;
+
+    let handler = CloudAccountHandler::new(test_client(mock_server.uri()));
+    let result = handler.get(42).await.unwrap();
+
+    assert_eq!(result.id, Some(42));
+}
+
+// Alias round-trip: `delete(id)` delegates to `delete_cloud_account()`.
+#[tokio::test]
+async fn test_cloud_account_delete_alias() {
+    let mock_server = MockServer::start().await;
+
+    Mock::given(method("DELETE"))
+        .and(path("/cloud-accounts/43"))
+        .and(header("x-api-key", "test-key"))
+        .and(header("x-api-secret-key", "test-secret"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "taskId": "task-del-ca",
+            "status": "processing-completed"
+        })))
+        .mount(&mock_server)
+        .await;
+
+    let handler = CloudAccountHandler::new(test_client(mock_server.uri()));
+    let result = handler.delete(43).await.unwrap();
+
+    assert_eq!(result.task_id, Some("task-del-ca".to_string()));
+}
