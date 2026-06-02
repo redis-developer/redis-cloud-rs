@@ -10,7 +10,7 @@ A comprehensive Rust client library for the Redis Cloud REST API, with Python bi
 
 ## Features
 
-- Broad coverage of Redis Cloud REST API endpoints, checked against the bundled OpenAPI spec in CI
+- Complete coverage of all Redis Cloud REST API endpoints (155/155 routes verified against the bundled OpenAPI spec in CI)
 - Async/await support with tokio
 - Strong typing for API requests and responses
 - Comprehensive error handling
@@ -53,7 +53,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     // List Pro subscriptions
-    let subs = client.subscriptions().get_all_subscriptions().await?;
+    let subs = client.subscriptions().list().await?;
     for sub in subs.subscriptions.unwrap_or_default() {
         println!("  - subscription {:?}: {:?}", sub.id, sub.name);
     }
@@ -143,12 +143,14 @@ The PyPI publish workflow has been failing since the `reqwest 0.13` upgrade
 
 ## API Coverage
 
-The crate covers most of the documented Redis Cloud REST API surface. Route
-coverage is enforced by an executable check
+The crate covers **100% of the documented Redis Cloud REST API surface** (155/155
+routes). Route coverage is enforced by an executable check
 ([`tests/openapi_route_coverage.rs`](tests/openapi_route_coverage.rs)) that
-diffs the typed handlers against the bundled OpenAPI spec; the remaining
-deferred routes are tracked explicitly in
-[`tests/fixtures/openapi_unsupported_routes.txt`](tests/fixtures/openapi_unsupported_routes.txt).
+diffs the typed handlers against the bundled OpenAPI spec; intentional gaps
+(currently none) and known off-spec routes (currently none) are tracked in
+[`tests/fixtures/openapi_unsupported_routes.txt`](tests/fixtures/openapi_unsupported_routes.txt)
+and
+[`tests/fixtures/openapi_non_spec_routes.txt`](tests/fixtures/openapi_non_spec_routes.txt).
 
 Handler organization:
 

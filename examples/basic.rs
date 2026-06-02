@@ -31,7 +31,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // List all Pro subscriptions
     println!("\nFetching Pro subscriptions...");
-    match client.subscriptions().get_all_subscriptions().await {
+    match client.subscriptions().list().await {
         Ok(response) => {
             if let Some(subs) = response.subscriptions {
                 println!("Found {} Pro subscriptions:", subs.len());
