@@ -7,6 +7,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.0](https://github.com/redis-developer/redis-cloud-rs/compare/v0.9.5...v0.10.0) - 2026-06-02
+
+### Added
+
+- *(python)* expand bindings to cover all major read domains, document parity scope (closes #66) ([#113](https://github.com/redis-developer/redis-cloud-rs/pull/113))
+- *(api)* add simplified alias methods across remaining domain handlers (closes #65) ([#112](https://github.com/redis-developer/redis-cloud-rs/pull/112))
+- *(api)* [**breaking**] implement remaining uncovered spec routes (#72, PR 2) ([#111](https://github.com/redis-developer/redis-cloud-rs/pull/111))
+
+### Fixed
+
+- *(flexible/databases)* correct timeUTC serde casing in DatabaseBackupConfig ([#108](https://github.com/redis-developer/redis-cloud-rs/pull/108)) ([#109](https://github.com/redis-developer/redis-cloud-rs/pull/109))
+- *(tasks)* accept object-shaped response.error on failed tasks ([#103](https://github.com/redis-developer/redis-cloud-rs/pull/103))
+- *(subscriptions)* send body when deleting Active-Active regions ([#99](https://github.com/redis-developer/redis-cloud-rs/pull/99))
+- *(connectivity)* vpc_peering create body serializes the spec's wire keys ([#89](https://github.com/redis-developer/redis-cloud-rs/pull/89))
+- *(account)* PaymentMethod.credit_card_ends_with should be String, not i32 ([#87](https://github.com/redis-developer/redis-cloud-rs/pull/87))
+- *(flexible/databases)* rename Database.activated to activated_on (wire field is `activatedOn`) ([#86](https://github.com/redis-developer/redis-cloud-rs/pull/86))
+- *(tasks)* handle the canonical TasksStateUpdate wrapper from GET /tasks ([#85](https://github.com/redis-developer/redis-cloud-rs/pull/85))
+- *(fixed/databases)* add missing 'subscription' field to AccountFixedSubscriptionDatabases ([#81](https://github.com/redis-developer/redis-cloud-rs/pull/81))
+
+### Other
+
+- audit and expand coverage for alias layer and new domains ([#116](https://github.com/redis-developer/redis-cloud-rs/pull/116))
+- audit and update documentation for release readiness (closes #114) ([#117](https://github.com/redis-developer/redis-cloud-rs/pull/117))
+- *(connectivity)* [**breaking**] reconcile TGW + PSC handler paths with spec (#72, PR 1) ([#110](https://github.com/redis-developer/redis-cloud-rs/pull/110))
+- *(openapi)* add executable route-coverage checks vs bundled spec ([#67](https://github.com/redis-developer/redis-cloud-rs/pull/67)) ([#107](https://github.com/redis-developer/redis-cloud-rs/pull/107))
+- *(connectivity)* [**breaking**] return TaskStateUpdate for task-returning endpoints ([#78](https://github.com/redis-developer/redis-cloud-rs/pull/78)) ([#106](https://github.com/redis-developer/redis-cloud-rs/pull/106))
+- *(types)* [**breaking**] consolidate shared task/tag models onto canonical types ([#64](https://github.com/redis-developer/redis-cloud-rs/pull/64)) ([#104](https://github.com/redis-developer/redis-cloud-rs/pull/104))
+- *(spec)* refresh bundled cloud_openapi.json from upstream ([#101](https://github.com/redis-developer/redis-cloud-rs/pull/101))
+- README + examples refresh for v0.10.0 ([#100](https://github.com/redis-developer/redis-cloud-rs/pull/100))
+- enforce #![deny(missing_docs)] and rustdoc::broken_intra_doc_links ([#98](https://github.com/redis-developer/redis-cloud-rs/pull/98))
+- *(models)* document fields in the four large request/response modules ([#96](https://github.com/redis-developer/redis-cloud-rs/pull/96))
+- *(users)* document all undocumented fields in user request/response models ([#95](https://github.com/redis-developer/redis-cloud-rs/pull/95))
+- *(small modules)* document the remaining undocumented fields in 6 short modules ([#94](https://github.com/redis-developer/redis-cloud-rs/pull/94))
+- *(connectivity)* expand thin module headers (psc, transit_gateway, vpc_peering) ([#93](https://github.com/redis-developer/redis-cloud-rs/pull/93))
+- *(types)* expand module header and document all variants/fields in shared types ([#92](https://github.com/redis-developer/redis-cloud-rs/pull/92))
+- *(connectivity)* document ConnectivityHandler delegation methods and struct fields ([#91](https://github.com/redis-developer/redis-cloud-rs/pull/91))
+- *(lib.rs)* refresh stale examples in crate-level docs ([#90](https://github.com/redis-developer/redis-cloud-rs/pull/90))
+- *(cost_report)* add wiremock integration coverage for the exported handler ([#88](https://github.com/redis-developer/redis-cloud-rs/pull/88))
+
 ### Added
 
 - Simplified alias methods across all domain handlers for a concise, ergonomic
