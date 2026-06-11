@@ -237,6 +237,28 @@ pub struct PaymentMethods {
     pub links: Option<Vec<Link>>,
 }
 
+/// Deserialize a field the API may send as either a JSON number or a string
+/// into an `Option<String>`.
+///
+/// Used for `creditCardEndsWith`, which the OpenAPI schema documents as a
+/// string but the live API returns as a number (see #120). A `null` or absent
+/// field yields `None`; a number is stringified; a string is kept verbatim.
+fn deserialize_opt_string_or_number<'de, D>(
+    deserializer: D,
+) -> std::result::Result<Option<String>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    match serde_json::Value::deserialize(deserializer)? {
+        serde_json::Value::Null => Ok(None),
+        serde_json::Value::String(s) => Ok(Some(s)),
+        serde_json::Value::Number(n) => Ok(Some(n.to_string())),
+        other => Err(serde::de::Error::custom(format!(
+            "expected a string or number for creditCardEndsWith, got {other}"
+        ))),
+    }
+}
+
 /// Payment method information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -249,12 +271,19 @@ pub struct PaymentMethod {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub r#type: Option<String>,
 
-    /// Last digits of the credit card as a masked string.
+    /// Last digits of the credit card.
     ///
-    /// Typed as `Option<String>` because the OpenAPI example shows a string
-    /// value and real responses can include leading zeros (`"0042"`) or
-    /// non-numeric formatting that would be lost or fail to parse as `i32`.
-    #[serde(skip_serializing_if = "Option::is_none")]
+    /// Kept as `Option<String>`, but deserialized with a number-or-string
+    /// helper: the OpenAPI schema documents a string, yet the live API returns
+    /// `creditCardEndsWith` as a JSON number. Accepting both keeps the public
+    /// type stable while tolerating the real response (a plain `String` failed
+    /// to deserialize — see #120). A string is preserved as-is, so a value with
+    /// leading zeros (`"0042"`) is not lost if the API ever sends one.
+    #[serde(
+        default,
+        deserialize_with = "deserialize_opt_string_or_number",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub credit_card_ends_with: Option<String>,
 
     /// Name on the card

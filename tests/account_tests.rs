@@ -227,6 +227,51 @@ async fn test_get_account_payment_methods() {
     assert_eq!(methods[0].credit_card_ends_with.as_deref(), Some("0042"));
 }
 
+// Regression for #120: the live API returns `creditCardEndsWith` as a JSON
+// number, not a string. The previous `Option<String>` typing failed to
+// deserialize it; the number-or-string helper now accepts both, stringifying
+// the number.
+#[tokio::test]
+async fn test_get_account_payment_methods_numeric_card_tail() {
+    let mock_server = MockServer::start().await;
+
+    Mock::given(method("GET"))
+        .and(path("/payment-methods"))
+        .and(header("x-api-key", "test-key"))
+        .and(header("x-api-secret-key", "test-secret"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "accountId": 123,
+            "paymentMethods": [
+                {
+                    "id": 555,
+                    "type": "Mastercard",
+                    "creditCardEndsWith": 3825,
+                    "expirationMonth": 2,
+                    "expirationYear": 2028
+                }
+            ]
+        })))
+        .mount(&mock_server)
+        .await;
+
+    let client = CloudClient::builder()
+        .api_key("test-key".to_string())
+        .api_secret("test-secret".to_string())
+        .base_url(mock_server.uri())
+        .build()
+        .unwrap();
+
+    let handler = AccountHandler::new(client);
+    let result = handler.get_account_payment_methods().await.unwrap();
+
+    let methods = result
+        .payment_methods
+        .expect("response should include paymentMethods");
+    assert_eq!(methods.len(), 1);
+    // Numeric card tail deserializes, stringified.
+    assert_eq!(methods[0].credit_card_ends_with.as_deref(), Some("3825"));
+}
+
 #[tokio::test]
 async fn test_get_account_system_logs() {
     let mock_server = MockServer::start().await;
