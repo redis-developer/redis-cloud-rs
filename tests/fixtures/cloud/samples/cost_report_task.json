@@ -1,0 +1,19 @@
+{
+  "taskId": "00000000-0000-0000-0000-000000000000",
+  "commandType": "costReportCreateRequest",
+  "status": "processing-completed",
+  "description": "Request processing completed successfully and its resources are now being provisioned / de-provisioned.",
+  "timestamp": "2026-06-11T18:17:58.06056495Z",
+  "response": {
+    "resource": {
+      "costReportId": "RedisCloudCosts_12345_2026-05-01_2026-05-31_0000000000000.csv"
+    }
+  },
+  "links": [
+    {
+      "rel": "self",
+      "type": "GET",
+      "href": "https://api.redislabs.com/v1/tasks/00000000-0000-0000-0000-000000000000"
+    }
+  ]
+}

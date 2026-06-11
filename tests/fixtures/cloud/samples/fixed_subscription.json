@@ -1,0 +1,34 @@
+{
+  "id": 111111,
+  "name": "example-subscription",
+  "status": "active",
+  "paymentMethodId": 555,
+  "paymentMethodType": "credit-card",
+  "planId": 21547,
+  "planName": "Single-Zone_Persistence_12GB",
+  "size": 12.0,
+  "sizeMeasurementUnit": "GB",
+  "provider": "AWS",
+  "region": "us-east-1",
+  "price": 198,
+  "pricePeriod": "Month",
+  "priceCurrency": "USD",
+  "maximumDatabases": 1,
+  "availability": "Single-zone",
+  "connections": "10000",
+  "cidrAllowRules": 32,
+  "supportDataPersistence": true,
+  "supportInstantAndDailyBackups": true,
+  "supportReplication": true,
+  "supportClustering": false,
+  "customerSupport": "Standard",
+  "creationDate": "2026-01-21T14:46:32Z",
+  "databaseStatus": "active",
+  "links": [
+    {
+      "href": "https://api.redislabs.com/v1/fixed/subscriptions/111111",
+      "type": "GET",
+      "rel": "self"
+    }
+  ]
+}
