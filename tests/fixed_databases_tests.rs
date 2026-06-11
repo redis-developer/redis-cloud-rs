@@ -653,4 +653,12 @@ async fn test_fixed_database_modules_parameters_array_deserializes() {
         modules[1].parameters,
         Some(json!([{ "name": "error_rate", "value": "0.01" }]))
     );
+
+    // #121: the nested security/clustering/backup objects are now captured.
+    let security = db.security.expect("security should deserialize (see #121)");
+    assert_eq!(security.source_ips, Some(vec!["0.0.0.0/0".to_string()]));
+    assert_eq!(security.enable_tls, Some(false));
+    let clustering = db.clustering.expect("clustering should deserialize");
+    assert_eq!(clustering.enabled, Some(false));
+    assert_eq!(clustering.regex_rules.as_ref().map(Vec::len), Some(1));
 }

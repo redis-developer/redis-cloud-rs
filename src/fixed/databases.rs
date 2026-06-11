@@ -338,6 +338,71 @@ pub struct DatabaseAlertSpec {
     pub value: i32,
 }
 
+/// Security configuration returned within a [`FixedDatabase`] read response
+/// (nested `security` object).
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FixedDatabaseSecurity {
+    /// Whether the default Redis user is enabled.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub default_user_enabled: Option<bool>,
+
+    /// Whether SSL client authentication is enabled.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ssl_client_authentication: Option<bool>,
+
+    /// Whether TLS client authentication is enabled.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tls_client_authentication: Option<bool>,
+
+    /// Whether TLS is enabled for connections.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub enable_tls: Option<bool>,
+
+    /// Source IP addresses / CIDR blocks allowed to connect.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub source_ips: Option<Vec<String>>,
+}
+
+/// A single regex rule within a fixed database's clustering policy.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FixedDatabaseRegexRule {
+    /// Order of this rule.
+    pub ordinal: i32,
+
+    /// Regex pattern.
+    pub pattern: String,
+}
+
+/// Clustering configuration returned within a [`FixedDatabase`] read response
+/// (nested `clustering` object).
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FixedDatabaseClustering {
+    /// Whether clustering is enabled.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub enabled: Option<bool>,
+
+    /// Regex rules for the custom hashing policy.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub regex_rules: Option<Vec<FixedDatabaseRegexRule>>,
+
+    /// Hashing policy (e.g. `"standard"`).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub hashing_policy: Option<String>,
+}
+
+/// Backup configuration returned within a [`FixedDatabase`] read response
+/// (nested `backup` object).
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FixedDatabaseBackup {
+    /// Whether remote backup is enabled.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub remote_backup_enabled: Option<bool>,
+}
+
 /// `FixedDatabase`
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -415,11 +480,17 @@ pub struct FixedDatabase {
     pub redis_flex: Option<bool>,
 
     /// Whether Redis OSS Cluster API support is enabled.
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(
+        rename = "supportOSSClusterApi",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub support_oss_cluster_api: Option<bool>,
 
     /// Whether the external endpoint is used for OSS Cluster API.
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(
+        rename = "useExternalEndpointForOSSClusterApi",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub use_external_endpoint_for_oss_cluster_api: Option<bool>,
 
     /// Data persistence type (e.g. `"none"`, `"aof-every-1-second"`, `"snapshot-every-1-hour"`).
@@ -454,45 +525,23 @@ pub struct FixedDatabase {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub dynamic_endpoints: Option<DynamicEndpoints>,
 
-    /// Whether default Redis user is enabled
+    /// Security configuration (TLS, source IPs, authentication).
+    ///
+    /// Returned as a nested `security` object on reads. See
+    /// [`FixedDatabaseSecurity`].
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub enable_default_user: Option<bool>,
-
-    /// Whether TLS is enabled for connections
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub enable_tls: Option<bool>,
-
-    /// Database password (masked in responses)
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub password: Option<String>,
-
-    /// List of source IP addresses or subnet masks allowed to connect
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub source_ips: Option<Vec<String>>,
-
-    /// Whether SSL client authentication is enabled
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub ssl_client_authentication: Option<bool>,
-
-    /// Whether TLS client authentication is enabled
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub tls_client_authentication: Option<bool>,
+    pub security: Option<FixedDatabaseSecurity>,
 
     /// Replica of configuration
     #[serde(skip_serializing_if = "Option::is_none")]
     pub replica: Option<ReplicaOfSpec>,
 
-    /// Whether database clustering is enabled
+    /// Clustering configuration (shard hashing).
+    ///
+    /// Returned as a nested `clustering` object on reads. See
+    /// [`FixedDatabaseClustering`].
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub clustering_enabled: Option<bool>,
-
-    /// Regex rules for custom hashing policy
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub regex_rules: Option<Vec<String>>,
-
-    /// Hashing policy for clustering
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub hashing_policy: Option<String>,
+    pub clustering: Option<FixedDatabaseClustering>,
 
     /// Redis modules/capabilities enabled on this database
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -502,9 +551,10 @@ pub struct FixedDatabase {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub alerts: Option<Vec<DatabaseAlertSpec>>,
 
-    /// Backup configuration and status
+    /// Backup configuration as returned on reads (nested `backup` object).
+    /// See [`FixedDatabaseBackup`].
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub backup: Option<DatabaseBackupStatus>,
+    pub backup: Option<FixedDatabaseBackup>,
 
     /// HATEOAS links
     #[serde(skip_serializing_if = "Option::is_none")]

@@ -142,6 +142,25 @@ async fn test_get_database_by_id() {
             "privateEndpoint": "redis-12345.c1.us-east-1.redislabs.com:16379",
             "publicEndpoint": "redis-12345-ext.c1.us-east-1.redislabs.com:16379",
             "protocol": "redis",
+            "supportOSSClusterApi": false,
+            "useExternalEndpointForOSSClusterApi": false,
+            "security": {
+                "enableDefaultUser": true,
+                "enableTls": false,
+                "sourceIps": ["0.0.0.0/0"],
+                "tlsClientAuthentication": false
+            },
+            "clustering": {
+                "numberOfShards": 1,
+                "hashingPolicy": "standard",
+                "regexRules": [{ "ordinal": 0, "pattern": ".*" }]
+            },
+            "backup": {
+                "enableRemoteBackup": false,
+                "interval": "every-12-hours",
+                "timeUTC": "14:00",
+                "destination": "s3://example/backups"
+            },
             "activatedOn": "2024-01-01T00:00:00Z",
             "lastModified": "2024-01-01T12:00:00Z"
         })))
@@ -183,6 +202,20 @@ async fn test_get_database_by_id() {
         result.activated_on,
         Some("2024-01-01T00:00:00Z".to_string())
     );
+    // #121: OSS-cased fields and the nested security/clustering/backup objects
+    // are captured from the real response shape rather than silently dropped.
+    assert_eq!(result.support_oss_cluster_api, Some(false));
+    let security = result
+        .security
+        .expect("security should deserialize (see #121)");
+    assert_eq!(security.source_ips, Some(vec!["0.0.0.0/0".to_string()]));
+    assert_eq!(security.enable_default_user, Some(true));
+    let clustering = result.clustering.expect("clustering should deserialize");
+    assert_eq!(clustering.number_of_shards, Some(1));
+    let backup = result.backup.expect("backup should deserialize");
+    assert_eq!(backup.enable_remote_backup, Some(false));
+    // Same timeUTC casing pitfall as #108 — must be captured.
+    assert_eq!(backup.time_utc.as_deref(), Some("14:00"));
 }
 
 #[tokio::test]

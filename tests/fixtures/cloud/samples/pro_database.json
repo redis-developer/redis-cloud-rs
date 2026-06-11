@@ -1,0 +1,54 @@
+{
+  "databaseId": 222333,
+  "name": "example-pro-db",
+  "protocol": "redis",
+  "provider": "AWS",
+  "region": "us-east-1",
+  "status": "active",
+  "memoryLimitInGb": 6.0,
+  "datasetSizeInGb": 3.0,
+  "memoryUsedInMb": 6.3,
+  "redisVersion": "8.4",
+  "redisVersionCompliance": "8.4.0",
+  "respVersion": "resp3",
+  "publicEndpoint": "redis-12345.example.cloud.redislabs.com:12345",
+  "privateEndpoint": "redis-12345.internal.example.cloud.redislabs.com:12345",
+  "dataPersistence": "aof-every-1-second",
+  "dataEvictionPolicy": "noeviction",
+  "replication": true,
+  "supportOSSClusterApi": false,
+  "useExternalEndpointForOSSClusterApi": false,
+  "autoMinorVersionUpgrade": true,
+  "queryPerformanceFactor": "standard",
+  "memoryStorage": "ram",
+  "security": {
+    "enableDefaultUser": true,
+    "enableTls": false,
+    "password": "example-password",
+    "sourceIps": ["0.0.0.0/0"],
+    "tlsClientAuthentication": false
+  },
+  "clustering": {
+    "numberOfShards": 1,
+    "hashingPolicy": "standard",
+    "regexRules": [
+      { "ordinal": 0, "pattern": ".*\\{(?<tag>.*)\\}.*" },
+      { "ordinal": 1, "pattern": "(?<tag>.*)" }
+    ]
+  },
+  "modules": [],
+  "throughputMeasurement": { "by": "operations-per-second", "value": 3000 },
+  "alerts": [
+    { "id": 1, "name": "dataset-size", "value": 80, "defaultValue": 80 }
+  ],
+  "backup": {
+    "destination": "s3://example-bucket/backups",
+    "enableRemoteBackup": false,
+    "interval": "every-12-hours",
+    "timeUTC": "14:00"
+  },
+  "replicaOf": null,
+  "activatedOn": "2026-06-11T18:00:00Z",
+  "lastModified": "2026-06-11T18:30:00Z",
+  "links": []
+}
