@@ -316,10 +316,20 @@ live_test_pinned!(live_pro_database_reads, c, res, {
         .list(sub)
         .await
         .expect("databases list should deserialize");
-    c.databases()
+    let database = c
+        .databases()
         .get_subscription_database_by_id(sub, db)
         .await
         .expect("get_subscription_database_by_id should deserialize");
+    // #121: the nested security object (with its source-IP allowlist) must be
+    // captured from the real response, not silently dropped.
+    let security = database
+        .security
+        .expect("Pro database response should include a security object (see #121)");
+    assert!(
+        security.source_ips.is_some(),
+        "security.sourceIps should be populated"
+    );
     c.databases()
         .get_database_backup_status(sub, db, None)
         .await
@@ -375,10 +385,19 @@ live_test_pinned!(live_connectivity_reads, c, res, {
 
 live_test_pinned!(live_essentials_database_reads, c, res, {
     let (sub, db) = (res.essentials_sub, res.essentials_db);
-    c.fixed_databases()
+    let database = c
+        .fixed_databases()
         .get_by_id(sub, db)
         .await
         .expect("fixed get_by_id should deserialize (see #119)");
+    // #121: nested security object captured from the real Essentials response.
+    let security = database
+        .security
+        .expect("Essentials database response should include a security object (see #121)");
+    assert!(
+        security.source_ips.is_some(),
+        "security.sourceIps should be populated"
+    );
     c.fixed_databases()
         .get_backup_status(sub, db)
         .await

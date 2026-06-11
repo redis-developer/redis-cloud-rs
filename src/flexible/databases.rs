@@ -489,8 +489,12 @@ pub struct Backup {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub enable_remote_backup: Option<bool>,
 
-    /// Backup time in UTC
-    #[serde(skip_serializing_if = "Option::is_none")]
+    /// Backup time in UTC.
+    ///
+    /// Wire field is `timeUTC` (capital UTC), so an explicit rename is needed —
+    /// `rename_all = "camelCase"` would produce `timeUtc` and silently drop the
+    /// real value (same casing pitfall as #108).
+    #[serde(rename = "timeUTC", skip_serializing_if = "Option::is_none")]
     pub time_utc: Option<String>,
 
     /// Backup interval (e.g., "every-24-hours", "every-12-hours")
@@ -824,16 +828,36 @@ pub struct Database {
     pub protocol: Option<String>,
 
     /// Support for OSS Cluster API
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(
+        rename = "supportOSSClusterApi",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub support_oss_cluster_api: Option<bool>,
 
     /// Use external endpoint for OSS Cluster API
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(
+        rename = "useExternalEndpointForOSSClusterApi",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub use_external_endpoint_for_oss_cluster_api: Option<bool>,
 
-    /// Whether TLS is enabled for connections
+    /// Security configuration (TLS, source IPs, authentication).
+    ///
+    /// The API returns these as a nested `security` object on reads. See
+    /// [`Security`].
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub enable_tls: Option<bool>,
+    pub security: Option<Security>,
+
+    /// Clustering configuration (shard count, hashing policy, regex rules).
+    ///
+    /// Returned as a nested `clustering` object on reads. See [`Clustering`].
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub clustering: Option<Clustering>,
+
+    /// Backup configuration as returned on reads (nested `backup` object).
+    /// See [`Backup`].
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub backup: Option<Backup>,
 
     /// Throughput measurement configuration
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -851,14 +875,6 @@ pub struct Database {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub periodic_backup_path: Option<String>,
 
-    /// Remote backup configuration
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub remote_backup: Option<DatabaseBackupConfig>,
-
-    /// List of source IP addresses or subnet masks allowed to connect
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub source_ip: Option<Vec<String>>,
-
     /// Client TLS/SSL certificate (deprecated, use `client_tls_certificates`)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub client_ssl_certificate: Option<String>,
@@ -866,10 +882,6 @@ pub struct Database {
     /// List of client TLS/SSL certificates for mTLS authentication
     #[serde(skip_serializing_if = "Option::is_none")]
     pub client_tls_certificates: Option<Vec<DatabaseCertificateSpec>>,
-
-    /// Database password (masked in responses for security)
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub password: Option<String>,
 
     /// Memcached SASL username
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -903,10 +915,6 @@ pub struct Database {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub replica: Option<ReplicaOfSpec>,
 
-    /// Whether default Redis user is enabled
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub enable_default_user: Option<bool>,
-
     /// Whether this is an Active-Active (CRDB) database
     #[serde(skip_serializing_if = "Option::is_none")]
     pub active_active_redis: Option<bool>,
@@ -922,22 +930,6 @@ pub struct Database {
     /// Whether automatic minor version upgrades are enabled
     #[serde(skip_serializing_if = "Option::is_none")]
     pub auto_minor_version_upgrade: Option<bool>,
-
-    /// Number of shards in the database cluster
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub number_of_shards: Option<i32>,
-
-    /// Regex rules for custom hashing policy
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub regex_rules: Option<Vec<RegexRule>>,
-
-    /// Whether SSL client authentication is enabled
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub ssl_client_authentication: Option<bool>,
-
-    /// Whether TLS client authentication is enabled
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub tls_client_authentication: Option<bool>,
 
     /// Timestamp when the database was activated.
     ///

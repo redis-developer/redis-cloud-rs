@@ -13,6 +13,7 @@
 //! (output is gitignored and must not be committed).
 
 use redis_cloud::account::PaymentMethods;
+use redis_cloud::databases::Database;
 use redis_cloud::fixed_databases::AccountFixedSubscriptionDatabases;
 use redis_cloud::fixed_subscriptions::FixedSubscription;
 use redis_cloud::types::{TaskStateUpdate, TaskStatus};
@@ -43,6 +44,52 @@ fn fixed_databases_response_deserializes() {
         modules[1].parameters,
         Some(serde_json::json!([{ "name": "error_rate", "value": "0.01" }]))
     );
+
+    // #121: the nested security/clustering/backup objects are now captured
+    // instead of silently dropped.
+    let security = db
+        .security
+        .expect("security object should deserialize (see #121)");
+    assert_eq!(security.source_ips, Some(vec!["0.0.0.0/0".to_string()]));
+    assert_eq!(security.enable_tls, Some(false));
+    assert_eq!(security.default_user_enabled, Some(false));
+
+    let clustering = db.clustering.expect("clustering object should deserialize");
+    assert_eq!(clustering.enabled, Some(false));
+    assert_eq!(clustering.regex_rules.as_ref().map(Vec::len), Some(2));
+    assert_eq!(clustering.hashing_policy.as_deref(), Some("standard"));
+
+    let backup = db.backup.expect("backup object should deserialize");
+    assert_eq!(backup.remote_backup_enabled, Some(false));
+}
+
+// #121 (Pro path): the flexible Database model nests security/clustering/backup
+// the same way, plus OSS-cased fields. All must be captured.
+#[test]
+fn pro_database_response_deserializes() {
+    let raw = include_str!("fixtures/cloud/samples/pro_database.json");
+    let db: Database = serde_json::from_str(raw).expect("pro database fixture should deserialize");
+
+    assert_eq!(db.database_id, 222333);
+    // OSS-cased fields land (rename to supportOSSClusterApi / ...OSSClusterApi).
+    assert_eq!(db.support_oss_cluster_api, Some(false));
+    assert_eq!(db.use_external_endpoint_for_oss_cluster_api, Some(false));
+
+    let security = db
+        .security
+        .expect("security object should deserialize (see #121)");
+    assert_eq!(security.source_ips, Some(vec!["0.0.0.0/0".to_string()]));
+    assert_eq!(security.enable_default_user, Some(true));
+    assert_eq!(security.enable_tls, Some(false));
+
+    let clustering = db.clustering.expect("clustering object should deserialize");
+    assert_eq!(clustering.number_of_shards, Some(1));
+    assert_eq!(clustering.regex_rules.as_ref().map(Vec::len), Some(2));
+
+    let backup = db.backup.expect("backup object should deserialize");
+    assert_eq!(backup.enable_remote_backup, Some(false));
+    assert_eq!(backup.interval.as_deref(), Some("every-12-hours"));
+    assert_eq!(backup.time_utc.as_deref(), Some("14:00"));
 }
 
 // #120: creditCardEndsWith is a JSON number; the number-or-string deserializer
