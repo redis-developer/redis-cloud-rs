@@ -560,3 +560,97 @@ async fn test_resume_fixed_database_traffic() {
     // Empty 204 body must deserialize cleanly into `()`.
     handler.resume_traffic(123, 456).await.unwrap();
 }
+
+// Regression for #119: the live API returns `modules[].parameters` as a JSON
+// array (`[]` when empty, objects otherwise), but the field used to be typed
+// as a map, so real database reads failed to deserialize. This mirrors the
+// real `GET /fixed/subscriptions/{id}/databases` response shape — including the
+// extra module metadata and nested `security`/`clustering`/`backup` objects the
+// API actually sends — and asserts the call succeeds.
+#[tokio::test]
+async fn test_fixed_database_modules_parameters_array_deserializes() {
+    let mock_server = MockServer::start().await;
+
+    Mock::given(method("GET"))
+        .and(path("/fixed/subscriptions/123/databases"))
+        .and(header("x-api-key", "test-key"))
+        .and(header("x-api-secret-key", "test-secret"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "accountId": 456,
+            "subscription": {
+                "subscriptionId": 123,
+                "numberOfDatabases": 1,
+                "databases": [
+                    {
+                        "databaseId": 13926356,
+                        "name": "with-modules",
+                        "protocol": "stack",
+                        "provider": "AWS",
+                        "region": "us-east-1",
+                        "redisVersion": "8.2",
+                        "status": "active",
+                        "planMemoryLimit": 12.0,
+                        "memoryLimitMeasurementUnit": "MB",
+                        "memoryStorage": "ram",
+                        "networkMonthlyUsageInByte": 1.83615528E+10,
+                        "security": {
+                            "defaultUserEnabled": false,
+                            "enableTls": false,
+                            "sourceIps": ["0.0.0.0/0"]
+                        },
+                        "clustering": {
+                            "enabled": false,
+                            "regexRules": [{ "ordinal": 0, "pattern": ".*" }],
+                            "hashingPolicy": "standard"
+                        },
+                        "modules": [
+                            {
+                                "id": 7778767,
+                                "name": "RedisTimeSeries",
+                                "capabilityName": "Time series",
+                                "version": "8.2.9",
+                                "description": "Time-Series data structure for redis",
+                                "parameters": []
+                            },
+                            {
+                                "id": 8131105,
+                                "name": "RedisBloom",
+                                "version": "8.2.13",
+                                "parameters": [{ "name": "error_rate", "value": "0.01" }]
+                            }
+                        ],
+                        "backup": { "remoteBackupEnabled": false }
+                    }
+                ],
+                "links": []
+            },
+            "links": []
+        })))
+        .mount(&mock_server)
+        .await;
+
+    let client = CloudClient::builder()
+        .api_key("test-key".to_string())
+        .api_secret("test-secret".to_string())
+        .base_url(mock_server.uri())
+        .build()
+        .unwrap();
+
+    let handler = FixedDatabaseHandler::new(client);
+    let result = handler.list(123, None, None).await.unwrap();
+
+    let db = result
+        .subscription
+        .and_then(|s| s.databases.into_iter().next())
+        .expect("response should include the database");
+    let modules = db.modules.expect("modules should deserialize");
+    assert_eq!(modules.len(), 2);
+    assert_eq!(modules[0].name, "RedisTimeSeries");
+    // Empty array parameters.
+    assert_eq!(modules[0].parameters, Some(json!([])));
+    // Populated array parameters round-trip as a JSON array.
+    assert_eq!(
+        modules[1].parameters,
+        Some(json!([{ "name": "error_rate", "value": "0.01" }]))
+    );
+}

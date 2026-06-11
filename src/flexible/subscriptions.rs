@@ -222,8 +222,13 @@ pub struct DatabaseModuleSpec {
     pub name: String,
 
     /// Optional. Redis advanced capability parameters. Use GET /database-modules to get the available capabilities and their parameters.
+    ///
+    /// Kept as a [`Value`] because the wire shape is asymmetric: create
+    /// requests send an object (capability name → parameter map), while
+    /// database reads return an array. A typed map only matched the request
+    /// side and failed to deserialize real responses.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub parameters: Option<HashMap<String, Value>>,
+    pub parameters: Option<Value>,
 }
 
 /// Update Pro subscription
