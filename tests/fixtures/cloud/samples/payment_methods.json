@@ -1,0 +1,21 @@
+{
+  "accountId": 12345,
+  "paymentMethods": [
+    {
+      "id": 555,
+      "type": "Mastercard",
+      "creditCardEndsWith": 1234,
+      "nameOnCard": "Example Cardholder",
+      "expirationMonth": 2,
+      "expirationYear": 2030,
+      "links": []
+    }
+  ],
+  "links": [
+    {
+      "rel": "self",
+      "type": "GET",
+      "href": "https://api.redislabs.com/v1/payment-methods"
+    }
+  ]
+}

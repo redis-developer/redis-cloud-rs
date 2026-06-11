@@ -7,47 +7,47 @@
   yet (intentionally deferred). Enforced by `tests/openapi_route_coverage.rs`.
 - `openapi_non_spec_routes.txt` — typed client routes that don't match any spec
   path (known drift). Also enforced by `tests/openapi_route_coverage.rs`.
+- `cloud/samples/*.json` — hand-authored response fixtures that reproduce real
+  API shapes with synthetic data. Validated by
+  `tests/cloud_fixture_validation.rs`.
+- `cloud/captured/` — *gitignored* output of `scripts/generate-cloud-fixtures.sh`
+  (local inspection only; never committed).
 
-Both allowlists are intentional-exception lists: the coverage test fails if a
-new gap appears without an entry, **and** if an entry goes stale (the route got
-covered or the path was fixed). Shrinking them is tracked in #72.
+## Testing layers
 
-## Current Status
+Cloud API responses are exercised at three levels:
 
-Beyond the OpenAPI spec and route-coverage allowlists above, there are no
-captured response fixtures yet.
+1. **Inline wiremock tests** (`tests/*_tests.rs`) — fast, no network, no creds.
+   They catch logic/routing regressions but not real-vs-model drift, because
+   the mocks are written to match our models.
+2. **Hand-authored fixtures** (`cloud/samples/`, validated by
+   `tests/cloud_fixture_validation.rs`) — encode the shapes the live API
+   actually returns (e.g. module `parameters` as an array, numeric
+   `creditCardEndsWith`, the `response.resource.costReportId` task envelope),
+   with synthetic values. Run in normal CI, no credentials. These guard the
+   type-fidelity regressions found via live testing (#118, #119, #120).
+3. **Live integration tests** (`tests/live_integration.rs`) — `#[ignore]`d,
+   read-only, hit a real account. They catch new drift the fixtures can't
+   anticipate.
 
-## Why No Real Fixtures Yet?
-
-Unlike Enterprise API (which uses Docker for testing), Cloud API fixtures require:
-1. A real Cloud account with active resources
-2. Billable subscriptions and databases
-3. Careful sanitization of account data before committing
-
-## Generating Cloud Fixtures
-
-When you have a Cloud account with test resources, you can generate fixtures:
+## Running the live integration tests
 
 ```bash
-export REDIS_CLOUD_API_KEY="your-key"
-export REDIS_CLOUD_SECRET_KEY="your-secret"
-./scripts/generate-cloud-fixtures.sh
+export REDIS_CLOUD_API_KEY=...      # or REDIS_CLOUD_API_ACCOUNT_KEY
+export REDIS_CLOUD_API_SECRET=...   # or REDIS_CLOUD_API_USER_KEY
+cargo test --test live_integration -- --ignored
 ```
 
-**Important**: Review all generated fixtures for sensitive data before committing!
+Read-only (no resource is created, modified, or deleted), so they are safe
+against a shared or billable account. Run them outside any sandbox that blocks
+outbound TLS.
 
-## Current Testing Approach
+## Capturing fixtures for inspection
 
-Cloud API tests currently use wiremock with inline JSON mocks. This approach:
-- ✅ Works well for testing
-- ✅ No infrastructure required
-- ✅ No costs
-- ⚠️  Doesn't catch type mismatches from real API responses
+`scripts/generate-cloud-fixtures.sh` captures live responses into the gitignored
+`cloud/captured/` directory for local comparison when investigating drift.
 
-## Future Work
-
-To get the full benefits of fixture-based testing for Cloud:
-1. Use a test Cloud account with minimal resources
-2. Generate fixtures from real API responses
-3. Sanitize account/subscription IDs
-4. Add validation tests like Enterprise has
+**Do not commit captured fixtures.** Its sanitizer is a best-effort denylist; a
+real run leaked fields it didn't know about (AWS access key ids, account ids
+under unexpected keys). Committed fixtures are hand-authored under
+`cloud/samples/` precisely so repo safety never depends on that denylist.

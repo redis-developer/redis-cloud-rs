@@ -1,0 +1,84 @@
+{
+  "accountId": 12345,
+  "subscription": {
+    "subscriptionId": 111111,
+    "numberOfDatabases": 1,
+    "databases": [
+      {
+        "databaseId": 222222,
+        "name": "example-db",
+        "protocol": "stack",
+        "provider": "AWS",
+        "region": "us-east-1",
+        "redisVersion": "8.2",
+        "redisVersionCompliance": "8.2.1",
+        "respVersion": "resp3",
+        "status": "active",
+        "planMemoryLimit": 12.0,
+        "planDatasetSize": 6.0,
+        "memoryLimitMeasurementUnit": "MB",
+        "memoryUsedInMb": 5270.0,
+        "networkMonthlyUsageInByte": 1.83615528E+10,
+        "memoryStorage": "ram",
+        "redisFlex": false,
+        "supportOSSClusterApi": false,
+        "useExternalEndpointForOSSClusterApi": false,
+        "dataPersistence": "aof-every-1-second",
+        "replication": true,
+        "dataEvictionPolicy": "noeviction",
+        "activatedOn": "2026-01-21T14:46:32Z",
+        "lastModified": "2026-04-07T10:49:56Z",
+        "publicEndpoint": "redis-12345.example.cloud.redislabs.com:12345",
+        "replicaAsSourceEndpoints": {
+          "public": "redis-12345.example.cloud.redislabs.com:12345"
+        },
+        "replicaOf": null,
+        "replica": null,
+        "clustering": {
+          "enabled": false,
+          "regexRules": [
+            { "ordinal": 0, "pattern": ".*\\{(?<tag>.*)\\}.*" },
+            { "ordinal": 1, "pattern": "(?<tag>.*)" }
+          ],
+          "hashingPolicy": "standard"
+        },
+        "security": {
+          "defaultUserEnabled": false,
+          "sslClientAuthentication": false,
+          "tlsClientAuthentication": false,
+          "enableTls": false,
+          "sourceIps": ["0.0.0.0/0"]
+        },
+        "modules": [
+          {
+            "id": 333333,
+            "name": "RedisTimeSeries",
+            "capabilityName": "Time series",
+            "version": "8.2.9",
+            "description": "Time-Series data structure for redis",
+            "parameters": []
+          },
+          {
+            "id": 333334,
+            "name": "RedisBloom",
+            "version": "8.2.13",
+            "parameters": [{ "name": "error_rate", "value": "0.01" }]
+          }
+        ],
+        "alerts": [
+          { "name": "datasets-size", "value": 95, "defaultValue": 80 }
+        ],
+        "backup": { "remoteBackupEnabled": false },
+        "links": []
+      }
+    ],
+    "links": []
+  },
+  "links": [
+    {
+      "rel": "self",
+      "type": "GET",
+      "href": "https://api.redislabs.com/v1/fixed/subscriptions/111111/databases"
+    }
+  ]
+}

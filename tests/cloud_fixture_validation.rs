@@ -1,0 +1,91 @@
+//! Deserialization tests against hand-authored fixtures that reproduce real
+//! Redis Cloud response shapes.
+//!
+//! Unlike the inline wiremock mocks (which are written to match our models, so
+//! they agree with our bugs), these fixtures encode the shapes the live API
+//! actually returns — captured by inspecting a real account, then re-authored
+//! with synthetic values so they are safe to commit and run in CI without
+//! credentials. They guard the type-fidelity regressions found via live
+//! testing: #118, #119, #120.
+//!
+//! The fixtures live in `tests/fixtures/cloud/samples/`. To refresh against a
+//! live account for comparison, see `scripts/generate-cloud-fixtures.sh`
+//! (output is gitignored and must not be committed).
+
+use redis_cloud::account::PaymentMethods;
+use redis_cloud::fixed_databases::AccountFixedSubscriptionDatabases;
+use redis_cloud::fixed_subscriptions::FixedSubscription;
+use redis_cloud::types::{TaskStateUpdate, TaskStatus};
+
+// #119: modules[].parameters is an array on the wire (empty or objects), and a
+// scientific-notation float appears in networkMonthlyUsageInByte. The whole
+// response must deserialize.
+#[test]
+fn fixed_databases_response_deserializes() {
+    let raw = include_str!("fixtures/cloud/samples/fixed_databases.json");
+    let resp: AccountFixedSubscriptionDatabases =
+        serde_json::from_str(raw).expect("fixed databases fixture should deserialize");
+
+    let db = resp
+        .subscription
+        .and_then(|s| s.databases.into_iter().next())
+        .expect("fixture should contain a database");
+
+    // Scientific-notation float field parses as f64.
+    assert_eq!(db.network_monthly_usage_in_byte, Some(1.83615528E+10));
+
+    let modules = db.modules.expect("modules should deserialize");
+    assert_eq!(modules.len(), 2);
+    // Empty array parameters.
+    assert_eq!(modules[0].parameters, Some(serde_json::json!([])));
+    // Populated array parameters round-trip as a JSON array (#119).
+    assert_eq!(
+        modules[1].parameters,
+        Some(serde_json::json!([{ "name": "error_rate", "value": "0.01" }]))
+    );
+}
+
+// #120: creditCardEndsWith is a JSON number; the number-or-string deserializer
+// must accept it and stringify it.
+#[test]
+fn payment_methods_response_deserializes() {
+    let raw = include_str!("fixtures/cloud/samples/payment_methods.json");
+    let resp: PaymentMethods =
+        serde_json::from_str(raw).expect("payment methods fixture should deserialize");
+
+    let methods = resp
+        .payment_methods
+        .expect("should contain payment methods");
+    assert_eq!(methods.len(), 1);
+    assert_eq!(methods[0].credit_card_ends_with.as_deref(), Some("1234"));
+}
+
+// #118: the cost-report task nests the id at response.resource.costReportId.
+#[test]
+fn cost_report_task_response_deserializes() {
+    let raw = include_str!("fixtures/cloud/samples/cost_report_task.json");
+    let task: TaskStateUpdate =
+        serde_json::from_str(raw).expect("cost-report task fixture should deserialize");
+
+    assert!(matches!(task.status, Some(TaskStatus::ProcessingCompleted)));
+    let report_id = task
+        .response
+        .and_then(|r| r.resource)
+        .and_then(|res| res.get("costReportId").cloned())
+        .and_then(|v| v.as_str().map(str::to_string))
+        .expect("response.resource.costReportId should be present");
+    assert!(report_id.ends_with(".csv"));
+}
+
+// The Essentials subscription model is field-complete; notably `connections`
+// is a string on the wire ("10000"), not a number.
+#[test]
+fn fixed_subscription_response_deserializes() {
+    let raw = include_str!("fixtures/cloud/samples/fixed_subscription.json");
+    let sub: FixedSubscription =
+        serde_json::from_str(raw).expect("fixed subscription fixture should deserialize");
+
+    assert_eq!(sub.id, Some(111111));
+    assert_eq!(sub.connections.as_deref(), Some("10000"));
+    assert_eq!(sub.database_status.as_deref(), Some("active"));
+}

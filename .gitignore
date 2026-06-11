@@ -17,6 +17,11 @@ Thumbs.db
 .env
 .env.local
 
+# Locally-captured Cloud API fixtures (see scripts/generate-cloud-fixtures.sh).
+# Never commit these — they can contain real account data. Committed fixtures
+# are hand-authored under tests/fixtures/cloud/samples/.
+tests/fixtures/cloud/captured/
+
 # Test coverage
 tarpaulin-report.html
 cobertura.xml
