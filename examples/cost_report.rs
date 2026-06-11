@@ -57,17 +57,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("  status={:?} progress={:?}", state.status, state.progress);
         match state.status {
             Some(TaskStatus::ProcessingCompleted) => {
-                // ProcessorResponse shape varies; raw JSON is the safest read.
-                let raw = serde_json::to_value(&state.response)?;
-                break raw
-                    .get("resourceId")
+                // The live API nests the id at `response.resource.costReportId`;
+                // `ProcessorResponse::resource` captures that object as a map.
+                break state
+                    .response
+                    .as_ref()
+                    .and_then(|r| r.resource.as_ref())
+                    .and_then(|res| res.get("costReportId"))
                     .and_then(|v| v.as_str())
                     .map(str::to_string)
-                    .or_else(|| {
-                        raw.get("costReportId")
-                            .and_then(|v| v.as_str())
-                            .map(str::to_string)
-                    })
                     .ok_or("task completed but did not return a costReportId")?;
             }
             Some(TaskStatus::ProcessingError) => {
@@ -89,7 +87,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .download_cost_report(&report_id)
         .await?;
 
-    let out_path = format!("cost-report-{report_id}.json");
+    // `report_id` already carries the report's own extension (e.g. `.csv`).
+    let out_path = format!("cost-report-{report_id}");
     std::fs::write(&out_path, &bytes)?;
     println!("wrote {} bytes to {out_path}", bytes.len());
 
