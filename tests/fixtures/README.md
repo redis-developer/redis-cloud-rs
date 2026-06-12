@@ -13,6 +13,28 @@
 - `cloud/captured/` — *gitignored* output of `scripts/generate-cloud-fixtures.sh`
   (local inspection only; never committed).
 
+## Keeping the bundled spec current
+
+`cloud_openapi.json` is the authoritative reference for
+`tests/openapi_route_coverage.rs` (it checks our typed handlers against it). It
+goes stale when Redis changes the upstream spec. `scripts/check-spec-drift.sh`
+compares the bundled copy against the published upstream
+(`https://api.redislabs.com/v1/cloud-api-docs`, no auth) and reports
+added/removed operations and schemas:
+
+```bash
+./scripts/check-spec-drift.sh           # report drift; exit 1 if any
+./scripts/check-spec-drift.sh --update  # refresh the bundled spec from upstream
+```
+
+After a refresh, reconcile any new routes in `openapi_route_coverage.rs` and
+note the change in the CHANGELOG. (Must run outside a sandbox that blocks
+outbound network or `/dev/fd` process substitution.)
+
+This catches drift between the bundled spec and the *published spec*. It does
+**not** catch where the spec disagrees with the real API's behavior — that
+class (#119/#121/#128/#130) is only caught by the live tests.
+
 ## Testing layers
 
 Cloud API responses are exercised at three levels:
