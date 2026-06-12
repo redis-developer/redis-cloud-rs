@@ -513,3 +513,75 @@ live_test_pinned!(live_pro_database_tag_lifecycle, c, res, {
         .any(|t| t.key.as_deref() == Some(key));
     assert!(!still_present, "tag should be gone after delete");
 });
+
+// Reversible subscription update: rename the pinned test subscription and
+// restore it. Guards #133 — the update request must actually carry `name`
+// (the old request type silently dropped it, making updates no-ops).
+live_test_pinned!(live_pro_subscription_update_name, c, res, {
+    use redis_cloud::subscriptions::SubscriptionUpdateRequest;
+    use std::time::Duration;
+
+    // Poll the subscription name until it reflects `want` (updates are async),
+    // returning the last observed name.
+    async fn wait_for_name(c: &CloudClient, sub: i32, want: &str) -> Option<String> {
+        for _ in 0..30 {
+            tokio::time::sleep(Duration::from_secs(2)).await;
+            if let Ok(s) = c.subscriptions().get_subscription_by_id(sub).await
+                && s.name.as_deref() == Some(want)
+            {
+                return s.name;
+            }
+        }
+        c.subscriptions()
+            .get_subscription_by_id(sub)
+            .await
+            .ok()
+            .and_then(|s| s.name)
+    }
+
+    let sub = res.pro_sub;
+    let original = c
+        .subscriptions()
+        .get_subscription_by_id(sub)
+        .await
+        .expect("get_subscription_by_id should deserialize")
+        .name
+        .expect("test subscription should have a name");
+    let temp = format!("{original}-rcrs-upd-test");
+
+    // Rename to a temp value.
+    c.subscriptions()
+        .update_subscription(
+            sub,
+            &SubscriptionUpdateRequest::builder()
+                .name(temp.clone())
+                .build(),
+        )
+        .await
+        .expect("update_subscription (rename) should succeed");
+    let after = wait_for_name(&c, sub, &temp).await;
+
+    // Restore the original name *before* asserting, so a failed assertion
+    // doesn't leave the subscription renamed.
+    c.subscriptions()
+        .update_subscription(
+            sub,
+            &SubscriptionUpdateRequest::builder()
+                .name(original.clone())
+                .build(),
+        )
+        .await
+        .expect("update_subscription (restore) should succeed");
+    let restored = wait_for_name(&c, sub, &original).await;
+
+    assert_eq!(
+        after.as_deref(),
+        Some(temp.as_str()),
+        "rename should take effect (see #133)"
+    );
+    assert_eq!(
+        restored.as_deref(),
+        Some(original.as_str()),
+        "name should be restored"
+    );
+});
