@@ -14,16 +14,20 @@
 //!
 //! ## What these cover
 //!
-//! These exercise the **read** surface and assert that real API responses
+//! Most tests exercise the **read** surface and assert that real API responses
 //! deserialize into the typed models. That is the class of drift wiremock
 //! tests cannot catch — the mocks are written to match our models, so they
 //! agree with our bugs. #119 (module `parameters` array-vs-map) and #120
 //! (`creditCardEndsWith` number-vs-string) both shipped because no real
 //! response was ever parsed in CI.
 //!
-//! They are strictly read-only: no resource is created, modified, or deleted,
-//! so they are safe to run against a shared or billable account. IDs are
-//! discovered dynamically, so the suite is not tied to one specific account.
+//! A few tests exercise **non-destructive, reversible writes** (database tags,
+//! a subscription rename, an ACL redis-rule lifecycle). These are strictly
+//! reversible and self-cleaning: every write is undone, and write tests that
+//! target a subscription/database are pinned to the dedicated `REDIS_CLOUD_TEST_*`
+//! resources so they never touch other subscriptions. No database or
+//! subscription is ever created or deleted, and nothing destructive is done —
+//! so the suite is safe to run against a shared or billable account.
 
 use redis_cloud::{CloudClient, CloudError};
 
@@ -584,4 +588,85 @@ live_test_pinned!(live_pro_subscription_update_name, c, res, {
         Some(original.as_str()),
         "name should be restored"
     );
+});
+
+// Reversible ACL redis-rule lifecycle (account-global, so not pinned to a
+// subscription). Creates a clearly-named test rule and deletes it, with a
+// pre-clean for any rule left by an interrupted prior run. Also guards that the
+// response `acl` field is captured (the create request sends `redisRule`, but
+// the read response returns `acl`).
+live_test!(live_acl_redis_rule_lifecycle, c, {
+    use redis_cloud::acl::AclRedisRuleCreateRequest;
+    use std::time::Duration;
+
+    const NAME: &str = "rcrs-acl-write-test";
+
+    async fn rule_id(c: &CloudClient, name: &str) -> Option<i32> {
+        c.acl()
+            .get_all_redis_rules()
+            .await
+            .ok()
+            .and_then(|r| r.redis_rules)
+            .and_then(|rules| rules.into_iter().find(|x| x.name.as_deref() == Some(name)))
+            .and_then(|x| x.id)
+    }
+    async fn poll_until<Fut>(mut f: impl FnMut() -> Fut) -> bool
+    where
+        Fut: std::future::Future<Output = bool>,
+    {
+        for _ in 0..20 {
+            tokio::time::sleep(Duration::from_secs(3)).await;
+            if f().await {
+                return true;
+            }
+        }
+        false
+    }
+
+    // Pre-clean a stray rule from an interrupted prior run.
+    if let Some(id) = rule_id(&c, NAME).await {
+        let _ = c.acl().delete_redis_rule(id).await;
+        poll_until(|| async { rule_id(&c, NAME).await.is_none() }).await;
+    }
+
+    // Create.
+    c.acl()
+        .create_redis_rule(&AclRedisRuleCreateRequest {
+            name: NAME.to_string(),
+            redis_rule: "+@read ~*".to_string(),
+            command_type: None,
+        })
+        .await
+        .expect("create_redis_rule should succeed");
+
+    // Wait for it to appear, then capture its acl (response uses `acl`).
+    assert!(
+        poll_until(|| async { rule_id(&c, NAME).await.is_some() }).await,
+        "created rule should appear in get_all_redis_rules"
+    );
+    let acl = c
+        .acl()
+        .get_all_redis_rules()
+        .await
+        .expect("get_all_redis_rules should deserialize")
+        .redis_rules
+        .unwrap_or_default()
+        .into_iter()
+        .find(|x| x.name.as_deref() == Some(NAME))
+        .and_then(|x| x.acl);
+
+    // Delete (cleanup) before asserting, so a failed assertion can't orphan it.
+    let id = rule_id(&c, NAME).await.expect("rule id");
+    c.acl()
+        .delete_redis_rule(id)
+        .await
+        .expect("delete_redis_rule should succeed");
+    let gone = poll_until(|| async { rule_id(&c, NAME).await.is_none() }).await;
+
+    assert_eq!(
+        acl.as_deref(),
+        Some("+@read ~*"),
+        "response acl should be captured"
+    );
+    assert!(gone, "rule should be deleted");
 });
