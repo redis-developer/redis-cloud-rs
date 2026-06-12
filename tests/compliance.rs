@@ -30,11 +30,19 @@
 //!
 //! ## Tiers
 //!
-//! All reads (T1 — every GET) are covered: each is `Pass`, `Drift`,
-//! `KnownDiff` (e.g. an endpoint the API 404s/500s), or `Skip` (needs
-//! Active-Active / configured connectivity, or a non-JSON body). The remaining
-//! `Uncovered` operations are the write surface — non-destructive writes (T2)
-//! and the deliberate destructive lifecycle (T3) are added incrementally.
+//! The matrix is fully classified — every one of the 155 operations has a
+//! status, no `Uncovered`:
+//!
+//! - **T1 reads** (every GET): `Pass` / `Drift` / `KnownDiff` (an endpoint the
+//!   API 404s/500s) / `Skip` (needs Active-Active or configured connectivity,
+//!   or a non-JSON body).
+//! - **T2 non-destructive writes**: reversible, self-cleaning lifecycles —
+//!   database tags (Pro + Essentials), an ACL redis-rule, and subscription
+//!   renames — validating request serialization and response shape.
+//! - **T4 destructive / mutating writes** (create/delete of subscriptions,
+//!   databases, cloud accounts; flush; import; upgrade; …) and
+//!   connectivity/Active-Active writes are `Skip`ped pending the deliberate,
+//!   guarded destructive pass.
 
 #![allow(clippy::type_complexity)]
 
@@ -219,6 +227,67 @@ async fn discover(
     extract(&c.get_raw(list_path).await.ok()?)
 }
 
+/// Classify the raw result of a (non-destructive, reversible) write: `Ok` means
+/// the API accepted the request body; the response is then round-tripped into
+/// `T` to validate the response shape. `Err` is a `Fail` (rejected request or
+/// deserialize error).
+async fn record_write<T: DeserializeOwned + Serialize>(
+    m: &mut Matrix,
+    method: &str,
+    spec_path: &str,
+    result: Result<Value, redis_cloud::CloudError>,
+) {
+    let status = match result {
+        Ok(raw) => match roundtrip::<T>(&raw) {
+            Ok(dropped) if dropped.is_empty() => Status::Pass,
+            Ok(dropped) => Status::Drift { dropped },
+            Err(e) => {
+                eprintln!("  [FAIL detail] {method} {spec_path}: {e}");
+                Status::Fail
+            }
+        },
+        Err(e) => {
+            eprintln!("  [FAIL detail] {method} {spec_path}: {e}");
+            Status::Fail
+        }
+    };
+    m.insert(key(method, spec_path), status);
+}
+
+/// Auto-classify every write operation not explicitly wired above as a `Skip`,
+/// with a reason: connectivity/Active-Active ops need resources we don't have;
+/// everything else is a mutating/destructive op deferred to the systematic
+/// write pass. Keeps the matrix fully classified (no `Uncovered` writes).
+fn classify_remaining_writes(m: &mut Matrix) {
+    let conn = [
+        "peering",
+        "private-link",
+        "private-service-connect",
+        "transitGateway",
+        "/regions",
+    ];
+    for (method, path) in spec_operations() {
+        if method == "GET" {
+            continue;
+        }
+        let k = key(&method, &path);
+        if m.contains_key(&k) {
+            continue;
+        }
+        let reason = if conn.iter().any(|p| path.contains(p)) {
+            "needs Active-Active / configured connectivity"
+        } else {
+            "mutating/destructive — deferred to the systematic write pass (T4)"
+        };
+        m.insert(
+            k,
+            Status::Skip {
+                reason: reason.to_string(),
+            },
+        );
+    }
+}
+
 /// [`check_tolerating`] specialized to a tolerated `NotFound` (the common case).
 async fn check_known_404<T: DeserializeOwned + Serialize>(
     m: &mut Matrix,
@@ -384,7 +453,7 @@ async fn api_compliance() {
         AccountSubscriptions, Subscription, SubscriptionMaintenanceWindows, SubscriptionPricings,
     };
     use redis_cloud::types::{
-        CloudTags, DatabaseTrafficStateResponse, TaskStateUpdate, TasksStateUpdate,
+        CloudTag, CloudTags, DatabaseTrafficStateResponse, TaskStateUpdate, TasksStateUpdate,
     };
     use redis_cloud::users::AccountUsers;
 
@@ -875,7 +944,248 @@ async fn api_compliance() {
         "binary (CSV) download, not JSON — covered by the live cost-report test",
     );
 
-    // Fill the rest of the surface with Uncovered (and catch any typo'd path).
+    // -- T2: non-destructive write lifecycles (reversible, self-cleaning) --
+
+    // Database tags (Pro): create -> update one -> overwrite all -> delete.
+    {
+        let base = format!("/subscriptions/{ps}/databases/{pd}/tags");
+        let _ = c.delete_raw(&format!("{base}/rcrs-compliance")).await; // pre-clean
+        let r = c
+            .post_raw(
+                &base,
+                serde_json::json!({"key": "rcrs-compliance", "value": "v1"}),
+            )
+            .await;
+        record_write::<CloudTag>(
+            &mut m,
+            "POST",
+            "/subscriptions/{subscriptionId}/databases/{databaseId}/tags",
+            r,
+        )
+        .await;
+        let r = c
+            .put_raw(
+                &format!("{base}/rcrs-compliance"),
+                serde_json::json!({"value": "v2"}),
+            )
+            .await;
+        record_write::<CloudTag>(
+            &mut m,
+            "PUT",
+            "/subscriptions/{subscriptionId}/databases/{databaseId}/tags/{tagKey}",
+            r,
+        )
+        .await;
+        let r = c
+            .put_raw(
+                &base,
+                serde_json::json!({"tags": [{"key": "rcrs-compliance", "value": "v3"}]}),
+            )
+            .await;
+        record_write::<CloudTags>(
+            &mut m,
+            "PUT",
+            "/subscriptions/{subscriptionId}/databases/{databaseId}/tags",
+            r,
+        )
+        .await;
+        let r = c.delete_raw(&format!("{base}/rcrs-compliance")).await;
+        record_write::<Value>(
+            &mut m,
+            "DELETE",
+            "/subscriptions/{subscriptionId}/databases/{databaseId}/tags/{tagKey}",
+            r,
+        )
+        .await;
+    }
+
+    // Database tags (Essentials): same lifecycle.
+    {
+        let base = format!("/fixed/subscriptions/{es}/databases/{ed}/tags");
+        let _ = c.delete_raw(&format!("{base}/rcrs-compliance")).await;
+        let r = c
+            .post_raw(
+                &base,
+                serde_json::json!({"key": "rcrs-compliance", "value": "v1"}),
+            )
+            .await;
+        record_write::<CloudTag>(
+            &mut m,
+            "POST",
+            "/fixed/subscriptions/{subscriptionId}/databases/{databaseId}/tags",
+            r,
+        )
+        .await;
+        let r = c
+            .put_raw(
+                &format!("{base}/rcrs-compliance"),
+                serde_json::json!({"value": "v2"}),
+            )
+            .await;
+        record_write::<CloudTag>(
+            &mut m,
+            "PUT",
+            "/fixed/subscriptions/{subscriptionId}/databases/{databaseId}/tags/{tagKey}",
+            r,
+        )
+        .await;
+        let r = c
+            .put_raw(
+                &base,
+                serde_json::json!({"tags": [{"key": "rcrs-compliance", "value": "v3"}]}),
+            )
+            .await;
+        record_write::<CloudTags>(
+            &mut m,
+            "PUT",
+            "/fixed/subscriptions/{subscriptionId}/databases/{databaseId}/tags",
+            r,
+        )
+        .await;
+        let r = c.delete_raw(&format!("{base}/rcrs-compliance")).await;
+        record_write::<Value>(
+            &mut m,
+            "DELETE",
+            "/fixed/subscriptions/{subscriptionId}/databases/{databaseId}/tags/{tagKey}",
+            r,
+        )
+        .await;
+    }
+
+    // ACL redis rule (account-global): create -> update -> delete.
+    {
+        const RULE: &str = "rcrs-compliance-rule";
+        let find = |v: &Value| -> Option<String> {
+            v["redisRules"]
+                .as_array()?
+                .iter()
+                .find(|x| x["name"].as_str() == Some(RULE))
+                .and_then(|x| x["id"].as_i64())
+                .map(|n| n.to_string())
+        };
+        // pre-clean a stray rule from an interrupted prior run
+        if let Some(id) = discover(&c, "/acl/redisRules", find).await {
+            let _ = c.delete_raw(&format!("/acl/redisRules/{id}")).await;
+        }
+        let r = c
+            .post_raw(
+                "/acl/redisRules",
+                serde_json::json!({"name": RULE, "redisRule": "+@read ~*"}),
+            )
+            .await;
+        record_write::<TaskStateUpdate>(&mut m, "POST", "/acl/redisRules", r).await;
+        // poll for the created rule id (creation is async)
+        let mut id = None;
+        for _ in 0..15 {
+            tokio::time::sleep(std::time::Duration::from_secs(2)).await;
+            if let Some(found) = discover(&c, "/acl/redisRules", find).await {
+                id = Some(found);
+                break;
+            }
+        }
+        if let Some(id) = id {
+            let r = c
+                .put_raw(
+                    &format!("/acl/redisRules/{id}"),
+                    serde_json::json!({"name": RULE, "redisRule": "+@read +@write ~*"}),
+                )
+                .await;
+            record_write::<TaskStateUpdate>(&mut m, "PUT", "/acl/redisRules/{aclRedisRuleId}", r)
+                .await;
+            let r = c.delete_raw(&format!("/acl/redisRules/{id}")).await;
+            record_write::<TaskStateUpdate>(
+                &mut m,
+                "DELETE",
+                "/acl/redisRules/{aclRedisRuleId}",
+                r,
+            )
+            .await;
+            // The delete is async; wait until the rule is actually gone so we
+            // don't leave a stray account-global rule behind.
+            for _ in 0..15 {
+                tokio::time::sleep(std::time::Duration::from_secs(2)).await;
+                if discover(&c, "/acl/redisRules", find).await.is_none() {
+                    break;
+                }
+            }
+        } else {
+            skip(
+                &mut m,
+                "PUT",
+                "/acl/redisRules/{aclRedisRuleId}",
+                "created rule did not appear in time",
+            );
+            skip(
+                &mut m,
+                "DELETE",
+                "/acl/redisRules/{aclRedisRuleId}",
+                "created rule did not appear in time",
+            );
+        }
+    }
+
+    // Subscription update (Pro): rename, then restore.
+    if let Some(orig) = c
+        .get_raw(&format!("/subscriptions/{ps}"))
+        .await
+        .ok()
+        .and_then(|v| v["name"].as_str().map(String::from))
+    {
+        let r = c
+            .put_raw(
+                &format!("/subscriptions/{ps}"),
+                serde_json::json!({"name": format!("{orig}-rcrs-compliance")}),
+            )
+            .await;
+        record_write::<TaskStateUpdate>(&mut m, "PUT", "/subscriptions/{subscriptionId}", r).await;
+        let _ = c
+            .put_raw(
+                &format!("/subscriptions/{ps}"),
+                serde_json::json!({"name": orig}),
+            )
+            .await; // restore
+    } else {
+        skip(
+            &mut m,
+            "PUT",
+            "/subscriptions/{subscriptionId}",
+            "could not read current name to rename/restore",
+        );
+    }
+
+    // Subscription update (Essentials): rename, then restore.
+    if let Some(orig) = c
+        .get_raw(&format!("/fixed/subscriptions/{es}"))
+        .await
+        .ok()
+        .and_then(|v| v["name"].as_str().map(String::from))
+    {
+        let r = c
+            .put_raw(
+                &format!("/fixed/subscriptions/{es}"),
+                serde_json::json!({"name": format!("{orig}-rcrs-compliance")}),
+            )
+            .await;
+        record_write::<TaskStateUpdate>(&mut m, "PUT", "/fixed/subscriptions/{subscriptionId}", r)
+            .await;
+        let _ = c
+            .put_raw(
+                &format!("/fixed/subscriptions/{es}"),
+                serde_json::json!({"name": orig}),
+            )
+            .await; // restore
+    } else {
+        skip(
+            &mut m,
+            "PUT",
+            "/fixed/subscriptions/{subscriptionId}",
+            "could not read current name to rename/restore",
+        );
+    }
+
+    // Classify every remaining (unwired) write as Skip, then fill reads with
+    // Uncovered (and catch any typo'd path).
+    classify_remaining_writes(&mut m);
     reconcile_with_spec(&mut m);
     print_report(&m);
 

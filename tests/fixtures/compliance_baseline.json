@@ -1,75 +1,96 @@
 {
   "DELETE /acl/redisRules/{aclRedisRuleId}": {
-    "status": "uncovered"
+    "status": "pass"
   },
   "DELETE /acl/roles/{aclRoleId}": {
-    "status": "uncovered"
+    "status": "skip",
+    "reason": "mutating/destructive — deferred to the systematic write pass (T4)"
   },
   "DELETE /acl/users/{aclUserId}": {
-    "status": "uncovered"
+    "status": "skip",
+    "reason": "mutating/destructive — deferred to the systematic write pass (T4)"
   },
   "DELETE /cloud-accounts/{cloudAccountId}": {
-    "status": "uncovered"
+    "status": "skip",
+    "reason": "mutating/destructive — deferred to the systematic write pass (T4)"
   },
   "DELETE /fixed/subscriptions/{subscriptionId}": {
-    "status": "uncovered"
+    "status": "skip",
+    "reason": "mutating/destructive — deferred to the systematic write pass (T4)"
   },
   "DELETE /fixed/subscriptions/{subscriptionId}/databases/{databaseId}": {
-    "status": "uncovered"
+    "status": "skip",
+    "reason": "mutating/destructive — deferred to the systematic write pass (T4)"
   },
   "DELETE /fixed/subscriptions/{subscriptionId}/databases/{databaseId}/tags/{tagKey}": {
-    "status": "uncovered"
+    "status": "pass"
   },
   "DELETE /subscriptions/{subscriptionId}": {
-    "status": "uncovered"
+    "status": "skip",
+    "reason": "mutating/destructive — deferred to the systematic write pass (T4)"
   },
   "DELETE /subscriptions/{subscriptionId}/databases/{databaseId}": {
-    "status": "uncovered"
+    "status": "skip",
+    "reason": "mutating/destructive — deferred to the systematic write pass (T4)"
   },
   "DELETE /subscriptions/{subscriptionId}/databases/{databaseId}/tags/{tagKey}": {
-    "status": "uncovered"
+    "status": "pass"
   },
   "DELETE /subscriptions/{subscriptionId}/peerings/{peeringId}": {
-    "status": "uncovered"
+    "status": "skip",
+    "reason": "needs Active-Active / configured connectivity"
   },
   "DELETE /subscriptions/{subscriptionId}/private-link": {
-    "status": "uncovered"
+    "status": "skip",
+    "reason": "needs Active-Active / configured connectivity"
   },
   "DELETE /subscriptions/{subscriptionId}/private-link/principals": {
-    "status": "uncovered"
+    "status": "skip",
+    "reason": "needs Active-Active / configured connectivity"
   },
   "DELETE /subscriptions/{subscriptionId}/private-service-connect": {
-    "status": "uncovered"
+    "status": "skip",
+    "reason": "needs Active-Active / configured connectivity"
   },
   "DELETE /subscriptions/{subscriptionId}/private-service-connect/{pscServiceId}/endpoints/{endpointId}": {
-    "status": "uncovered"
+    "status": "skip",
+    "reason": "needs Active-Active / configured connectivity"
   },
   "DELETE /subscriptions/{subscriptionId}/regions": {
-    "status": "uncovered"
+    "status": "skip",
+    "reason": "needs Active-Active / configured connectivity"
   },
   "DELETE /subscriptions/{subscriptionId}/regions/peerings/{peeringId}": {
-    "status": "uncovered"
+    "status": "skip",
+    "reason": "needs Active-Active / configured connectivity"
   },
   "DELETE /subscriptions/{subscriptionId}/regions/{regionId}/private-link": {
-    "status": "uncovered"
+    "status": "skip",
+    "reason": "needs Active-Active / configured connectivity"
   },
   "DELETE /subscriptions/{subscriptionId}/regions/{regionId}/private-link/principals": {
-    "status": "uncovered"
+    "status": "skip",
+    "reason": "needs Active-Active / configured connectivity"
   },
   "DELETE /subscriptions/{subscriptionId}/regions/{regionId}/private-service-connect": {
-    "status": "uncovered"
+    "status": "skip",
+    "reason": "needs Active-Active / configured connectivity"
   },
   "DELETE /subscriptions/{subscriptionId}/regions/{regionId}/private-service-connect/{pscServiceId}/endpoints/{endpointId}": {
-    "status": "uncovered"
+    "status": "skip",
+    "reason": "needs Active-Active / configured connectivity"
   },
   "DELETE /subscriptions/{subscriptionId}/regions/{regionId}/transitGateways/{TgwId}/attachment": {
-    "status": "uncovered"
+    "status": "skip",
+    "reason": "needs Active-Active / configured connectivity"
   },
   "DELETE /subscriptions/{subscriptionId}/transitGateways/{TgwId}/attachment": {
-    "status": "uncovered"
+    "status": "skip",
+    "reason": "needs Active-Active / configured connectivity"
   },
   "DELETE /users/{userId}": {
-    "status": "uncovered"
+    "status": "skip",
+    "reason": "mutating/destructive — deferred to the systematic write pass (T4)"
   },
   "GET /": {
     "status": "pass"
@@ -336,189 +357,241 @@
     "status": "pass"
   },
   "POST /acl/redisRules": {
-    "status": "uncovered"
+    "status": "pass"
   },
   "POST /acl/roles": {
-    "status": "uncovered"
+    "status": "skip",
+    "reason": "mutating/destructive — deferred to the systematic write pass (T4)"
   },
   "POST /acl/users": {
-    "status": "uncovered"
+    "status": "skip",
+    "reason": "mutating/destructive — deferred to the systematic write pass (T4)"
   },
   "POST /cloud-accounts": {
-    "status": "uncovered"
+    "status": "skip",
+    "reason": "mutating/destructive — deferred to the systematic write pass (T4)"
   },
   "POST /cost-report": {
-    "status": "uncovered"
+    "status": "skip",
+    "reason": "mutating/destructive — deferred to the systematic write pass (T4)"
   },
   "POST /fixed/subscriptions": {
-    "status": "uncovered"
+    "status": "skip",
+    "reason": "mutating/destructive — deferred to the systematic write pass (T4)"
   },
   "POST /fixed/subscriptions/{subscriptionId}/databases": {
-    "status": "uncovered"
+    "status": "skip",
+    "reason": "mutating/destructive — deferred to the systematic write pass (T4)"
   },
   "POST /fixed/subscriptions/{subscriptionId}/databases/{databaseId}/backup": {
-    "status": "uncovered"
+    "status": "skip",
+    "reason": "mutating/destructive — deferred to the systematic write pass (T4)"
   },
   "POST /fixed/subscriptions/{subscriptionId}/databases/{databaseId}/import": {
-    "status": "uncovered"
+    "status": "skip",
+    "reason": "mutating/destructive — deferred to the systematic write pass (T4)"
   },
   "POST /fixed/subscriptions/{subscriptionId}/databases/{databaseId}/tags": {
-    "status": "uncovered"
+    "status": "pass"
   },
   "POST /fixed/subscriptions/{subscriptionId}/databases/{databaseId}/traffic/resume": {
-    "status": "uncovered"
+    "status": "skip",
+    "reason": "mutating/destructive — deferred to the systematic write pass (T4)"
   },
   "POST /fixed/subscriptions/{subscriptionId}/databases/{databaseId}/upgrade": {
-    "status": "uncovered"
+    "status": "skip",
+    "reason": "mutating/destructive — deferred to the systematic write pass (T4)"
   },
   "POST /subscriptions": {
-    "status": "uncovered"
+    "status": "skip",
+    "reason": "mutating/destructive — deferred to the systematic write pass (T4)"
   },
   "POST /subscriptions/{subscriptionId}/databases": {
-    "status": "uncovered"
+    "status": "skip",
+    "reason": "mutating/destructive — deferred to the systematic write pass (T4)"
   },
   "POST /subscriptions/{subscriptionId}/databases/{databaseId}/backup": {
-    "status": "uncovered"
+    "status": "skip",
+    "reason": "mutating/destructive — deferred to the systematic write pass (T4)"
   },
   "POST /subscriptions/{subscriptionId}/databases/{databaseId}/import": {
-    "status": "uncovered"
+    "status": "skip",
+    "reason": "mutating/destructive — deferred to the systematic write pass (T4)"
   },
   "POST /subscriptions/{subscriptionId}/databases/{databaseId}/tags": {
-    "status": "uncovered"
+    "status": "pass"
   },
   "POST /subscriptions/{subscriptionId}/databases/{databaseId}/traffic/resume": {
-    "status": "uncovered"
+    "status": "skip",
+    "reason": "mutating/destructive — deferred to the systematic write pass (T4)"
   },
   "POST /subscriptions/{subscriptionId}/databases/{databaseId}/upgrade": {
-    "status": "uncovered"
+    "status": "skip",
+    "reason": "mutating/destructive — deferred to the systematic write pass (T4)"
   },
   "POST /subscriptions/{subscriptionId}/peerings": {
-    "status": "uncovered"
+    "status": "skip",
+    "reason": "needs Active-Active / configured connectivity"
   },
   "POST /subscriptions/{subscriptionId}/private-link": {
-    "status": "uncovered"
+    "status": "skip",
+    "reason": "needs Active-Active / configured connectivity"
   },
   "POST /subscriptions/{subscriptionId}/private-link/connections/disassociate": {
-    "status": "uncovered"
+    "status": "skip",
+    "reason": "needs Active-Active / configured connectivity"
   },
   "POST /subscriptions/{subscriptionId}/private-link/principals": {
-    "status": "uncovered"
+    "status": "skip",
+    "reason": "needs Active-Active / configured connectivity"
   },
   "POST /subscriptions/{subscriptionId}/private-service-connect": {
-    "status": "uncovered"
+    "status": "skip",
+    "reason": "needs Active-Active / configured connectivity"
   },
   "POST /subscriptions/{subscriptionId}/private-service-connect/{pscServiceId}": {
-    "status": "uncovered"
+    "status": "skip",
+    "reason": "needs Active-Active / configured connectivity"
   },
   "POST /subscriptions/{subscriptionId}/regions": {
-    "status": "uncovered"
+    "status": "skip",
+    "reason": "needs Active-Active / configured connectivity"
   },
   "POST /subscriptions/{subscriptionId}/regions/peerings": {
-    "status": "uncovered"
+    "status": "skip",
+    "reason": "needs Active-Active / configured connectivity"
   },
   "POST /subscriptions/{subscriptionId}/regions/{regionId}/private-link": {
-    "status": "uncovered"
+    "status": "skip",
+    "reason": "needs Active-Active / configured connectivity"
   },
   "POST /subscriptions/{subscriptionId}/regions/{regionId}/private-link/connections/disassociate": {
-    "status": "uncovered"
+    "status": "skip",
+    "reason": "needs Active-Active / configured connectivity"
   },
   "POST /subscriptions/{subscriptionId}/regions/{regionId}/private-link/principals": {
-    "status": "uncovered"
+    "status": "skip",
+    "reason": "needs Active-Active / configured connectivity"
   },
   "POST /subscriptions/{subscriptionId}/regions/{regionId}/private-service-connect": {
-    "status": "uncovered"
+    "status": "skip",
+    "reason": "needs Active-Active / configured connectivity"
   },
   "POST /subscriptions/{subscriptionId}/regions/{regionId}/private-service-connect/{pscServiceId}": {
-    "status": "uncovered"
+    "status": "skip",
+    "reason": "needs Active-Active / configured connectivity"
   },
   "POST /subscriptions/{subscriptionId}/regions/{regionId}/transitGateways/{TgwId}/attachment": {
-    "status": "uncovered"
+    "status": "skip",
+    "reason": "needs Active-Active / configured connectivity"
   },
   "POST /subscriptions/{subscriptionId}/transitGateways/{TgwId}/attachment": {
-    "status": "uncovered"
+    "status": "skip",
+    "reason": "needs Active-Active / configured connectivity"
   },
   "PUT /acl/redisRules/{aclRedisRuleId}": {
-    "status": "uncovered"
+    "status": "pass"
   },
   "PUT /acl/roles/{aclRoleId}": {
-    "status": "uncovered"
+    "status": "skip",
+    "reason": "mutating/destructive — deferred to the systematic write pass (T4)"
   },
   "PUT /acl/users/{aclUserId}": {
-    "status": "uncovered"
+    "status": "skip",
+    "reason": "mutating/destructive — deferred to the systematic write pass (T4)"
   },
   "PUT /cloud-accounts/{cloudAccountId}": {
-    "status": "uncovered"
+    "status": "skip",
+    "reason": "mutating/destructive — deferred to the systematic write pass (T4)"
   },
   "PUT /fixed/subscriptions/{subscriptionId}": {
-    "status": "uncovered"
+    "status": "pass"
   },
   "PUT /fixed/subscriptions/{subscriptionId}/databases/{databaseId}": {
-    "status": "uncovered"
+    "status": "skip",
+    "reason": "mutating/destructive — deferred to the systematic write pass (T4)"
   },
   "PUT /fixed/subscriptions/{subscriptionId}/databases/{databaseId}/tags": {
-    "status": "uncovered"
+    "status": "pass"
   },
   "PUT /fixed/subscriptions/{subscriptionId}/databases/{databaseId}/tags/{tagKey}": {
-    "status": "uncovered"
+    "status": "pass"
   },
   "PUT /subscriptions/{subscriptionId}": {
-    "status": "uncovered"
+    "status": "pass"
   },
   "PUT /subscriptions/{subscriptionId}/cidr": {
-    "status": "uncovered"
+    "status": "skip",
+    "reason": "mutating/destructive — deferred to the systematic write pass (T4)"
   },
   "PUT /subscriptions/{subscriptionId}/databases/{databaseId}": {
-    "status": "uncovered"
+    "status": "skip",
+    "reason": "mutating/destructive — deferred to the systematic write pass (T4)"
   },
   "PUT /subscriptions/{subscriptionId}/databases/{databaseId}/flush": {
-    "status": "uncovered"
+    "status": "skip",
+    "reason": "mutating/destructive — deferred to the systematic write pass (T4)"
   },
   "PUT /subscriptions/{subscriptionId}/databases/{databaseId}/regions": {
-    "status": "uncovered"
+    "status": "skip",
+    "reason": "needs Active-Active / configured connectivity"
   },
   "PUT /subscriptions/{subscriptionId}/databases/{databaseId}/tags": {
-    "status": "uncovered"
+    "status": "pass"
   },
   "PUT /subscriptions/{subscriptionId}/databases/{databaseId}/tags/{tagKey}": {
-    "status": "uncovered"
+    "status": "pass"
   },
   "PUT /subscriptions/{subscriptionId}/maintenance-windows": {
-    "status": "uncovered"
+    "status": "skip",
+    "reason": "mutating/destructive — deferred to the systematic write pass (T4)"
   },
   "PUT /subscriptions/{subscriptionId}/peerings/{peeringId}": {
-    "status": "uncovered"
+    "status": "skip",
+    "reason": "needs Active-Active / configured connectivity"
   },
   "PUT /subscriptions/{subscriptionId}/private-service-connect/{pscServiceId}/endpoints/{endpointId}": {
-    "status": "uncovered"
+    "status": "skip",
+    "reason": "needs Active-Active / configured connectivity"
   },
   "PUT /subscriptions/{subscriptionId}/regions/peerings/{peeringId}": {
-    "status": "uncovered"
+    "status": "skip",
+    "reason": "needs Active-Active / configured connectivity"
   },
   "PUT /subscriptions/{subscriptionId}/regions/{regionId}/private-service-connect/{pscServiceId}/endpoints/{endpointId}": {
-    "status": "uncovered"
+    "status": "skip",
+    "reason": "needs Active-Active / configured connectivity"
   },
   "PUT /subscriptions/{subscriptionId}/regions/{regionId}/transitGateways/invitations/{tgwInvitationId}/accept": {
-    "status": "uncovered"
+    "status": "skip",
+    "reason": "needs Active-Active / configured connectivity"
   },
   "PUT /subscriptions/{subscriptionId}/regions/{regionId}/transitGateways/invitations/{tgwInvitationId}/reject": {
-    "status": "uncovered"
+    "status": "skip",
+    "reason": "needs Active-Active / configured connectivity"
   },
   "PUT /subscriptions/{subscriptionId}/regions/{regionId}/transitGateways/{TgwId}/attachment": {
-    "status": "uncovered"
+    "status": "skip",
+    "reason": "needs Active-Active / configured connectivity"
   },
   "PUT /subscriptions/{subscriptionId}/resource-tags": {
-    "status": "uncovered"
+    "status": "skip",
+    "reason": "mutating/destructive — deferred to the systematic write pass (T4)"
   },
   "PUT /subscriptions/{subscriptionId}/transitGateways/invitations/{tgwInvitationId}/accept": {
-    "status": "uncovered"
+    "status": "skip",
+    "reason": "needs Active-Active / configured connectivity"
   },
   "PUT /subscriptions/{subscriptionId}/transitGateways/invitations/{tgwInvitationId}/reject": {
-    "status": "uncovered"
+    "status": "skip",
+    "reason": "needs Active-Active / configured connectivity"
   },
   "PUT /subscriptions/{subscriptionId}/transitGateways/{TgwId}/attachment": {
-    "status": "uncovered"
+    "status": "skip",
+    "reason": "needs Active-Active / configured connectivity"
   },
   "PUT /users/{userId}": {
-    "status": "uncovered"
+    "status": "skip",
+    "reason": "mutating/destructive — deferred to the systematic write pass (T4)"
   }
 }
