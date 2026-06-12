@@ -84,16 +84,17 @@
     "status": "pass"
   },
   "GET /acl/users/{aclUserId}": {
-    "status": "uncovered"
+    "status": "pass"
   },
   "GET /cloud-accounts": {
     "status": "pass"
   },
   "GET /cloud-accounts/{cloudAccountId}": {
-    "status": "uncovered"
+    "status": "pass"
   },
   "GET /cost-report/{costReportId}": {
-    "status": "uncovered"
+    "status": "skip",
+    "reason": "binary (CSV) download, not JSON — covered by the live cost-report test"
   },
   "GET /data-persistence": {
     "status": "pass"
@@ -102,16 +103,26 @@
     "status": "pass"
   },
   "GET /fixed/plans": {
-    "status": "uncovered"
+    "status": "drift",
+    "dropped": [
+      "plans"
+    ]
   },
   "GET /fixed/plans/subscriptions/{subscriptionId}": {
-    "status": "uncovered"
+    "status": "drift",
+    "dropped": [
+      "plans"
+    ]
   },
   "GET /fixed/plans/{planId}": {
-    "status": "uncovered"
+    "status": "drift",
+    "dropped": [
+      "maximumBandwidthGB"
+    ]
   },
   "GET /fixed/redis-versions": {
-    "status": "uncovered"
+    "status": "known-diff",
+    "note": "API returns a server-side 500 on this spec-documented endpoint"
   },
   "GET /fixed/subscriptions": {
     "status": "pass"
@@ -143,16 +154,16 @@
     ]
   },
   "GET /fixed/subscriptions/{subscriptionId}/databases/{databaseId}/available-target-versions": {
-    "status": "uncovered"
+    "status": "pass"
   },
   "GET /fixed/subscriptions/{subscriptionId}/databases/{databaseId}/backup": {
     "status": "pass"
   },
   "GET /fixed/subscriptions/{subscriptionId}/databases/{databaseId}/import": {
-    "status": "uncovered"
+    "status": "pass"
   },
   "GET /fixed/subscriptions/{subscriptionId}/databases/{databaseId}/slow-log": {
-    "status": "uncovered"
+    "status": "pass"
   },
   "GET /fixed/subscriptions/{subscriptionId}/databases/{databaseId}/tags": {
     "status": "pass"
@@ -162,28 +173,29 @@
     "note": "API 404s traffic for an active database"
   },
   "GET /fixed/subscriptions/{subscriptionId}/databases/{databaseId}/upgrade": {
-    "status": "uncovered"
+    "status": "known-diff",
+    "note": "404 when no version upgrade is pending"
   },
   "GET /logs": {
-    "status": "uncovered"
+    "status": "pass"
   },
   "GET /payment-methods": {
     "status": "pass"
   },
   "GET /query-performance-factors": {
-    "status": "uncovered"
+    "status": "pass"
   },
   "GET /regions": {
     "status": "pass"
   },
   "GET /session-logs": {
-    "status": "uncovered"
+    "status": "pass"
   },
   "GET /subscriptions": {
     "status": "pass"
   },
   "GET /subscriptions/redis-versions": {
-    "status": "uncovered"
+    "status": "pass"
   },
   "GET /subscriptions/{subscriptionId}": {
     "status": "pass"
@@ -208,19 +220,22 @@
     ]
   },
   "GET /subscriptions/{subscriptionId}/databases/{databaseId}/available-target-versions": {
-    "status": "uncovered"
+    "status": "pass"
   },
   "GET /subscriptions/{subscriptionId}/databases/{databaseId}/backup": {
     "status": "pass"
   },
   "GET /subscriptions/{subscriptionId}/databases/{databaseId}/certificate": {
-    "status": "uncovered"
+    "status": "drift",
+    "dropped": [
+      "publicCertificatePEMString"
+    ]
   },
   "GET /subscriptions/{subscriptionId}/databases/{databaseId}/import": {
-    "status": "uncovered"
+    "status": "pass"
   },
   "GET /subscriptions/{subscriptionId}/databases/{databaseId}/slow-log": {
-    "status": "uncovered"
+    "status": "pass"
   },
   "GET /subscriptions/{subscriptionId}/databases/{databaseId}/tags": {
     "status": "pass"
@@ -230,7 +245,8 @@
     "note": "API 404s traffic for an active database"
   },
   "GET /subscriptions/{subscriptionId}/databases/{databaseId}/upgrade": {
-    "status": "uncovered"
+    "status": "known-diff",
+    "note": "404 when no version upgrade is pending"
   },
   "GET /subscriptions/{subscriptionId}/maintenance-windows": {
     "status": "pass"
@@ -245,67 +261,79 @@
     "status": "pass"
   },
   "GET /subscriptions/{subscriptionId}/private-link/endpoint-script": {
-    "status": "uncovered"
+    "status": "pass"
   },
   "GET /subscriptions/{subscriptionId}/private-service-connect": {
     "status": "pass"
   },
   "GET /subscriptions/{subscriptionId}/private-service-connect/{pscServiceId}": {
-    "status": "uncovered"
+    "status": "skip",
+    "reason": "needs Active-Active / configured connectivity (no test resource)"
   },
   "GET /subscriptions/{subscriptionId}/private-service-connect/{pscServiceId}/endpoints/{endpointId}/creationScripts": {
-    "status": "uncovered"
+    "status": "skip",
+    "reason": "needs Active-Active / configured connectivity (no test resource)"
   },
   "GET /subscriptions/{subscriptionId}/private-service-connect/{pscServiceId}/endpoints/{endpointId}/deletionScripts": {
-    "status": "uncovered"
+    "status": "skip",
+    "reason": "needs Active-Active / configured connectivity (no test resource)"
   },
   "GET /subscriptions/{subscriptionId}/regions": {
-    "status": "uncovered"
+    "status": "known-diff",
+    "note": "Active-Active subscriptions only"
   },
   "GET /subscriptions/{subscriptionId}/regions/peerings": {
-    "status": "uncovered"
+    "status": "pass"
   },
   "GET /subscriptions/{subscriptionId}/regions/{regionId}/private-link": {
-    "status": "uncovered"
+    "status": "skip",
+    "reason": "needs Active-Active / configured connectivity (no test resource)"
   },
   "GET /subscriptions/{subscriptionId}/regions/{regionId}/private-link/endpoint-script": {
-    "status": "uncovered"
+    "status": "skip",
+    "reason": "needs Active-Active / configured connectivity (no test resource)"
   },
   "GET /subscriptions/{subscriptionId}/regions/{regionId}/private-service-connect": {
-    "status": "uncovered"
+    "status": "skip",
+    "reason": "needs Active-Active / configured connectivity (no test resource)"
   },
   "GET /subscriptions/{subscriptionId}/regions/{regionId}/private-service-connect/{pscServiceId}": {
-    "status": "uncovered"
+    "status": "skip",
+    "reason": "needs Active-Active / configured connectivity (no test resource)"
   },
   "GET /subscriptions/{subscriptionId}/regions/{regionId}/private-service-connect/{pscServiceId}/endpoints/{endpointId}/creationScripts": {
-    "status": "uncovered"
+    "status": "skip",
+    "reason": "needs Active-Active / configured connectivity (no test resource)"
   },
   "GET /subscriptions/{subscriptionId}/regions/{regionId}/private-service-connect/{pscServiceId}/endpoints/{endpointId}/deletionScripts": {
-    "status": "uncovered"
+    "status": "skip",
+    "reason": "needs Active-Active / configured connectivity (no test resource)"
   },
   "GET /subscriptions/{subscriptionId}/regions/{regionId}/transitGateways": {
-    "status": "uncovered"
+    "status": "skip",
+    "reason": "needs Active-Active / configured connectivity (no test resource)"
   },
   "GET /subscriptions/{subscriptionId}/regions/{regionId}/transitGateways/invitations": {
-    "status": "uncovered"
+    "status": "skip",
+    "reason": "needs Active-Active / configured connectivity (no test resource)"
   },
   "GET /subscriptions/{subscriptionId}/transitGateways": {
     "status": "pass"
   },
   "GET /subscriptions/{subscriptionId}/transitGateways/invitations": {
-    "status": "uncovered"
+    "status": "pass"
   },
   "GET /tasks": {
     "status": "pass"
   },
   "GET /tasks/{taskId}": {
-    "status": "uncovered"
+    "status": "pass"
   },
   "GET /users": {
     "status": "pass"
   },
   "GET /users/{userId}": {
-    "status": "uncovered"
+    "status": "pass"
   },
   "POST /acl/redisRules": {
     "status": "uncovered"

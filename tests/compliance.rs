@@ -30,9 +30,11 @@
 //!
 //! ## Tiers
 //!
-//! Phase 1 covers reads (T1). Non-destructive writes (T2) and the deliberate
-//! destructive lifecycle (T3) are added incrementally; until then their
-//! operations show as `Uncovered` in the matrix.
+//! All reads (T1 — every GET) are covered: each is `Pass`, `Drift`,
+//! `KnownDiff` (e.g. an endpoint the API 404s/500s), or `Skip` (needs
+//! Active-Active / configured connectivity, or a non-JSON body). The remaining
+//! `Uncovered` operations are the write surface — non-destructive writes (T2)
+//! and the deliberate destructive lifecycle (T3) are added incrementally.
 
 #![allow(clippy::type_complexity)]
 
@@ -166,15 +168,18 @@ async fn check<T: DeserializeOwned + Serialize>(
     m.insert(key(method, spec_path), status);
 }
 
-/// Like [`check`], but a `NotFound` is a documented known-diff rather than a
-/// failure (e.g. the spec lists `GET .../traffic` but the API 404s it for an
-/// active database).
-async fn check_known_404<T: DeserializeOwned + Serialize>(
+/// Like [`check`], but an API error whose message contains `tolerate` is a
+/// documented known-diff rather than a failure — e.g. the spec lists
+/// `GET .../traffic` but the API 404s it for an active database, or
+/// `GET /fixed/redis-versions` returns a server-side 500. A success still
+/// round-trips normally, so a later API fix shows up as a status change.
+async fn check_tolerating<T: DeserializeOwned + Serialize>(
     m: &mut Matrix,
     c: &CloudClient,
     method: &str,
     spec_path: &str,
     live_path: &str,
+    tolerate: &str,
     note: &str,
 ) {
     let status = match c.get_raw(live_path).await {
@@ -183,12 +188,47 @@ async fn check_known_404<T: DeserializeOwned + Serialize>(
             Ok(dropped) => Status::Drift { dropped },
             Err(_) => Status::Fail,
         },
-        Err(redis_cloud::CloudError::NotFound { .. }) => Status::KnownDiff {
+        Err(e) if e.to_string().contains(tolerate) => Status::KnownDiff {
             note: note.to_string(),
         },
-        Err(_) => Status::Fail,
+        Err(e) => {
+            eprintln!("  [FAIL detail] {method} {spec_path}: {e}");
+            Status::Fail
+        }
     };
     m.insert(key(method, spec_path), status);
+}
+
+/// Record an intentionally-skipped operation (e.g. needs Active-Active / PSC
+/// setup, or a non-JSON body) with a reason.
+fn skip(m: &mut Matrix, method: &str, spec_path: &str, reason: &str) {
+    m.insert(
+        key(method, spec_path),
+        Status::Skip {
+            reason: reason.to_string(),
+        },
+    );
+}
+
+/// Fetch a list endpoint and extract an id to drill into a by-id operation.
+async fn discover(
+    c: &CloudClient,
+    list_path: &str,
+    extract: impl Fn(&Value) -> Option<String>,
+) -> Option<String> {
+    extract(&c.get_raw(list_path).await.ok()?)
+}
+
+/// [`check_tolerating`] specialized to a tolerated `NotFound` (the common case).
+async fn check_known_404<T: DeserializeOwned + Serialize>(
+    m: &mut Matrix,
+    c: &CloudClient,
+    method: &str,
+    spec_path: &str,
+    live_path: &str,
+    note: &str,
+) {
+    check_tolerating::<T>(m, c, method, spec_path, live_path, "Not Found", note).await;
 }
 
 // ---------------------------------------------------------------------------
@@ -536,6 +576,304 @@ async fn api_compliance() {
         "API 404s traffic for an active database",
     )
     .await;
+
+    // -- T1 (phase 2): remaining account-level reads --
+    check::<redis_cloud::account::AccountSystemLogEntries>(&mut m, &c, "GET", "/logs", "/logs")
+        .await;
+    check::<redis_cloud::account::AccountSessionLogEntries>(
+        &mut m,
+        &c,
+        "GET",
+        "/session-logs",
+        "/session-logs",
+    )
+    .await;
+    check::<redis_cloud::account::SearchScalingFactorsData>(
+        &mut m,
+        &c,
+        "GET",
+        "/query-performance-factors",
+        "/query-performance-factors",
+    )
+    .await;
+    check::<redis_cloud::subscriptions::RedisVersions>(
+        &mut m,
+        &c,
+        "GET",
+        "/subscriptions/redis-versions",
+        "/subscriptions/redis-versions",
+    )
+    .await;
+    // The API returns a server-side 500 for this spec-documented endpoint (the
+    // Pro equivalent works). Tolerated as a known-diff so a later fix surfaces.
+    check_tolerating::<redis_cloud::fixed_subscriptions::RedisVersions>(
+        &mut m,
+        &c,
+        "GET",
+        "/fixed/redis-versions",
+        "/fixed/redis-versions",
+        "Internal Server Error",
+        "API returns a server-side 500 on this spec-documented endpoint",
+    )
+    .await;
+    check::<redis_cloud::fixed_subscriptions::FixedSubscriptionsPlans>(
+        &mut m,
+        &c,
+        "GET",
+        "/fixed/plans",
+        "/fixed/plans",
+    )
+    .await;
+    check::<redis_cloud::fixed_subscriptions::FixedSubscriptionsPlans>(
+        &mut m,
+        &c,
+        "GET",
+        "/fixed/plans/subscriptions/{subscriptionId}",
+        &format!("/fixed/plans/subscriptions/{es}"),
+    )
+    .await;
+
+    // -- T1 (phase 2): by-id reads (id discovered from the matching list) --
+    if let Some(id) = discover(&c, "/users", |v| {
+        v["users"][0]["id"].as_i64().map(|n| n.to_string())
+    })
+    .await
+    {
+        check::<redis_cloud::users::AccountUser>(
+            &mut m,
+            &c,
+            "GET",
+            "/users/{userId}",
+            &format!("/users/{id}"),
+        )
+        .await;
+    } else {
+        skip(&mut m, "GET", "/users/{userId}", "no user to drill into");
+    }
+    if let Some(id) = discover(&c, "/acl/users", |v| {
+        v["users"][0]["id"].as_i64().map(|n| n.to_string())
+    })
+    .await
+    {
+        check::<redis_cloud::acl::ACLUser>(
+            &mut m,
+            &c,
+            "GET",
+            "/acl/users/{aclUserId}",
+            &format!("/acl/users/{id}"),
+        )
+        .await;
+    } else {
+        skip(
+            &mut m,
+            "GET",
+            "/acl/users/{aclUserId}",
+            "no ACL user to drill into",
+        );
+    }
+    if let Some(id) = discover(&c, "/cloud-accounts", |v| {
+        v["cloudAccounts"][0]["id"].as_i64().map(|n| n.to_string())
+    })
+    .await
+    {
+        check::<redis_cloud::cloud_accounts::CloudAccount>(
+            &mut m,
+            &c,
+            "GET",
+            "/cloud-accounts/{cloudAccountId}",
+            &format!("/cloud-accounts/{id}"),
+        )
+        .await;
+    } else {
+        skip(
+            &mut m,
+            "GET",
+            "/cloud-accounts/{cloudAccountId}",
+            "no cloud account to drill into",
+        );
+    }
+    if let Some(id) = discover(&c, "/tasks", |v| {
+        v["tasks"][0]["taskId"].as_str().map(String::from)
+    })
+    .await
+    {
+        check::<redis_cloud::types::TaskStateUpdate>(
+            &mut m,
+            &c,
+            "GET",
+            "/tasks/{taskId}",
+            &format!("/tasks/{id}"),
+        )
+        .await;
+    } else {
+        skip(&mut m, "GET", "/tasks/{taskId}", "no task to drill into");
+    }
+    if let Some(id) = discover(&c, "/fixed/plans", |v| {
+        v["plans"][0]["id"].as_i64().map(|n| n.to_string())
+    })
+    .await
+    {
+        check::<redis_cloud::fixed_subscriptions::FixedSubscriptionsPlan>(
+            &mut m,
+            &c,
+            "GET",
+            "/fixed/plans/{planId}",
+            &format!("/fixed/plans/{id}"),
+        )
+        .await;
+    } else {
+        skip(
+            &mut m,
+            "GET",
+            "/fixed/plans/{planId}",
+            "no plan to drill into",
+        );
+    }
+
+    // -- T1 (phase 2): Pro database sub-resources --
+    check::<redis_cloud::databases::DatabaseCertificate>(
+        &mut m,
+        &c,
+        "GET",
+        "/subscriptions/{subscriptionId}/databases/{databaseId}/certificate",
+        &format!("/subscriptions/{ps}/databases/{pd}/certificate"),
+    )
+    .await;
+    check::<redis_cloud::databases::DatabaseSlowLogEntries>(
+        &mut m,
+        &c,
+        "GET",
+        "/subscriptions/{subscriptionId}/databases/{databaseId}/slow-log",
+        &format!("/subscriptions/{ps}/databases/{pd}/slow-log"),
+    )
+    .await;
+    check::<redis_cloud::types::TaskStateUpdate>(
+        &mut m,
+        &c,
+        "GET",
+        "/subscriptions/{subscriptionId}/databases/{databaseId}/import",
+        &format!("/subscriptions/{ps}/databases/{pd}/import"),
+    )
+    .await;
+    check_known_404::<redis_cloud::databases::BdbVersionUpgradeStatus>(
+        &mut m,
+        &c,
+        "GET",
+        "/subscriptions/{subscriptionId}/databases/{databaseId}/upgrade",
+        &format!("/subscriptions/{ps}/databases/{pd}/upgrade"),
+        "404 when no version upgrade is pending",
+    )
+    .await;
+    check::<Value>(
+        &mut m,
+        &c,
+        "GET",
+        "/subscriptions/{subscriptionId}/databases/{databaseId}/available-target-versions",
+        &format!("/subscriptions/{ps}/databases/{pd}/available-target-versions"),
+    )
+    .await;
+
+    // -- T1 (phase 2): Essentials database sub-resources --
+    check::<redis_cloud::fixed_databases::DatabaseSlowLogEntries>(
+        &mut m,
+        &c,
+        "GET",
+        "/fixed/subscriptions/{subscriptionId}/databases/{databaseId}/slow-log",
+        &format!("/fixed/subscriptions/{es}/databases/{ed}/slow-log"),
+    )
+    .await;
+    check::<redis_cloud::types::TaskStateUpdate>(
+        &mut m,
+        &c,
+        "GET",
+        "/fixed/subscriptions/{subscriptionId}/databases/{databaseId}/import",
+        &format!("/fixed/subscriptions/{es}/databases/{ed}/import"),
+    )
+    .await;
+    check_known_404::<Value>(
+        &mut m,
+        &c,
+        "GET",
+        "/fixed/subscriptions/{subscriptionId}/databases/{databaseId}/upgrade",
+        &format!("/fixed/subscriptions/{es}/databases/{ed}/upgrade"),
+        "404 when no version upgrade is pending",
+    )
+    .await;
+    check::<Value>(
+        &mut m,
+        &c,
+        "GET",
+        "/fixed/subscriptions/{subscriptionId}/databases/{databaseId}/available-target-versions",
+        &format!("/fixed/subscriptions/{es}/databases/{ed}/available-target-versions"),
+    )
+    .await;
+
+    // -- T1 (phase 2): sub-level connectivity that may 404 without config --
+    check_known_404::<redis_cloud::subscriptions::ActiveActiveSubscriptionRegions>(
+        &mut m,
+        &c,
+        "GET",
+        "/subscriptions/{subscriptionId}/regions",
+        &format!("/subscriptions/{ps}/regions"),
+        "Active-Active subscriptions only",
+    )
+    .await;
+    check_known_404::<TaskStateUpdate>(
+        &mut m,
+        &c,
+        "GET",
+        "/subscriptions/{subscriptionId}/regions/peerings",
+        &format!("/subscriptions/{ps}/regions/peerings"),
+        "Active-Active subscriptions only",
+    )
+    .await;
+    check_known_404::<TaskStateUpdate>(
+        &mut m,
+        &c,
+        "GET",
+        "/subscriptions/{subscriptionId}/private-link/endpoint-script",
+        &format!("/subscriptions/{ps}/private-link/endpoint-script"),
+        "needs a configured private link",
+    )
+    .await;
+    check_known_404::<TaskStateUpdate>(
+        &mut m,
+        &c,
+        "GET",
+        "/subscriptions/{subscriptionId}/transitGateways/invitations",
+        &format!("/subscriptions/{ps}/transitGateways/invitations"),
+        "needs Transit Gateway invitations",
+    )
+    .await;
+
+    // -- region/PSC-specific reads need a regionId / pscServiceId / endpointId we
+    //    don't have without Active-Active or configured connectivity --
+    for p in [
+        "/subscriptions/{subscriptionId}/private-service-connect/{pscServiceId}",
+        "/subscriptions/{subscriptionId}/private-service-connect/{pscServiceId}/endpoints/{endpointId}/creationScripts",
+        "/subscriptions/{subscriptionId}/private-service-connect/{pscServiceId}/endpoints/{endpointId}/deletionScripts",
+        "/subscriptions/{subscriptionId}/regions/{regionId}/private-link",
+        "/subscriptions/{subscriptionId}/regions/{regionId}/private-link/endpoint-script",
+        "/subscriptions/{subscriptionId}/regions/{regionId}/private-service-connect",
+        "/subscriptions/{subscriptionId}/regions/{regionId}/private-service-connect/{pscServiceId}",
+        "/subscriptions/{subscriptionId}/regions/{regionId}/private-service-connect/{pscServiceId}/endpoints/{endpointId}/creationScripts",
+        "/subscriptions/{subscriptionId}/regions/{regionId}/private-service-connect/{pscServiceId}/endpoints/{endpointId}/deletionScripts",
+        "/subscriptions/{subscriptionId}/regions/{regionId}/transitGateways",
+        "/subscriptions/{subscriptionId}/regions/{regionId}/transitGateways/invitations",
+    ] {
+        skip(
+            &mut m,
+            "GET",
+            p,
+            "needs Active-Active / configured connectivity (no test resource)",
+        );
+    }
+    skip(
+        &mut m,
+        "GET",
+        "/cost-report/{costReportId}",
+        "binary (CSV) download, not JSON — covered by the live cost-report test",
+    );
 
     // Fill the rest of the surface with Uncovered (and catch any typo'd path).
     reconcile_with_spec(&mut m);
