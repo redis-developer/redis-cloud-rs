@@ -425,3 +425,91 @@ live_test_pinned!(live_essentials_database_reads, c, res, {
         Err(e) => panic!("fixed get_traffic returned an unexpected error: {e}"),
     }
 });
+
+// ---------------------------------------------------------------------------
+// Non-destructive WRITE validation (pinned) — full database-tag lifecycle.
+// Fully reversible and scoped to the pinned test database; cleans up after
+// itself (and pre-cleans in case a prior run was interrupted).
+// ---------------------------------------------------------------------------
+
+live_test_pinned!(live_pro_database_tag_lifecycle, c, res, {
+    use redis_cloud::databases::{DatabaseTagCreateRequest, DatabaseTagUpdateRequest};
+
+    let (sub, db) = (res.pro_sub, res.pro_db);
+    let key = "rcrs-write-test";
+
+    // Pre-clean: drop a stray tag from an interrupted prior run (ignore errors).
+    let _ = c.databases().delete_tag(sub, db, key.to_string()).await;
+
+    // Create.
+    let created = c
+        .databases()
+        .create_tag(
+            sub,
+            db,
+            &DatabaseTagCreateRequest {
+                key: key.to_string(),
+                value: "v1".to_string(),
+                subscription_id: None,
+                database_id: None,
+                command_type: None,
+            },
+        )
+        .await
+        .expect("create_tag should succeed");
+    assert_eq!(created.value.as_deref(), Some("v1"));
+
+    // Read back — the inline tags array must be captured (#130).
+    let tags = c
+        .databases()
+        .get_tags(sub, db)
+        .await
+        .expect("get_tags should deserialize");
+    let found = tags
+        .tags
+        .unwrap_or_default()
+        .into_iter()
+        .find(|t| t.key.as_deref() == Some(key));
+    assert!(
+        found.is_some_and(|t| t.value.as_deref() == Some("v1")),
+        "created tag should appear in get_tags with its value (see #130)"
+    );
+
+    // Update the value (PUT request serialization).
+    let updated = c
+        .databases()
+        .update_tag(
+            sub,
+            db,
+            key.to_string(),
+            &DatabaseTagUpdateRequest {
+                subscription_id: None,
+                database_id: None,
+                key: None,
+                value: "v2".to_string(),
+                command_type: None,
+            },
+        )
+        .await
+        .expect("update_tag should succeed");
+    assert_eq!(updated.value.as_deref(), Some("v2"));
+
+    // Delete (cleanup).
+    c.databases()
+        .delete_tag(sub, db, key.to_string())
+        .await
+        .expect("delete_tag should succeed");
+
+    // Verify gone.
+    let after = c
+        .databases()
+        .get_tags(sub, db)
+        .await
+        .expect("get_tags should deserialize");
+    let still_present = after
+        .tags
+        .unwrap_or_default()
+        .iter()
+        .any(|t| t.key.as_deref() == Some(key));
+    assert!(!still_present, "tag should be gone after delete");
+});

@@ -249,14 +249,20 @@ pub struct CloudTag {
 
 /// Collection wrapper returned by the database tags listing endpoints.
 ///
-/// Matches the `CloudTags` schema, which is a HATEOAS envelope carrying the
-/// owning account ID and links rather than an inline tag array.
+/// The OpenAPI `CloudTags` schema describes only `accountId`/`links`, but the
+/// live `GET .../tags` response includes an inline `tags` array when the
+/// database has tags — so the array is captured here too (see #130).
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CloudTags {
     /// Account ID owning the tags.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub account_id: Option<i32>,
+
+    /// Tags on the database. Present (possibly empty) on real responses; the
+    /// OpenAPI schema omits it.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tags: Option<Vec<CloudTag>>,
 
     /// HATEOAS links.
     #[serde(skip_serializing_if = "Option::is_none")]

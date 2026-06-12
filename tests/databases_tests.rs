@@ -1265,3 +1265,48 @@ async fn test_resume_database_traffic() {
     // Empty 204 body must deserialize cleanly into `()`.
     handler.resume_traffic(123, 456).await.unwrap();
 }
+
+// #130: the live GET tags response carries an inline `tags` array that the
+// CloudTags model used to drop. Mirror the real shape and assert it's captured.
+#[tokio::test]
+async fn test_get_tags_captures_inline_tags() {
+    let mock_server = MockServer::start().await;
+
+    Mock::given(method("GET"))
+        .and(path("/subscriptions/123/databases/456/tags"))
+        .and(header("x-api-key", "test-key"))
+        .and(header("x-api-secret-key", "test-secret"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "accountId": 456,
+            "tags": [
+                {
+                    "key": "env",
+                    "value": "test",
+                    "createdAt": "2026-06-12T14:36:24.487Z",
+                    "updatedAt": "2026-06-12T14:36:24.487Z",
+                    "links": []
+                }
+            ],
+            "links": []
+        })))
+        .mount(&mock_server)
+        .await;
+
+    let client = CloudClient::builder()
+        .api_key("test-key".to_string())
+        .api_secret("test-secret".to_string())
+        .base_url(mock_server.uri())
+        .build()
+        .unwrap();
+
+    let handler = DatabaseHandler::new(client);
+    let result = handler.get_tags(123, 456).await.unwrap();
+
+    assert_eq!(result.account_id, Some(456));
+    let tags = result
+        .tags
+        .expect("tags array should be captured (see #130)");
+    assert_eq!(tags.len(), 1);
+    assert_eq!(tags[0].key.as_deref(), Some("env"));
+    assert_eq!(tags[0].value.as_deref(), Some("test"));
+}
