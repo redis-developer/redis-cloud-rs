@@ -1,0 +1,496 @@
+{
+  "DELETE /acl/redisRules/{aclRedisRuleId}": {
+    "status": "uncovered"
+  },
+  "DELETE /acl/roles/{aclRoleId}": {
+    "status": "uncovered"
+  },
+  "DELETE /acl/users/{aclUserId}": {
+    "status": "uncovered"
+  },
+  "DELETE /cloud-accounts/{cloudAccountId}": {
+    "status": "uncovered"
+  },
+  "DELETE /fixed/subscriptions/{subscriptionId}": {
+    "status": "uncovered"
+  },
+  "DELETE /fixed/subscriptions/{subscriptionId}/databases/{databaseId}": {
+    "status": "uncovered"
+  },
+  "DELETE /fixed/subscriptions/{subscriptionId}/databases/{databaseId}/tags/{tagKey}": {
+    "status": "uncovered"
+  },
+  "DELETE /subscriptions/{subscriptionId}": {
+    "status": "uncovered"
+  },
+  "DELETE /subscriptions/{subscriptionId}/databases/{databaseId}": {
+    "status": "uncovered"
+  },
+  "DELETE /subscriptions/{subscriptionId}/databases/{databaseId}/tags/{tagKey}": {
+    "status": "uncovered"
+  },
+  "DELETE /subscriptions/{subscriptionId}/peerings/{peeringId}": {
+    "status": "uncovered"
+  },
+  "DELETE /subscriptions/{subscriptionId}/private-link": {
+    "status": "uncovered"
+  },
+  "DELETE /subscriptions/{subscriptionId}/private-link/principals": {
+    "status": "uncovered"
+  },
+  "DELETE /subscriptions/{subscriptionId}/private-service-connect": {
+    "status": "uncovered"
+  },
+  "DELETE /subscriptions/{subscriptionId}/private-service-connect/{pscServiceId}/endpoints/{endpointId}": {
+    "status": "uncovered"
+  },
+  "DELETE /subscriptions/{subscriptionId}/regions": {
+    "status": "uncovered"
+  },
+  "DELETE /subscriptions/{subscriptionId}/regions/peerings/{peeringId}": {
+    "status": "uncovered"
+  },
+  "DELETE /subscriptions/{subscriptionId}/regions/{regionId}/private-link": {
+    "status": "uncovered"
+  },
+  "DELETE /subscriptions/{subscriptionId}/regions/{regionId}/private-link/principals": {
+    "status": "uncovered"
+  },
+  "DELETE /subscriptions/{subscriptionId}/regions/{regionId}/private-service-connect": {
+    "status": "uncovered"
+  },
+  "DELETE /subscriptions/{subscriptionId}/regions/{regionId}/private-service-connect/{pscServiceId}/endpoints/{endpointId}": {
+    "status": "uncovered"
+  },
+  "DELETE /subscriptions/{subscriptionId}/regions/{regionId}/transitGateways/{TgwId}/attachment": {
+    "status": "uncovered"
+  },
+  "DELETE /subscriptions/{subscriptionId}/transitGateways/{TgwId}/attachment": {
+    "status": "uncovered"
+  },
+  "DELETE /users/{userId}": {
+    "status": "uncovered"
+  },
+  "GET /": {
+    "status": "pass"
+  },
+  "GET /acl/redisRules": {
+    "status": "pass"
+  },
+  "GET /acl/roles": {
+    "status": "pass"
+  },
+  "GET /acl/users": {
+    "status": "pass"
+  },
+  "GET /acl/users/{aclUserId}": {
+    "status": "uncovered"
+  },
+  "GET /cloud-accounts": {
+    "status": "pass"
+  },
+  "GET /cloud-accounts/{cloudAccountId}": {
+    "status": "uncovered"
+  },
+  "GET /cost-report/{costReportId}": {
+    "status": "uncovered"
+  },
+  "GET /data-persistence": {
+    "status": "pass"
+  },
+  "GET /database-modules": {
+    "status": "pass"
+  },
+  "GET /fixed/plans": {
+    "status": "uncovered"
+  },
+  "GET /fixed/plans/subscriptions/{subscriptionId}": {
+    "status": "uncovered"
+  },
+  "GET /fixed/plans/{planId}": {
+    "status": "uncovered"
+  },
+  "GET /fixed/redis-versions": {
+    "status": "uncovered"
+  },
+  "GET /fixed/subscriptions": {
+    "status": "pass"
+  },
+  "GET /fixed/subscriptions/{subscriptionId}": {
+    "status": "pass"
+  },
+  "GET /fixed/subscriptions/{subscriptionId}/databases": {
+    "status": "drift",
+    "dropped": [
+      "subscription.databases[0].alerts[0].defaultValue",
+      "subscription.databases[0].modules[0].capabilityName",
+      "subscription.databases[0].modules[0].description",
+      "subscription.databases[0].modules[0].id",
+      "subscription.databases[0].modules[0].version",
+      "subscription.databases[0].replicaAsSourceEndpoints"
+    ]
+  },
+  "GET /fixed/subscriptions/{subscriptionId}/databases/{databaseId}": {
+    "status": "drift",
+    "dropped": [
+      "alerts[0].defaultValue",
+      "modules[0].capabilityName",
+      "modules[0].description",
+      "modules[0].id",
+      "modules[0].version",
+      "replicaAsSourceEndpoints",
+      "security.password"
+    ]
+  },
+  "GET /fixed/subscriptions/{subscriptionId}/databases/{databaseId}/available-target-versions": {
+    "status": "uncovered"
+  },
+  "GET /fixed/subscriptions/{subscriptionId}/databases/{databaseId}/backup": {
+    "status": "pass"
+  },
+  "GET /fixed/subscriptions/{subscriptionId}/databases/{databaseId}/import": {
+    "status": "uncovered"
+  },
+  "GET /fixed/subscriptions/{subscriptionId}/databases/{databaseId}/slow-log": {
+    "status": "uncovered"
+  },
+  "GET /fixed/subscriptions/{subscriptionId}/databases/{databaseId}/tags": {
+    "status": "pass"
+  },
+  "GET /fixed/subscriptions/{subscriptionId}/databases/{databaseId}/traffic": {
+    "status": "known-diff",
+    "note": "API 404s traffic for an active database"
+  },
+  "GET /fixed/subscriptions/{subscriptionId}/databases/{databaseId}/upgrade": {
+    "status": "uncovered"
+  },
+  "GET /logs": {
+    "status": "uncovered"
+  },
+  "GET /payment-methods": {
+    "status": "pass"
+  },
+  "GET /query-performance-factors": {
+    "status": "uncovered"
+  },
+  "GET /regions": {
+    "status": "pass"
+  },
+  "GET /session-logs": {
+    "status": "uncovered"
+  },
+  "GET /subscriptions": {
+    "status": "pass"
+  },
+  "GET /subscriptions/redis-versions": {
+    "status": "uncovered"
+  },
+  "GET /subscriptions/{subscriptionId}": {
+    "status": "pass"
+  },
+  "GET /subscriptions/{subscriptionId}/cidr": {
+    "status": "pass"
+  },
+  "GET /subscriptions/{subscriptionId}/databases": {
+    "status": "drift",
+    "dropped": [
+      "subscription[0].databases[0].alerts[0].defaultValue",
+      "subscription[0].databases[0].alerts[0].id",
+      "subscription[0].databases[0].replicaAsSourceEndpoints"
+    ]
+  },
+  "GET /subscriptions/{subscriptionId}/databases/{databaseId}": {
+    "status": "drift",
+    "dropped": [
+      "alerts[0].defaultValue",
+      "alerts[0].id",
+      "replicaAsSourceEndpoints"
+    ]
+  },
+  "GET /subscriptions/{subscriptionId}/databases/{databaseId}/available-target-versions": {
+    "status": "uncovered"
+  },
+  "GET /subscriptions/{subscriptionId}/databases/{databaseId}/backup": {
+    "status": "pass"
+  },
+  "GET /subscriptions/{subscriptionId}/databases/{databaseId}/certificate": {
+    "status": "uncovered"
+  },
+  "GET /subscriptions/{subscriptionId}/databases/{databaseId}/import": {
+    "status": "uncovered"
+  },
+  "GET /subscriptions/{subscriptionId}/databases/{databaseId}/slow-log": {
+    "status": "uncovered"
+  },
+  "GET /subscriptions/{subscriptionId}/databases/{databaseId}/tags": {
+    "status": "pass"
+  },
+  "GET /subscriptions/{subscriptionId}/databases/{databaseId}/traffic": {
+    "status": "known-diff",
+    "note": "API 404s traffic for an active database"
+  },
+  "GET /subscriptions/{subscriptionId}/databases/{databaseId}/upgrade": {
+    "status": "uncovered"
+  },
+  "GET /subscriptions/{subscriptionId}/maintenance-windows": {
+    "status": "pass"
+  },
+  "GET /subscriptions/{subscriptionId}/peerings": {
+    "status": "pass"
+  },
+  "GET /subscriptions/{subscriptionId}/pricing": {
+    "status": "pass"
+  },
+  "GET /subscriptions/{subscriptionId}/private-link": {
+    "status": "pass"
+  },
+  "GET /subscriptions/{subscriptionId}/private-link/endpoint-script": {
+    "status": "uncovered"
+  },
+  "GET /subscriptions/{subscriptionId}/private-service-connect": {
+    "status": "pass"
+  },
+  "GET /subscriptions/{subscriptionId}/private-service-connect/{pscServiceId}": {
+    "status": "uncovered"
+  },
+  "GET /subscriptions/{subscriptionId}/private-service-connect/{pscServiceId}/endpoints/{endpointId}/creationScripts": {
+    "status": "uncovered"
+  },
+  "GET /subscriptions/{subscriptionId}/private-service-connect/{pscServiceId}/endpoints/{endpointId}/deletionScripts": {
+    "status": "uncovered"
+  },
+  "GET /subscriptions/{subscriptionId}/regions": {
+    "status": "uncovered"
+  },
+  "GET /subscriptions/{subscriptionId}/regions/peerings": {
+    "status": "uncovered"
+  },
+  "GET /subscriptions/{subscriptionId}/regions/{regionId}/private-link": {
+    "status": "uncovered"
+  },
+  "GET /subscriptions/{subscriptionId}/regions/{regionId}/private-link/endpoint-script": {
+    "status": "uncovered"
+  },
+  "GET /subscriptions/{subscriptionId}/regions/{regionId}/private-service-connect": {
+    "status": "uncovered"
+  },
+  "GET /subscriptions/{subscriptionId}/regions/{regionId}/private-service-connect/{pscServiceId}": {
+    "status": "uncovered"
+  },
+  "GET /subscriptions/{subscriptionId}/regions/{regionId}/private-service-connect/{pscServiceId}/endpoints/{endpointId}/creationScripts": {
+    "status": "uncovered"
+  },
+  "GET /subscriptions/{subscriptionId}/regions/{regionId}/private-service-connect/{pscServiceId}/endpoints/{endpointId}/deletionScripts": {
+    "status": "uncovered"
+  },
+  "GET /subscriptions/{subscriptionId}/regions/{regionId}/transitGateways": {
+    "status": "uncovered"
+  },
+  "GET /subscriptions/{subscriptionId}/regions/{regionId}/transitGateways/invitations": {
+    "status": "uncovered"
+  },
+  "GET /subscriptions/{subscriptionId}/transitGateways": {
+    "status": "pass"
+  },
+  "GET /subscriptions/{subscriptionId}/transitGateways/invitations": {
+    "status": "uncovered"
+  },
+  "GET /tasks": {
+    "status": "pass"
+  },
+  "GET /tasks/{taskId}": {
+    "status": "uncovered"
+  },
+  "GET /users": {
+    "status": "pass"
+  },
+  "GET /users/{userId}": {
+    "status": "uncovered"
+  },
+  "POST /acl/redisRules": {
+    "status": "uncovered"
+  },
+  "POST /acl/roles": {
+    "status": "uncovered"
+  },
+  "POST /acl/users": {
+    "status": "uncovered"
+  },
+  "POST /cloud-accounts": {
+    "status": "uncovered"
+  },
+  "POST /cost-report": {
+    "status": "uncovered"
+  },
+  "POST /fixed/subscriptions": {
+    "status": "uncovered"
+  },
+  "POST /fixed/subscriptions/{subscriptionId}/databases": {
+    "status": "uncovered"
+  },
+  "POST /fixed/subscriptions/{subscriptionId}/databases/{databaseId}/backup": {
+    "status": "uncovered"
+  },
+  "POST /fixed/subscriptions/{subscriptionId}/databases/{databaseId}/import": {
+    "status": "uncovered"
+  },
+  "POST /fixed/subscriptions/{subscriptionId}/databases/{databaseId}/tags": {
+    "status": "uncovered"
+  },
+  "POST /fixed/subscriptions/{subscriptionId}/databases/{databaseId}/traffic/resume": {
+    "status": "uncovered"
+  },
+  "POST /fixed/subscriptions/{subscriptionId}/databases/{databaseId}/upgrade": {
+    "status": "uncovered"
+  },
+  "POST /subscriptions": {
+    "status": "uncovered"
+  },
+  "POST /subscriptions/{subscriptionId}/databases": {
+    "status": "uncovered"
+  },
+  "POST /subscriptions/{subscriptionId}/databases/{databaseId}/backup": {
+    "status": "uncovered"
+  },
+  "POST /subscriptions/{subscriptionId}/databases/{databaseId}/import": {
+    "status": "uncovered"
+  },
+  "POST /subscriptions/{subscriptionId}/databases/{databaseId}/tags": {
+    "status": "uncovered"
+  },
+  "POST /subscriptions/{subscriptionId}/databases/{databaseId}/traffic/resume": {
+    "status": "uncovered"
+  },
+  "POST /subscriptions/{subscriptionId}/databases/{databaseId}/upgrade": {
+    "status": "uncovered"
+  },
+  "POST /subscriptions/{subscriptionId}/peerings": {
+    "status": "uncovered"
+  },
+  "POST /subscriptions/{subscriptionId}/private-link": {
+    "status": "uncovered"
+  },
+  "POST /subscriptions/{subscriptionId}/private-link/connections/disassociate": {
+    "status": "uncovered"
+  },
+  "POST /subscriptions/{subscriptionId}/private-link/principals": {
+    "status": "uncovered"
+  },
+  "POST /subscriptions/{subscriptionId}/private-service-connect": {
+    "status": "uncovered"
+  },
+  "POST /subscriptions/{subscriptionId}/private-service-connect/{pscServiceId}": {
+    "status": "uncovered"
+  },
+  "POST /subscriptions/{subscriptionId}/regions": {
+    "status": "uncovered"
+  },
+  "POST /subscriptions/{subscriptionId}/regions/peerings": {
+    "status": "uncovered"
+  },
+  "POST /subscriptions/{subscriptionId}/regions/{regionId}/private-link": {
+    "status": "uncovered"
+  },
+  "POST /subscriptions/{subscriptionId}/regions/{regionId}/private-link/connections/disassociate": {
+    "status": "uncovered"
+  },
+  "POST /subscriptions/{subscriptionId}/regions/{regionId}/private-link/principals": {
+    "status": "uncovered"
+  },
+  "POST /subscriptions/{subscriptionId}/regions/{regionId}/private-service-connect": {
+    "status": "uncovered"
+  },
+  "POST /subscriptions/{subscriptionId}/regions/{regionId}/private-service-connect/{pscServiceId}": {
+    "status": "uncovered"
+  },
+  "POST /subscriptions/{subscriptionId}/regions/{regionId}/transitGateways/{TgwId}/attachment": {
+    "status": "uncovered"
+  },
+  "POST /subscriptions/{subscriptionId}/transitGateways/{TgwId}/attachment": {
+    "status": "uncovered"
+  },
+  "PUT /acl/redisRules/{aclRedisRuleId}": {
+    "status": "uncovered"
+  },
+  "PUT /acl/roles/{aclRoleId}": {
+    "status": "uncovered"
+  },
+  "PUT /acl/users/{aclUserId}": {
+    "status": "uncovered"
+  },
+  "PUT /cloud-accounts/{cloudAccountId}": {
+    "status": "uncovered"
+  },
+  "PUT /fixed/subscriptions/{subscriptionId}": {
+    "status": "uncovered"
+  },
+  "PUT /fixed/subscriptions/{subscriptionId}/databases/{databaseId}": {
+    "status": "uncovered"
+  },
+  "PUT /fixed/subscriptions/{subscriptionId}/databases/{databaseId}/tags": {
+    "status": "uncovered"
+  },
+  "PUT /fixed/subscriptions/{subscriptionId}/databases/{databaseId}/tags/{tagKey}": {
+    "status": "uncovered"
+  },
+  "PUT /subscriptions/{subscriptionId}": {
+    "status": "uncovered"
+  },
+  "PUT /subscriptions/{subscriptionId}/cidr": {
+    "status": "uncovered"
+  },
+  "PUT /subscriptions/{subscriptionId}/databases/{databaseId}": {
+    "status": "uncovered"
+  },
+  "PUT /subscriptions/{subscriptionId}/databases/{databaseId}/flush": {
+    "status": "uncovered"
+  },
+  "PUT /subscriptions/{subscriptionId}/databases/{databaseId}/regions": {
+    "status": "uncovered"
+  },
+  "PUT /subscriptions/{subscriptionId}/databases/{databaseId}/tags": {
+    "status": "uncovered"
+  },
+  "PUT /subscriptions/{subscriptionId}/databases/{databaseId}/tags/{tagKey}": {
+    "status": "uncovered"
+  },
+  "PUT /subscriptions/{subscriptionId}/maintenance-windows": {
+    "status": "uncovered"
+  },
+  "PUT /subscriptions/{subscriptionId}/peerings/{peeringId}": {
+    "status": "uncovered"
+  },
+  "PUT /subscriptions/{subscriptionId}/private-service-connect/{pscServiceId}/endpoints/{endpointId}": {
+    "status": "uncovered"
+  },
+  "PUT /subscriptions/{subscriptionId}/regions/peerings/{peeringId}": {
+    "status": "uncovered"
+  },
+  "PUT /subscriptions/{subscriptionId}/regions/{regionId}/private-service-connect/{pscServiceId}/endpoints/{endpointId}": {
+    "status": "uncovered"
+  },
+  "PUT /subscriptions/{subscriptionId}/regions/{regionId}/transitGateways/invitations/{tgwInvitationId}/accept": {
+    "status": "uncovered"
+  },
+  "PUT /subscriptions/{subscriptionId}/regions/{regionId}/transitGateways/invitations/{tgwInvitationId}/reject": {
+    "status": "uncovered"
+  },
+  "PUT /subscriptions/{subscriptionId}/regions/{regionId}/transitGateways/{TgwId}/attachment": {
+    "status": "uncovered"
+  },
+  "PUT /subscriptions/{subscriptionId}/resource-tags": {
+    "status": "uncovered"
+  },
+  "PUT /subscriptions/{subscriptionId}/transitGateways/invitations/{tgwInvitationId}/accept": {
+    "status": "uncovered"
+  },
+  "PUT /subscriptions/{subscriptionId}/transitGateways/invitations/{tgwInvitationId}/reject": {
+    "status": "uncovered"
+  },
+  "PUT /subscriptions/{subscriptionId}/transitGateways/{TgwId}/attachment": {
+    "status": "uncovered"
+  },
+  "PUT /users/{userId}": {
+    "status": "uncovered"
+  }
+}
