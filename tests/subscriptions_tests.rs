@@ -254,6 +254,9 @@ async fn test_update_subscription() {
         .and(path("/subscriptions/123"))
         .and(header("x-api-key", "test-key"))
         .and(header("x-api-secret-key", "test-secret"))
+        // #133: the request body must actually carry `name` (the old request
+        // type couldn't serialize it, so updates were no-ops).
+        .and(body_json(json!({ "name": "renamed-subscription" })))
         .respond_with(ResponseTemplate::new(202).set_body_json(json!({
             "taskId": "task-update-sub",
             "commandType": "UPDATE_SUBSCRIPTION",
@@ -270,10 +273,9 @@ async fn test_update_subscription() {
         .unwrap();
 
     let handler = SubscriptionsHandler::new(client);
-    let request = redis_cloud::subscriptions::BaseSubscriptionUpdateRequest {
-        subscription_id: None,
-        command_type: None,
-    };
+    let request = redis_cloud::subscriptions::SubscriptionUpdateRequest::builder()
+        .name("renamed-subscription")
+        .build();
 
     let result = handler.update_subscription(123, &request).await.unwrap();
     assert_eq!(result.task_id, Some("task-update-sub".to_string()));

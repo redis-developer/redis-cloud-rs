@@ -64,20 +64,6 @@ use typed_builder::TypedBuilder;
 // ============================================================================
 
 /// Subscription update request message
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct BaseSubscriptionUpdateRequest {
-    /// Subscription ID being updated. Server-populated from the path.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub subscription_id: Option<i32>,
-
-    /// Read-only on the response; populated by the server with the
-    /// operation type (e.g. `"UPDATE_SUBSCRIPTION"`).
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub command_type: Option<String>,
-}
-
-/// Subscription update request message
 ///
 /// # Example
 ///
@@ -110,6 +96,12 @@ pub struct SubscriptionUpdateRequest {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[builder(default, setter(strip_option, into))]
     pub payment_method: Option<String>,
+
+    /// Optional. Whether the databases in this subscription are reachable on
+    /// their public endpoints.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option))]
+    pub public_endpoint_access: Option<bool>,
 
     /// Read-only on the response; populated by the server with the
     /// operation type (e.g. `"UPDATE_SUBSCRIPTION"`).
@@ -1061,7 +1053,7 @@ impl SubscriptionHandler {
     pub async fn update_subscription(
         &self,
         subscription_id: i32,
-        request: &BaseSubscriptionUpdateRequest,
+        request: &SubscriptionUpdateRequest,
     ) -> Result<TaskStateUpdate> {
         self.client
             .put(&format!("/subscriptions/{subscription_id}"), request)
@@ -1305,7 +1297,7 @@ impl SubscriptionHandler {
     pub async fn update(
         &self,
         subscription_id: i32,
-        request: &BaseSubscriptionUpdateRequest,
+        request: &SubscriptionUpdateRequest,
     ) -> Result<TaskStateUpdate> {
         self.update_subscription(subscription_id, request).await
     }
