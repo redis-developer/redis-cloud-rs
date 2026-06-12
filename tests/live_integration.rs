@@ -284,10 +284,20 @@ live_test!(live_tasks_list, c, {
 
 live_test_pinned!(live_pro_subscription_reads, c, res, {
     let sub = res.pro_sub;
-    c.subscriptions()
+    let subscription = c
+        .subscriptions()
         .get_subscription_by_id(sub)
         .await
         .expect("get_subscription_by_id should deserialize");
+    // #128: subscriptionPricing and nested cloudDetails must be captured.
+    assert!(
+        subscription.subscription_pricing.is_some(),
+        "subscriptionPricing should be populated (see #128)"
+    );
+    assert!(
+        subscription.cloud_details.is_some(),
+        "cloudDetails should be populated"
+    );
     c.subscriptions()
         .get_cidr_allowlist(sub)
         .await

@@ -1,0 +1,59 @@
+{
+  "accountId": 12345,
+  "subscriptions": [
+    {
+      "id": 111111,
+      "name": "example-pro-subscription",
+      "status": "active",
+      "paymentMethodId": 555,
+      "paymentMethodType": "credit-card",
+      "memoryStorage": "ram",
+      "numberOfDatabases": 1,
+      "deploymentType": "single-region",
+      "cloudDetails": [
+        {
+          "provider": "AWS",
+          "cloudAccountId": 1,
+          "totalSizeInGb": 6.0,
+          "regions": [
+            {
+              "region": "us-east-1",
+              "networking": [
+                {
+                  "deploymentCIDR": "192.168.0.0/26",
+                  "subnetId": "subnet-0example",
+                  "securityGroupId": "sg-0example"
+                }
+              ],
+              "preferredAvailabilityZones": ["use1-az1"],
+              "multipleAvailabilityZones": false
+            }
+          ],
+          "resourceTags": [],
+          "links": []
+        }
+      ],
+      "subscriptionPricing": [
+        {
+          "type": "MinimumPrice",
+          "quantity": 1,
+          "quantityMeasurement": "subscription",
+          "pricePerUnit": 0.274,
+          "priceCurrency": "USD",
+          "pricePeriod": "hour"
+        },
+        {
+          "type": "Shards",
+          "typeDetails": "micro",
+          "quantity": 6,
+          "quantityMeasurement": "shards",
+          "pricePerUnit": 0.043,
+          "priceCurrency": "USD",
+          "pricePeriod": "hour"
+        }
+      ],
+      "links": []
+    }
+  ],
+  "links": []
+}

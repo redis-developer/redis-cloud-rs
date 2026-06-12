@@ -187,7 +187,31 @@ async fn test_get_subscription_by_id() {
             "id": 123,
             "name": "Production",
             "status": "active",
-            "paymentMethodType": "credit-card"
+            "paymentMethodType": "credit-card",
+            "numberOfDatabases": 1,
+            "cloudDetails": [{
+                "provider": "AWS",
+                "cloudAccountId": 1,
+                "totalSizeInGb": 6.0,
+                "regions": [{
+                    "region": "us-east-1",
+                    "networking": [{
+                        "deploymentCIDR": "192.168.0.0/26",
+                        "subnetId": "subnet-0example",
+                        "securityGroupId": "sg-0example"
+                    }]
+                }],
+                "resourceTags": [],
+                "links": []
+            }],
+            "subscriptionPricing": [{
+                "type": "Shards",
+                "quantity": 6,
+                "quantityMeasurement": "shards",
+                "pricePerUnit": 0.043,
+                "priceCurrency": "USD",
+                "pricePeriod": "hour"
+            }]
         })))
         .mount(&mock_server)
         .await;
@@ -204,6 +228,22 @@ async fn test_get_subscription_by_id() {
 
     assert_eq!(result.id, Some(123));
     assert_eq!(result.name, Some("Production".to_string()));
+    // #128: subscriptionPricing and the nested cloudDetails networking/tags are
+    // captured from the real response shape.
+    let pricing = result
+        .subscription_pricing
+        .expect("subscriptionPricing should deserialize (see #128)");
+    assert_eq!(pricing[0].r#type.as_deref(), Some("Shards"));
+    let net = result
+        .cloud_details
+        .and_then(|c| c.into_iter().next())
+        .and_then(|c| c.regions)
+        .and_then(|r| r.into_iter().next())
+        .and_then(|r| r.networking)
+        .and_then(|n| n.into_iter().next())
+        .expect("networking should deserialize");
+    assert_eq!(net.deployment_cidr.as_deref(), Some("192.168.0.0/26"));
+    assert!(net.security_group_id.is_some());
 }
 
 #[tokio::test]

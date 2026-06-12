@@ -611,6 +611,14 @@ pub struct CloudDetail {
     /// Regions configured for this cloud provider
     #[serde(skip_serializing_if = "Option::is_none")]
     pub regions: Option<Vec<SubscriptionRegion>>,
+
+    /// Resource tags applied to the subscription's cloud resources.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub resource_tags: Option<Vec<Tag>>,
+
+    /// HATEOAS links.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub links: Option<Vec<Link>>,
 }
 
 /// Region details in a subscription response
@@ -638,8 +646,12 @@ pub struct SubscriptionRegion {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SubscriptionNetworking {
-    /// Deployment CIDR
-    #[serde(skip_serializing_if = "Option::is_none")]
+    /// Deployment CIDR.
+    ///
+    /// Wire field is `deploymentCIDR` (capital CIDR), so an explicit rename is
+    /// needed — `rename_all = "camelCase"` would produce `deploymentCidr` and
+    /// silently drop the real value (same casing pitfall as #108/#121).
+    #[serde(rename = "deploymentCIDR", skip_serializing_if = "Option::is_none")]
     pub deployment_cidr: Option<String>,
 
     /// VPC ID
@@ -649,6 +661,10 @@ pub struct SubscriptionNetworking {
     /// Subnet ID
     #[serde(skip_serializing_if = "Option::is_none")]
     pub subnet_id: Option<String>,
+
+    /// Security group ID associated with the deployment.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub security_group_id: Option<String>,
 }
 
 /// `RedisLabs` Subscription information
@@ -703,9 +719,15 @@ pub struct Subscription {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub cloud_details: Option<Vec<CloudDetail>>,
 
-    /// Pricing details for the subscription
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub pricing: Option<Vec<SubscriptionPricing>>,
+    /// Pricing details for the subscription.
+    ///
+    /// Wire field is `subscriptionPricing`; the field was previously named
+    /// `pricing` (serialized as `pricing`) and silently dropped the real value.
+    #[serde(
+        rename = "subscriptionPricing",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub subscription_pricing: Option<Vec<SubscriptionPricing>>,
 
     /// Redis version for databases created in this subscription (deprecated)
     #[serde(skip_serializing_if = "Option::is_none")]

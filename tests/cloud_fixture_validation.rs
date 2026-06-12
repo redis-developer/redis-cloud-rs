@@ -16,6 +16,7 @@ use redis_cloud::account::PaymentMethods;
 use redis_cloud::databases::Database;
 use redis_cloud::fixed_databases::AccountFixedSubscriptionDatabases;
 use redis_cloud::fixed_subscriptions::FixedSubscription;
+use redis_cloud::subscriptions::AccountSubscriptions;
 use redis_cloud::types::{TaskStateUpdate, TaskStatus};
 
 // #119: modules[].parameters is an array on the wire (empty or objects), and a
@@ -135,4 +136,44 @@ fn fixed_subscription_response_deserializes() {
     assert_eq!(sub.id, Some(111111));
     assert_eq!(sub.connections.as_deref(), Some("10000"));
     assert_eq!(sub.database_status.as_deref(), Some("active"));
+}
+
+// #128: the Pro subscription read dropped subscriptionPricing and the nested
+// cloudDetails networking/tags/links (incl. the deploymentCIDR casing). All
+// must now be captured.
+#[test]
+fn pro_subscriptions_response_deserializes() {
+    let raw = include_str!("fixtures/cloud/samples/pro_subscriptions.json");
+    let resp: AccountSubscriptions =
+        serde_json::from_str(raw).expect("pro subscriptions fixture should deserialize");
+
+    let sub = resp
+        .subscriptions
+        .and_then(|s| s.into_iter().next())
+        .expect("fixture should contain a subscription");
+
+    // subscriptionPricing (was dropped because the field mapped to `pricing`).
+    let pricing = sub
+        .subscription_pricing
+        .expect("subscriptionPricing should deserialize (see #128)");
+    assert_eq!(pricing.len(), 2);
+    assert_eq!(pricing[0].r#type.as_deref(), Some("MinimumPrice"));
+
+    let cloud = sub
+        .cloud_details
+        .and_then(|c| c.into_iter().next())
+        .expect("cloudDetails should deserialize");
+    // resourceTags + links on cloudDetails (were unmodeled).
+    assert!(cloud.resource_tags.is_some());
+    assert!(cloud.links.is_some());
+
+    let net = cloud
+        .regions
+        .and_then(|r| r.into_iter().next())
+        .and_then(|r| r.networking)
+        .and_then(|n| n.into_iter().next())
+        .expect("networking should deserialize");
+    // deploymentCIDR casing (was dropped) + securityGroupId (was unmodeled).
+    assert_eq!(net.deployment_cidr.as_deref(), Some("192.168.0.0/26"));
+    assert!(net.security_group_id.is_some());
 }
