@@ -670,3 +670,53 @@ live_test!(live_acl_redis_rule_lifecycle, c, {
     );
     assert!(gone, "rule should be deleted");
 });
+
+// Cost-report generate -> poll -> download flow (non-destructive: produces a
+// downloadable report, mutates nothing). Guards #118 — the completed task
+// nests the id at `response.resource.costReportId`, and the report downloads.
+live_test!(live_cost_report_generate_and_download, c, {
+    use redis_cloud::cost_report::CostReportCreateRequest;
+    use redis_cloud::types::TaskStatus;
+    use std::time::Duration;
+
+    // Fixed historical range (account exists since 2025-12; <= 40-day span).
+    let task = c
+        .cost_reports()
+        .generate_cost_report(CostReportCreateRequest::new("2026-05-01", "2026-05-31"))
+        .await
+        .expect("generate_cost_report should kick off a task");
+    let task_id = task.task_id.expect("generate should return a task id");
+
+    let mut report_id = None;
+    for _ in 0..40 {
+        tokio::time::sleep(Duration::from_secs(3)).await;
+        let state = c
+            .tasks()
+            .get_task_by_id(task_id.clone())
+            .await
+            .expect("get_task_by_id should deserialize");
+        match state.status {
+            Some(TaskStatus::ProcessingCompleted) => {
+                report_id = state.response.and_then(|r| r.resource).and_then(|res| {
+                    res.get("costReportId")
+                        .and_then(|v| v.as_str().map(str::to_string))
+                });
+                break;
+            }
+            Some(TaskStatus::ProcessingError) => panic!("cost report generation failed"),
+            _ => {}
+        }
+    }
+    let report_id =
+        report_id.expect("completed task should carry response.resource.costReportId (see #118)");
+
+    let bytes = c
+        .cost_reports()
+        .download_cost_report(&report_id)
+        .await
+        .expect("download_cost_report should succeed");
+    assert!(
+        !bytes.is_empty(),
+        "downloaded cost report should have content"
+    );
+});
