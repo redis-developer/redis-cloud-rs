@@ -226,6 +226,13 @@ async fn test_update_database() {
         .and(path("/subscriptions/123/databases/456"))
         .and(header("x-api-key", "test-key"))
         .and(header("x-api-secret-key", "test-secret"))
+        // The request body must actually serialize the update fields (guards
+        // the request-serialization class; confirmed live for DB renames).
+        .and(body_json(json!({
+            "name": "updated-database",
+            "memoryLimitInGb": 4.0,
+            "dataEvictionPolicy": "volatile-lru"
+        })))
         .respond_with(ResponseTemplate::new(202).set_body_json(json!({
             "taskId": "task-update-db-456",
             "commandType": "UPDATE_DATABASE",
