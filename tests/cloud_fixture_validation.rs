@@ -45,6 +45,17 @@ fn fixed_databases_response_deserializes() {
         modules[1].parameters,
         Some(serde_json::json!([{ "name": "error_rate", "value": "0.01" }]))
     );
+    // #140: module response metadata is now captured (was dropped).
+    assert_eq!(modules[0].id, Some(333333));
+    assert_eq!(modules[0].capability_name.as_deref(), Some("Time series"));
+    assert_eq!(modules[0].version.as_deref(), Some("8.2.9"));
+
+    // #140: alert defaultValue is now captured.
+    let alerts = db.alerts.expect("alerts should deserialize");
+    assert_eq!(alerts[0].default_value, Some(80));
+
+    // #140: replicaAsSourceEndpoints is now captured (was dropped).
+    assert!(db.replica_as_source_endpoints.is_some());
 
     // #121: the nested security/clustering/backup objects are now captured
     // instead of silently dropped.

@@ -197,7 +197,15 @@ pub struct CrdbFlushRequest {
 #[serde(rename_all = "camelCase")]
 pub struct DatabaseCertificate {
     /// An X.509 PEM (base64) encoded server certificate with new line characters replaced by '\n'.
-    #[serde(skip_serializing_if = "Option::is_none")]
+    ///
+    /// Wire field is `publicCertificatePEMString` (capital PEM), so an explicit
+    /// rename is needed — `rename_all = "camelCase"` would produce
+    /// `publicCertificatePemString` and drop the real value (the #108 casing
+    /// pitfall).
+    #[serde(
+        rename = "publicCertificatePEMString",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub public_certificate_pem_string: Option<String>,
 }
 
@@ -448,6 +456,7 @@ pub struct DatabaseBackupConfig {
 
 /// Optional. Redis advanced capabilities (also known as modules) to be provisioned in the database. Use GET /database-modules to get a list of available advanced capabilities.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct DatabaseModuleSpec {
     /// Redis advanced capability name. Use GET /database-modules for a list of available capabilities.
     pub name: String,
@@ -460,6 +469,22 @@ pub struct DatabaseModuleSpec {
     /// side and failed to deserialize real responses.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub parameters: Option<Value>,
+
+    /// Module id (response only).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub id: Option<i32>,
+
+    /// Human-readable capability name, e.g. `"Search and query"` (response only).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub capability_name: Option<String>,
+
+    /// Module version (response only).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub version: Option<String>,
+
+    /// Module description (response only).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub description: Option<String>,
 }
 
 /// Optional. Changes Replica Of (also known as Active-Passive) configuration details.
@@ -807,6 +832,11 @@ pub struct Database {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub public_endpoint: Option<String>,
 
+    /// Replica-as-source endpoints (`public`/`private`), returned on reads.
+    /// Kept as a [`Value`] (the flexible model has no nested endpoints struct).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub replica_as_source_endpoints: Option<Value>,
+
     /// TCP port on which the database is available
     #[serde(skip_serializing_if = "Option::is_none")]
     pub port: Option<i32>,
@@ -950,12 +980,21 @@ pub struct Database {
 
 /// Optional. Changes Redis database alert details.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct DatabaseAlertSpec {
     /// Alert type. Available options depend on Plan type. See [Configure alerts](https://redis.io/docs/latest/operate/rc/databases/monitor-performance/#configure-metric-alerts) for more information.
     pub name: String,
 
     /// Value over which an alert will be sent. Default values and range depend on the alert type. See [Configure alerts](https://redis.io/docs/latest/operate/rc/databases/monitor-performance/#configure-metric-alerts) for more information.
     pub value: i32,
+
+    /// Alert id (response only). A composite string such as `"<dbId>-<n>"`.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub id: Option<String>,
+
+    /// Default threshold value for this alert type (response only).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub default_value: Option<i32>,
 }
 
 /// Request structure for creating a new Pro database
