@@ -39,7 +39,7 @@
   "modules": [],
   "throughputMeasurement": { "by": "operations-per-second", "value": 3000 },
   "alerts": [
-    { "id": 1, "name": "dataset-size", "value": 80, "defaultValue": 80 }
+    { "id": "222333-1", "name": "dataset-size", "value": 80, "defaultValue": 80 }
   ],
   "backup": {
     "destination": "s3://example-bucket/backups",

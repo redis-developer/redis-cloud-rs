@@ -280,6 +280,7 @@ pub struct FixedDatabaseBackupRequest {
 
 /// Optional. Redis advanced capabilities (also known as modules) to be provisioned in the database. Use GET /database-modules to get a list of available advanced capabilities.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct DatabaseModuleSpec {
     /// Redis advanced capability name. Use GET /database-modules for a list of available capabilities.
     pub name: String,
@@ -292,6 +293,22 @@ pub struct DatabaseModuleSpec {
     /// side and failed to deserialize real responses.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub parameters: Option<Value>,
+
+    /// Module id (response only).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub id: Option<i32>,
+
+    /// Human-readable capability name, e.g. `"Search and query"` (response only).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub capability_name: Option<String>,
+
+    /// Module version (response only).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub version: Option<String>,
+
+    /// Module description (response only).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub description: Option<String>,
 }
 
 /// Optional. Changes Replica Of (also known as Active-Passive) configuration details.
@@ -330,12 +347,21 @@ pub struct DatabaseBackupStatus {
 
 /// Optional. Changes Redis database alert details.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct DatabaseAlertSpec {
     /// Alert type. Available options depend on Plan type. See [Configure alerts](https://redis.io/docs/latest/operate/rc/databases/monitor-performance/#configure-metric-alerts) for more information.
     pub name: String,
 
     /// Value over which an alert will be sent. Default values and range depend on the alert type. See [Configure alerts](https://redis.io/docs/latest/operate/rc/databases/monitor-performance/#configure-metric-alerts) for more information.
     pub value: i32,
+
+    /// Alert id (response only). A composite string such as `"<dbId>-<n>"`.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub id: Option<String>,
+
+    /// Default threshold value for this alert type (response only).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub default_value: Option<i32>,
 }
 
 /// Security configuration returned within a [`FixedDatabase`] read response
@@ -362,6 +388,10 @@ pub struct FixedDatabaseSecurity {
     /// Source IP addresses / CIDR blocks allowed to connect.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub source_ips: Option<Vec<String>>,
+
+    /// Database password (masked in responses).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub password: Option<String>,
 }
 
 /// A single regex rule within a fixed database's clustering policy.
@@ -524,6 +554,10 @@ pub struct FixedDatabase {
     /// Additional dynamic endpoints. See [`DynamicEndpoints`].
     #[serde(skip_serializing_if = "Option::is_none")]
     pub dynamic_endpoints: Option<DynamicEndpoints>,
+
+    /// Replica-as-source endpoints (`public`/`private`), returned on reads.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub replica_as_source_endpoints: Option<DynamicEndpoints>,
 
     /// Security configuration (TLS, source IPs, authentication).
     ///

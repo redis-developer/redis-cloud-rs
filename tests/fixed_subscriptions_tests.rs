@@ -14,7 +14,7 @@ async fn test_get_all_fixed_subscriptions_plans() {
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "plans": [
                 {
-                    "id": "plan-1",
+                    "id": 1,
                     "name": "Cache 250MB",
                     "size": 250,
                     "sizeMeasurementUnit": "MB",
@@ -22,7 +22,7 @@ async fn test_get_all_fixed_subscriptions_plans() {
                     "region": "us-east-1"
                 },
                 {
-                    "id": "plan-2",
+                    "id": 2,
                     "name": "Cache 1GB",
                     "size": 1,
                     "sizeMeasurementUnit": "GB",
@@ -44,9 +44,11 @@ async fn test_get_all_fixed_subscriptions_plans() {
     let handler = FixedSubscriptionsHandler::new(client);
     let result = handler.list_plans(None, None).await.unwrap();
 
-    // Verify the response was successfully parsed
-    // Note: plans data would need typed fields added to FixedSubscriptionsPlans to be accessible
-    assert!(result.links.is_none()); // No links in the mock response
+    // #140: the `plans` array is now captured (was previously dropped).
+    let plans = result.plans.expect("plans should deserialize");
+    assert_eq!(plans.len(), 2);
+    assert_eq!(plans[0].id, Some(1));
+    assert_eq!(plans[0].name.as_deref(), Some("Cache 250MB"));
 }
 
 #[tokio::test]
@@ -64,7 +66,7 @@ async fn test_get_fixed_subscriptions_plans_by_subscription_id() {
             },
             "plans": [
                 {
-                    "id": "plan-1",
+                    "id": 1,
                     "name": "Current Plan",
                     "size": 500,
                     "price": 15
@@ -84,9 +86,10 @@ async fn test_get_fixed_subscriptions_plans_by_subscription_id() {
     let handler = FixedSubscriptionsHandler::new(client);
     let result = handler.get_plans_by_subscription_id(123).await.unwrap();
 
-    // Verify the response was successfully parsed
-    // Note: subscription and plans data would need typed fields to be accessible
-    assert!(result.links.is_none()); // No links in the mock response
+    // #140: the `plans` array is now captured.
+    let plans = result.plans.expect("plans should deserialize");
+    assert_eq!(plans.len(), 1);
+    assert_eq!(plans[0].id, Some(1));
 }
 
 #[tokio::test]

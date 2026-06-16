@@ -71,6 +71,11 @@ pub struct RedisVersions {
 /// Redis list of Essentials subscriptions plans
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FixedSubscriptionsPlans {
+    /// The available Essentials plans. The OpenAPI schema omits this array, but
+    /// the live `GET /fixed/plans` responses include it (see #140).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub plans: Option<Vec<FixedSubscriptionsPlan>>,
+
     /// HATEOAS links
     #[serde(skip_serializing_if = "Option::is_none")]
     pub links: Option<Vec<Link>>,
@@ -179,7 +184,10 @@ pub struct FixedSubscriptionsPlan {
     pub maximum_throughput: Option<i32>,
 
     /// Maximum monthly bandwidth, in GB.
-    #[serde(skip_serializing_if = "Option::is_none")]
+    ///
+    /// Wire field is `maximumBandwidthGB` (capital GB); `rename_all = "camelCase"`
+    /// would produce `maximumBandwidthGb` and drop the value (#108 casing pitfall).
+    #[serde(rename = "maximumBandwidthGB", skip_serializing_if = "Option::is_none")]
     pub maximum_bandwidth_gb: Option<i32>,
 
     /// Availability tier (e.g. `"Single-zone"`, `"Multi-zone"`).

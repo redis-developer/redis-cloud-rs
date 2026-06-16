@@ -572,10 +572,18 @@ async fn test_create_database_with_modules() {
             redis_cloud::databases::DatabaseModuleSpec {
                 name: "RediSearch".to_string(),
                 parameters: None,
+                id: None,
+                capability_name: None,
+                version: None,
+                description: None,
             },
             redis_cloud::databases::DatabaseModuleSpec {
                 name: "RedisJSON".to_string(),
                 parameters: None,
+                id: None,
+                capability_name: None,
+                version: None,
+                description: None,
             },
         ]),
         sharding_type: None,
@@ -647,6 +655,8 @@ async fn test_create_database_with_alerts() {
         alerts: Some(vec![redis_cloud::databases::DatabaseAlertSpec {
             name: "dataset-size".to_string(),
             value: 80,
+            id: None,
+            default_value: None,
         }]),
         modules: None,
         sharding_type: None,

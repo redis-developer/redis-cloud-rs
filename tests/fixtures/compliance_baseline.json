@@ -124,22 +124,13 @@
     "status": "pass"
   },
   "GET /fixed/plans": {
-    "status": "drift",
-    "dropped": [
-      "plans"
-    ]
+    "status": "pass"
   },
   "GET /fixed/plans/subscriptions/{subscriptionId}": {
-    "status": "drift",
-    "dropped": [
-      "plans"
-    ]
+    "status": "pass"
   },
   "GET /fixed/plans/{planId}": {
-    "status": "drift",
-    "dropped": [
-      "maximumBandwidthGB"
-    ]
+    "status": "pass"
   },
   "GET /fixed/redis-versions": {
     "status": "known-diff",
@@ -152,27 +143,10 @@
     "status": "pass"
   },
   "GET /fixed/subscriptions/{subscriptionId}/databases": {
-    "status": "drift",
-    "dropped": [
-      "subscription.databases[0].alerts[0].defaultValue",
-      "subscription.databases[0].modules[0].capabilityName",
-      "subscription.databases[0].modules[0].description",
-      "subscription.databases[0].modules[0].id",
-      "subscription.databases[0].modules[0].version",
-      "subscription.databases[0].replicaAsSourceEndpoints"
-    ]
+    "status": "pass"
   },
   "GET /fixed/subscriptions/{subscriptionId}/databases/{databaseId}": {
-    "status": "drift",
-    "dropped": [
-      "alerts[0].defaultValue",
-      "modules[0].capabilityName",
-      "modules[0].description",
-      "modules[0].id",
-      "modules[0].version",
-      "replicaAsSourceEndpoints",
-      "security.password"
-    ]
+    "status": "pass"
   },
   "GET /fixed/subscriptions/{subscriptionId}/databases/{databaseId}/available-target-versions": {
     "status": "pass"
@@ -225,20 +199,10 @@
     "status": "pass"
   },
   "GET /subscriptions/{subscriptionId}/databases": {
-    "status": "drift",
-    "dropped": [
-      "subscription[0].databases[0].alerts[0].defaultValue",
-      "subscription[0].databases[0].alerts[0].id",
-      "subscription[0].databases[0].replicaAsSourceEndpoints"
-    ]
+    "status": "pass"
   },
   "GET /subscriptions/{subscriptionId}/databases/{databaseId}": {
-    "status": "drift",
-    "dropped": [
-      "alerts[0].defaultValue",
-      "alerts[0].id",
-      "replicaAsSourceEndpoints"
-    ]
+    "status": "pass"
   },
   "GET /subscriptions/{subscriptionId}/databases/{databaseId}/available-target-versions": {
     "status": "pass"
@@ -247,10 +211,7 @@
     "status": "pass"
   },
   "GET /subscriptions/{subscriptionId}/databases/{databaseId}/certificate": {
-    "status": "drift",
-    "dropped": [
-      "publicCertificatePEMString"
-    ]
+    "status": "pass"
   },
   "GET /subscriptions/{subscriptionId}/databases/{databaseId}/import": {
     "status": "pass"
