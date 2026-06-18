@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.11.0](https://github.com/redis-developer/redis-cloud-rs/compare/v0.10.0...v0.11.0) - 2026-06-16
+
+### Added
+
+- *(scripts)* add OpenAPI spec-drift check against upstream ([#132](https://github.com/redis-developer/redis-cloud-rs/pull/132))
+
+### Fixed
+
+- *(models)* batch-fix compliance drift — capture dropped response fields ([#140](https://github.com/redis-developer/redis-cloud-rs/pull/140)) ([#143](https://github.com/redis-developer/redis-cloud-rs/pull/143))
+- *(subscriptions)* [**breaking**] make Pro update_subscription actually update ([#133](https://github.com/redis-developer/redis-cloud-rs/pull/133)) ([#134](https://github.com/redis-developer/redis-cloud-rs/pull/134))
+- *(tags)* capture inline tags array in CloudTags + validate tag write path ([#130](https://github.com/redis-developer/redis-cloud-rs/pull/130)) ([#131](https://github.com/redis-developer/redis-cloud-rs/pull/131))
+- *(subscriptions)* [**breaking**] capture subscriptionPricing + nested cloudDetails on reads ([#128](https://github.com/redis-developer/redis-cloud-rs/pull/128)) ([#129](https://github.com/redis-developer/redis-cloud-rs/pull/129))
+- *(databases)* [**breaking**] capture nested security/clustering/backup on reads ([#121](https://github.com/redis-developer/redis-cloud-rs/pull/121)) ([#127](https://github.com/redis-developer/redis-cloud-rs/pull/127))
+- *(account)* accept numeric `creditCardEndsWith` in payment methods ([#123](https://github.com/redis-developer/redis-cloud-rs/pull/123))
+- *(databases)* accept array-shaped module `parameters` on reads ([#122](https://github.com/redis-developer/redis-cloud-rs/pull/122))
+
+### Other
+
+- *(compliance)* phase 3 — non-destructive writes; matrix fully classified ([#142](https://github.com/redis-developer/redis-cloud-rs/pull/142))
+- *(compliance)* phase 2 — cover the full read surface ([#141](https://github.com/redis-developer/redis-cloud-rs/pull/141))
+- *(compliance)* add API compliance harness (phase 1: reads) ([#139](https://github.com/redis-developer/redis-cloud-rs/pull/139))
+- *(cost-report)* validate generate->poll->download flow live ([#138](https://github.com/redis-developer/redis-cloud-rs/pull/138))
+- *(spec)* refresh bundled cloud_openapi.json from upstream ([#137](https://github.com/redis-developer/redis-cloud-rs/pull/137))
+- *(acl)* validate reversible ACL redis-rule write lifecycle (live) ([#136](https://github.com/redis-developer/redis-cloud-rs/pull/136))
+- *(databases)* assert update_database serializes the request body ([#135](https://github.com/redis-developer/redis-cloud-rs/pull/135))
+- *(live)* expand read sweep to Pro tier + connectivity, pinned to test resources ([#126](https://github.com/redis-developer/redis-cloud-rs/pull/126))
+- add live integration harness + hand-authored response fixtures ([#125](https://github.com/redis-developer/redis-cloud-rs/pull/125))
+- *(examples)* fix cost-report id extraction and output filename ([#118](https://github.com/redis-developer/redis-cloud-rs/pull/118))
+
 ## [0.10.0](https://github.com/redis-developer/redis-cloud-rs/compare/v0.9.5...v0.10.0) - 2026-06-02
 
 ### Added
