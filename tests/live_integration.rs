@@ -66,6 +66,19 @@ fn env_i32(key: &str) -> Option<i32> {
     std::env::var(key).ok()?.parse().ok()
 }
 
+fn canonical_test_subscription_name(name: &str) -> String {
+    let mut name = name.to_string();
+    loop {
+        let Some(stripped) = ["-rcrs-upd-test", "-rcrs-compliance"]
+            .iter()
+            .find_map(|suffix| name.strip_suffix(suffix))
+        else {
+            return name;
+        };
+        name = stripped.to_string();
+    }
+}
+
 fn test_resources() -> Option<TestResources> {
     Some(TestResources {
         pro_sub: env_i32("REDIS_CLOUD_TEST_PRO_SUB_ID")?,
@@ -551,13 +564,17 @@ live_test_pinned!(live_pro_subscription_update_name, c, res, {
     }
 
     let sub = res.pro_sub;
-    let original = c
+    let observed = c
         .subscriptions()
         .get_subscription_by_id(sub)
         .await
         .expect("get_subscription_by_id should deserialize")
         .name
         .expect("test subscription should have a name");
+    // A force-terminated prior live/compliance run may have left a reserved
+    // suffix behind. Always derive the stable name before the new lifecycle so
+    // this run heals it when restoring.
+    let original = canonical_test_subscription_name(&observed);
     let temp = format!("{original}-rcrs-upd-test");
 
     // Rename to a temp value.

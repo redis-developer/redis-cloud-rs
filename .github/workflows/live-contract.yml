@@ -1,0 +1,135 @@
+name: Redis Cloud Live Contract Validation
+
+on:
+  schedule:
+    - cron: "37 14 * * 3"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: redis-cloud-live-contract-validation
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    name: Validate safe live contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: live-contract-tests
+    env:
+      REDIS_CLOUD_API_ACCOUNT_KEY: ${{ secrets.REDIS_CLOUD_API_ACCOUNT_KEY }}
+      REDIS_CLOUD_API_USER_KEY: ${{ secrets.REDIS_CLOUD_API_USER_KEY }}
+      REDIS_CLOUD_TEST_PRO_SUB_ID: ${{ secrets.REDIS_CLOUD_TEST_PRO_SUB_ID }}
+      REDIS_CLOUD_TEST_PRO_DB_ID: ${{ secrets.REDIS_CLOUD_TEST_PRO_DB_ID }}
+      REDIS_CLOUD_TEST_ESSENTIALS_SUB_ID: ${{ secrets.REDIS_CLOUD_TEST_ESSENTIALS_SUB_ID }}
+      REDIS_CLOUD_TEST_ESSENTIALS_DB_ID: ${{ secrets.REDIS_CLOUD_TEST_ESSENTIALS_DB_ID }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify dedicated test configuration
+        shell: bash
+        run: |
+          missing=0
+          for name in \
+            REDIS_CLOUD_API_ACCOUNT_KEY \
+            REDIS_CLOUD_API_USER_KEY \
+            REDIS_CLOUD_TEST_PRO_SUB_ID \
+            REDIS_CLOUD_TEST_PRO_DB_ID \
+            REDIS_CLOUD_TEST_ESSENTIALS_SUB_ID \
+            REDIS_CLOUD_TEST_ESSENTIALS_DB_ID
+          do
+            if [[ -z "${!name:-}" ]]; then
+              echo "::error title=Missing live-test secret::$name is not configured in the live-contract-tests environment."
+              missing=1
+            fi
+          done
+
+          for name in \
+            REDIS_CLOUD_TEST_PRO_SUB_ID \
+            REDIS_CLOUD_TEST_PRO_DB_ID \
+            REDIS_CLOUD_TEST_ESSENTIALS_SUB_ID \
+            REDIS_CLOUD_TEST_ESSENTIALS_DB_ID
+          do
+            if [[ -n "${!name:-}" && "${!name}" == *[!0-9]* ]]; then
+              echo "::error title=Invalid live-test resource::$name must be a numeric ID."
+              missing=1
+            fi
+          done
+
+          if [[ -n "${REDIS_CLOUD_ALLOW_DESTRUCTIVE:-}" ]]; then
+            echo "::error title=Destructive mode is forbidden::This workflow only runs safe and reversible validation."
+            exit 1
+          fi
+          exit "$missing"
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+
+      - name: Run safe live integration suite
+        id: live
+        run: cargo test --test live_integration --all-features -- --ignored --test-threads=1
+
+      - name: Run compliance baseline gate
+        id: compliance
+        env:
+          COMPLIANCE_SUMMARY_PATH: compliance-summary.txt
+        run: cargo test --test compliance --all-features api_compliance -- --ignored --exact --test-threads=1
+
+      - name: Publish payload-free summary
+        if: always()
+        shell: bash
+        env:
+          LIVE_OUTCOME: ${{ steps.live.outcome }}
+          COMPLIANCE_OUTCOME: ${{ steps.compliance.outcome }}
+        run: |
+          live_outcome="${LIVE_OUTCOME:-not-run}"
+          compliance_outcome="${COMPLIANCE_OUTCOME:-not-run}"
+          if [[ -f tests/fixtures/compliance_baseline.json ]]; then
+            baseline="$(jq -r '
+              [to_entries[].value.status]
+              | group_by(.)
+              | map("\(.[0])=\(length)")
+              | join(" ")
+            ' tests/fixtures/compliance_baseline.json)"
+          else
+            baseline="unavailable"
+          fi
+          if [[ -f compliance-summary.txt ]]; then
+            current_compliance="$(tr -d '\n' < compliance-summary.txt)"
+          else
+            current_compliance="unavailable"
+          fi
+
+          {
+            echo "Redis Cloud live contract validation"
+            echo "commit=$GITHUB_SHA"
+            echo "live_integration=$live_outcome"
+            echo "compliance=$compliance_outcome"
+            echo "current_compliance=$current_compliance"
+            echo "committed_baseline=$baseline"
+          } > live-validation-summary.txt
+
+          {
+            echo "## Redis Cloud live contract validation"
+            echo
+            echo "- Commit: \`$GITHUB_SHA\`"
+            echo "- Live integration suite: **$live_outcome**"
+            echo "- Compliance baseline gate: **$compliance_outcome**"
+            echo "- Current compliance: \`$current_compliance\`"
+            echo "- Committed baseline: \`$baseline\`"
+            echo
+            echo "The artifact contains only this aggregate summary; live API payloads are never uploaded."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload validation summary
+        if: ${{ always() && hashFiles('live-validation-summary.txt') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: redis-cloud-live-validation
+          path: live-validation-summary.txt
+          retention-days: 14

@@ -79,6 +79,45 @@ temporarily modify dedicated resources and creates then deletes a test ACL
 rule. Run it only against the pinned test resources, and outside any sandbox
 that blocks outbound TLS.
 
+## Scheduled live validation
+
+The `Redis Cloud Live Contract Validation` workflow runs every Wednesday at
+14:37 UTC and can be dispatched manually. It uses the `live-contract-tests`
+GitHub environment, whose secrets must point only at a dedicated non-production
+account:
+
+- `REDIS_CLOUD_API_ACCOUNT_KEY`
+- `REDIS_CLOUD_API_USER_KEY`
+- `REDIS_CLOUD_TEST_PRO_SUB_ID`
+- `REDIS_CLOUD_TEST_PRO_DB_ID`
+- `REDIS_CLOUD_TEST_ESSENTIALS_SUB_ID`
+- `REDIS_CLOUD_TEST_ESSENTIALS_DB_ID`
+
+The workflow fails before building if any value is absent or a resource ID is
+not numeric. It never prints those values, sets `COMPLIANCE_BLESS`, or enables
+destructive validation. The live integration and compliance suites run
+serially, and overlapping scheduled/manual runs queue instead of cancelling an
+in-progress cleanup. No subscription, database, or cloud account is created or
+deleted.
+
+Reversible writes reserve the `rcrs-` marker names. Tag and ACL-rule lifecycles
+pre-clean artifacts left by an interrupted run, preserve unrelated tags, and
+clean up on completion. Subscription renames restore before assertions and
+strip known test suffixes on the next run, so a force-terminated run is
+self-healing. If a run is interrupted, rerun it before using the pinned
+resources for other work and inspect their names/tags/rules before intervening
+manually.
+
+The compliance baseline is a hard gate: any changed status or dropped-field set
+fails the job. The Actions summary and 14-day artifact contain only aggregate
+outcomes and committed baseline counts, never captured live payloads. Reproduce
+the scheduled commands locally with:
+
+```bash
+cargo test --test live_integration --all-features -- --ignored --test-threads=1
+cargo test --test compliance --all-features api_compliance -- --ignored --exact --test-threads=1
+```
+
 ## Capturing fixtures for inspection
 
 `scripts/generate-cloud-fixtures.sh` captures live responses into the gitignored
