@@ -48,9 +48,10 @@ Cloud API responses are exercised at three levels:
    `creditCardEndsWith`, the `response.resource.costReportId` task envelope),
    with synthetic values. Run in normal CI, no credentials. These guard the
    type-fidelity regressions found via live testing (#118, #119, #120).
-3. **Live integration tests** (`tests/live_integration.rs`) — `#[ignore]`d,
-   read-only, hit a real account. They catch new drift the fixtures can't
-   anticipate.
+3. **Live integration tests** (`tests/live_integration.rs`) — `#[ignore]`d and
+   run against dedicated resources. Most are reads; the write tests perform
+   reversible tag, rename, and ACL-rule lifecycles with cleanup. They catch new
+   drift the fixtures can't anticipate.
 
 ## Running the live integration tests
 
@@ -60,9 +61,10 @@ export REDIS_CLOUD_API_SECRET=...   # or REDIS_CLOUD_API_USER_KEY
 cargo test --test live_integration -- --ignored
 ```
 
-Read-only (no resource is created, modified, or deleted), so they are safe
-against a shared or billable account. Run them outside any sandbox that blocks
-outbound TLS.
+The suite does not create or delete subscriptions or databases, but it does
+temporarily modify dedicated resources and creates then deletes a test ACL
+rule. Run it only against the pinned test resources, and outside any sandbox
+that blocks outbound TLS.
 
 ## Capturing fixtures for inspection
 

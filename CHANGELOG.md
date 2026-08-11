@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Add handlers for Data Integration workspaces and dynamic endpoint redirections.
+
+### Fixed
+
+- Normalize `/v1`-prefixed OpenAPI paths and refresh the bundled specification
+  to the current 169-operation surface.
+
 ## [0.11.0](https://github.com/redis-developer/redis-cloud-rs/compare/v0.10.0...v0.11.0) - 2026-06-16
 
 ### Added
