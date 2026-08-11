@@ -176,6 +176,22 @@ Handler organization:
 For the authoritative per-endpoint mapping see the bundled OpenAPI spec at
 [`tests/fixtures/cloud_openapi.json`](tests/fixtures/cloud_openapi.json).
 
+## Test Coverage
+
+CI enforces a repository-wide line-coverage floor of 76%, based on the reviewed
+76.366% all-features baseline. Reproduce the gate locally with:
+
+```bash
+cargo llvm-cov --all-features --lcov --output-path lcov.info --fail-under-lines 76
+```
+
+The floor is intentionally stored in `.github/workflows/ci.yml`, so lowering it
+requires an explicit reviewed change. Raise it as coverage improves. Patch
+coverage is not initially enforced: the deterministic repository-wide gate is
+the source-of-truth check, while Codecov remains an external reporting service.
+An upload outage is reported as a CI warning without being confused with a
+source coverage regression.
+
 ## Documentation
 
 - [API Documentation](https://docs.rs/redis-cloud)

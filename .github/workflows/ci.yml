@@ -19,6 +19,8 @@ env:
   RUST_BACKTRACE: short
   CARGO_INCREMENTAL: 1
   RUSTFLAGS: "-C debuginfo=0"
+  # Reviewed baseline: 76.366%. Lower only through an explicit pull request.
+  COVERAGE_MIN_LINES: 76
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
@@ -97,12 +99,22 @@ jobs:
       - name: Generate coverage report
         run: cargo llvm-cov --all-features --lcov --output-path lcov.info
 
+      - name: Enforce line coverage floor
+        run: cargo llvm-cov report --fail-under-lines "$COVERAGE_MIN_LINES"
+
       - name: Upload coverage to Codecov
+        id: codecov
+        continue-on-error: true
         uses: codecov/codecov-action@v5
         with:
           files: lcov.info
-          fail_ci_if_error: false
+          fail_ci_if_error: true
           verbose: true
+
+      - name: Report Codecov service failure
+        if: steps.codecov.outcome == 'failure'
+        run: |
+          echo "::warning title=Codecov reporting failed::The source coverage gate passed, but the external report could not be uploaded."
 
   build:
     name: Build - ${{ matrix.os }}
@@ -144,8 +156,8 @@ jobs:
             echo "Tests failed"
             exit 1
           fi
-          # Coverage is informational, don't fail on it
-          if [[ "${{ needs.coverage.result }}" == "failure" ]]; then
-            echo "Coverage failed (non-blocking)"
+          if [[ "${{ needs.coverage.result }}" != "success" ]]; then
+            echo "Coverage regression or report generation failed"
+            exit 1
           fi
           echo "CI passed!"
