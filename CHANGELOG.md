@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.12.0](https://github.com/redis-developer/redis-cloud-rs/compare/v0.11.0...v0.12.0) - 2026-08-11
+
+### Added
+
+- *(spec)* reconcile current Cloud API and live response drift ([#154](https://github.com/redis-developer/redis-cloud-rs/pull/154))
+
+### Other
+
+- *(live)* schedule safe contract validation ([#162](https://github.com/redis-developer/redis-cloud-rs/pull/162))
+- *(test)* establish a ratcheting coverage floor ([#161](https://github.com/redis-developer/redis-cloud-rs/pull/161))
+- *(spec)* schedule OpenAPI drift detection ([#160](https://github.com/redis-developer/redis-cloud-rs/pull/160))
+- close PSC and Transit Gateway coverage gaps ([#159](https://github.com/redis-developer/redis-cloud-rs/pull/159))
+- cover the public CloudError contract ([#158](https://github.com/redis-developer/redis-cloud-rs/pull/158))
+- synchronize README dependency version ([#156](https://github.com/redis-developer/redis-cloud-rs/pull/156))
+
 ### Added
 
 - Add handlers for Data Integration workspaces and dynamic endpoint redirections.
