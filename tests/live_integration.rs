@@ -282,6 +282,13 @@ live_test!(live_tasks_list, c, {
         .expect("tasks get_all_tasks should deserialize");
 });
 
+live_test!(live_data_integration_workspaces, c, {
+    c.data_integration()
+        .list_workspaces()
+        .await
+        .expect("Data Integration workspace list should return JSON");
+});
+
 // ---------------------------------------------------------------------------
 // Pro subscription (pinned to REDIS_CLOUD_TEST_PRO_SUB_ID)
 // ---------------------------------------------------------------------------
