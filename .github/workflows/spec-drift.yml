@@ -1,0 +1,77 @@
+name: Redis Cloud OpenAPI Drift
+
+on:
+  schedule:
+    - cron: "17 13 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: redis-cloud-openapi-drift
+  cancel-in-progress: false
+
+jobs:
+  drift:
+    name: Compare bundled and published specifications
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check published specification
+        id: check
+        shell: bash
+        run: |
+          set +e
+          ./scripts/check-spec-drift.sh 2>&1 | tee spec-drift.log
+          status="${PIPESTATUS[0]}"
+          set -e
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+
+      - name: Publish result
+        if: always()
+        shell: bash
+        env:
+          DRIFT_STATUS: ${{ steps.check.outputs.status }}
+        run: |
+          case "$DRIFT_STATUS" in
+            0) result="No drift detected" ;;
+            1) result="Semantic OpenAPI drift detected" ;;
+            *) result="Specification fetch or tooling failure" ;;
+          esac
+
+          {
+            echo "## Redis Cloud OpenAPI drift"
+            echo
+            echo "**Result:** $result"
+            echo
+            echo '```text'
+            if [[ -f spec-drift.log ]]; then
+              cat spec-drift.log
+            else
+              echo "The drift check did not produce a log."
+            fi
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          case "$DRIFT_STATUS" in
+            0) exit 0 ;;
+            1)
+              echo "::error title=Redis Cloud OpenAPI drift detected::Refresh the bundled spec and reconcile handlers in a reviewed pull request."
+              exit 1
+              ;;
+            *)
+              echo "::error title=OpenAPI drift check infrastructure failure::The published spec could not be fetched or validated; this is distinct from semantic drift."
+              exit 2
+              ;;
+          esac
+
+      - name: Upload drift report
+        if: ${{ always() && hashFiles('spec-drift.log') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: redis-cloud-openapi-drift
+          path: spec-drift.log
+          retention-days: 14

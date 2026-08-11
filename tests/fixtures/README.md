@@ -31,6 +31,19 @@ After a refresh, reconcile any new routes in `openapi_route_coverage.rs` and
 note the change in the CHANGELOG. (Must run outside a sandbox that blocks
 outbound network or `/dev/fd` process substitution.)
 
+The `Redis Cloud OpenAPI Drift` workflow runs this comparison every Monday at
+13:17 UTC and can also be started manually from GitHub Actions. Repository
+maintainers own review of failures. Exit status 1 means the operation or schema
+sets changed; exit status 2 means the published document could not be fetched
+or validated, so transient infrastructure failures are distinguishable from
+real drift. The workflow publishes the complete report in its job summary and
+as a 14-day artifact.
+
+The scheduled workflow never overwrites the bundled fixture. When it detects
+drift, reproduce locally without `--update`, then use `--update` on a dedicated
+branch and review the spec, route coverage, compliance classifications, and
+CHANGELOG changes together.
+
 This catches drift between the bundled spec and the *published spec*. It does
 **not** catch where the spec disagrees with the real API's behavior — that
 class (#119/#121/#128/#130) is only caught by the live tests.
