@@ -254,6 +254,67 @@ async fn record_write<T: DeserializeOwned + Serialize>(
     m.insert(key(method, spec_path), status);
 }
 
+/// Exercise the reversible tag surface without replacing unrelated tags.
+/// Failure to snapshot the current collection fails closed: the baseline will
+/// see these operations change to `Skip`, and no write is attempted.
+async fn run_tag_lifecycle(
+    m: &mut Matrix,
+    c: &CloudClient,
+    live_base: &str,
+    spec_base: &str,
+    spec_item: &str,
+) {
+    const TEST_KEY: &str = "rcrs-compliance";
+    let preserved = match c.get_raw(live_base).await {
+        Ok(raw) => raw.get("tags").and_then(Value::as_array).map(|tags| {
+            tags.iter()
+                .filter(|tag| tag.get("key").and_then(Value::as_str) != Some(TEST_KEY))
+                .cloned()
+                .collect::<Vec<_>>()
+        }),
+        Err(error) => {
+            eprintln!("  [FAIL detail] GET {spec_base}: {error}");
+            None
+        }
+    };
+    let Some(mut replacement) = preserved else {
+        for (method, path) in [
+            ("POST", spec_base),
+            ("PUT", spec_item),
+            ("PUT", spec_base),
+            ("DELETE", spec_item),
+        ] {
+            skip(m, method, path, "could not snapshot existing tags safely");
+        }
+        return;
+    };
+
+    let live_item = format!("{live_base}/{TEST_KEY}");
+    let _ = c.delete_raw(&live_item).await;
+
+    let result = c
+        .post_raw(
+            live_base,
+            serde_json::json!({"key": TEST_KEY, "value": "v1"}),
+        )
+        .await;
+    record_write::<redis_cloud::types::CloudTag>(m, "POST", spec_base, result).await;
+
+    let result = c
+        .put_raw(&live_item, serde_json::json!({"value": "v2"}))
+        .await;
+    record_write::<redis_cloud::types::CloudTag>(m, "PUT", spec_item, result).await;
+
+    replacement.push(serde_json::json!({"key": TEST_KEY, "value": "v3"}));
+    let result = c
+        .put_raw(live_base, serde_json::json!({"tags": replacement}))
+        .await;
+    record_write::<redis_cloud::types::CloudTags>(m, "PUT", spec_base, result).await;
+
+    let result = c.delete_raw(&live_item).await;
+    record_write::<Value>(m, "DELETE", spec_item, result).await;
+}
+
 /// Auto-classify every write operation not explicitly wired above as a `Skip`,
 /// with a reason: connectivity/Active-Active ops need resources we don't have;
 /// everything else is a mutating/destructive op deferred to the systematic
@@ -333,6 +394,94 @@ fn bundled_spec_operations_are_base_relative() {
     assert!(ops.iter().all(|(_, path)| !path.starts_with("/v1/")));
 }
 
+#[tokio::test]
+async fn tag_lifecycle_preserves_unrelated_tags() {
+    use wiremock::matchers::{body_json, method, path};
+    use wiremock::{Mock, MockServer, ResponseTemplate};
+
+    let server = MockServer::start().await;
+    let live_base = "/subscriptions/1/databases/2/tags";
+    let live_item = "/subscriptions/1/databases/2/tags/rcrs-compliance";
+
+    Mock::given(method("GET"))
+        .and(path(live_base))
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+            "tags": [
+                {"key": "keep", "value": "original"},
+                {"key": "rcrs-compliance", "value": "stale"}
+            ]
+        })))
+        .expect(1)
+        .mount(&server)
+        .await;
+    Mock::given(method("DELETE"))
+        .and(path(live_item))
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({})))
+        .expect(2)
+        .mount(&server)
+        .await;
+    Mock::given(method("POST"))
+        .and(path(live_base))
+        .and(body_json(
+            serde_json::json!({"key": "rcrs-compliance", "value": "v1"}),
+        ))
+        .respond_with(
+            ResponseTemplate::new(200)
+                .set_body_json(serde_json::json!({"key": "rcrs-compliance", "value": "v1"})),
+        )
+        .expect(1)
+        .mount(&server)
+        .await;
+    Mock::given(method("PUT"))
+        .and(path(live_item))
+        .and(body_json(serde_json::json!({"value": "v2"})))
+        .respond_with(
+            ResponseTemplate::new(200)
+                .set_body_json(serde_json::json!({"key": "rcrs-compliance", "value": "v2"})),
+        )
+        .expect(1)
+        .mount(&server)
+        .await;
+    Mock::given(method("PUT"))
+        .and(path(live_base))
+        .and(body_json(serde_json::json!({
+            "tags": [
+                {"key": "keep", "value": "original"},
+                {"key": "rcrs-compliance", "value": "v3"}
+            ]
+        })))
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+            "tags": [
+                {"key": "keep", "value": "original"},
+                {"key": "rcrs-compliance", "value": "v3"}
+            ]
+        })))
+        .expect(1)
+        .mount(&server)
+        .await;
+
+    let client = CloudClient::builder()
+        .api_key("test-key")
+        .api_secret("test-secret")
+        .base_url(server.uri())
+        .build()
+        .expect("mock client should build");
+    let mut matrix = Matrix::new();
+    let spec_base = "/subscriptions/{subscriptionId}/databases/{databaseId}/tags";
+    let spec_item = "/subscriptions/{subscriptionId}/databases/{databaseId}/tags/{tagKey}";
+
+    run_tag_lifecycle(&mut matrix, &client, live_base, spec_base, spec_item).await;
+
+    for operation in [
+        key("POST", spec_base),
+        key("PUT", spec_item),
+        key("PUT", spec_base),
+        key("DELETE", spec_item),
+    ] {
+        assert_eq!(matrix.get(&operation), Some(&Status::Pass));
+    }
+}
+
 /// Add `Uncovered` for every spec op without a registered check, and detect
 /// registered ops that don't exist in the spec (typos / non-spec routes).
 fn reconcile_with_spec(m: &mut Matrix) {
@@ -375,7 +524,14 @@ fn print_report(m: &Matrix) {
         .iter()
         .map(|k| format!("{}={}", k, counts.get(k).copied().unwrap_or(0)))
         .collect();
-    println!("--- {total} operations: {} ---", summary.join(" "));
+    let summary = format!("{total} operations: {}", summary.join(" "));
+    println!("--- {summary} ---");
+
+    // Scheduled CI may request an aggregate-only artifact. This deliberately
+    // contains no operation paths, response bodies, or captured live values.
+    if let Ok(path) = std::env::var("COMPLIANCE_SUMMARY_PATH") {
+        std::fs::write(path, format!("{summary}\n")).expect("write compliance summary");
+    }
 }
 
 fn load_baseline() -> Option<Matrix> {
@@ -431,6 +587,19 @@ fn env_i32(k: &str) -> Option<i32> {
     std::env::var(k).ok()?.parse().ok()
 }
 
+fn canonical_test_subscription_name(name: &str) -> String {
+    let mut name = name.to_string();
+    loop {
+        let Some(stripped) = ["-rcrs-upd-test", "-rcrs-compliance"]
+            .iter()
+            .find_map(|suffix| name.strip_suffix(suffix))
+        else {
+            return name;
+        };
+        name = stripped.to_string();
+    }
+}
+
 // ---------------------------------------------------------------------------
 // The harness
 // ---------------------------------------------------------------------------
@@ -464,7 +633,7 @@ async fn api_compliance() {
         AccountSubscriptions, Subscription, SubscriptionMaintenanceWindows, SubscriptionPricings,
     };
     use redis_cloud::types::{
-        CloudTag, CloudTags, DatabaseTrafficStateResponse, TaskStateUpdate, TasksStateUpdate,
+        CloudTags, DatabaseTrafficStateResponse, TaskStateUpdate, TasksStateUpdate,
     };
     use redis_cloud::users::AccountUsers;
 
@@ -990,111 +1159,26 @@ async fn api_compliance() {
 
     // -- T2: non-destructive write lifecycles (reversible, self-cleaning) --
 
-    // Database tags (Pro): create -> update one -> overwrite all -> delete.
-    {
-        let base = format!("/subscriptions/{ps}/databases/{pd}/tags");
-        let _ = c.delete_raw(&format!("{base}/rcrs-compliance")).await; // pre-clean
-        let r = c
-            .post_raw(
-                &base,
-                serde_json::json!({"key": "rcrs-compliance", "value": "v1"}),
-            )
-            .await;
-        record_write::<CloudTag>(
-            &mut m,
-            "POST",
-            "/subscriptions/{subscriptionId}/databases/{databaseId}/tags",
-            r,
-        )
-        .await;
-        let r = c
-            .put_raw(
-                &format!("{base}/rcrs-compliance"),
-                serde_json::json!({"value": "v2"}),
-            )
-            .await;
-        record_write::<CloudTag>(
-            &mut m,
-            "PUT",
-            "/subscriptions/{subscriptionId}/databases/{databaseId}/tags/{tagKey}",
-            r,
-        )
-        .await;
-        let r = c
-            .put_raw(
-                &base,
-                serde_json::json!({"tags": [{"key": "rcrs-compliance", "value": "v3"}]}),
-            )
-            .await;
-        record_write::<CloudTags>(
-            &mut m,
-            "PUT",
-            "/subscriptions/{subscriptionId}/databases/{databaseId}/tags",
-            r,
-        )
-        .await;
-        let r = c.delete_raw(&format!("{base}/rcrs-compliance")).await;
-        record_write::<Value>(
-            &mut m,
-            "DELETE",
-            "/subscriptions/{subscriptionId}/databases/{databaseId}/tags/{tagKey}",
-            r,
-        )
-        .await;
-    }
+    // Database tags (Pro): create -> update one -> replace all -> delete,
+    // preserving every pre-existing non-test tag throughout the lifecycle.
+    run_tag_lifecycle(
+        &mut m,
+        &c,
+        &format!("/subscriptions/{ps}/databases/{pd}/tags"),
+        "/subscriptions/{subscriptionId}/databases/{databaseId}/tags",
+        "/subscriptions/{subscriptionId}/databases/{databaseId}/tags/{tagKey}",
+    )
+    .await;
 
-    // Database tags (Essentials): same lifecycle.
-    {
-        let base = format!("/fixed/subscriptions/{es}/databases/{ed}/tags");
-        let _ = c.delete_raw(&format!("{base}/rcrs-compliance")).await;
-        let r = c
-            .post_raw(
-                &base,
-                serde_json::json!({"key": "rcrs-compliance", "value": "v1"}),
-            )
-            .await;
-        record_write::<CloudTag>(
-            &mut m,
-            "POST",
-            "/fixed/subscriptions/{subscriptionId}/databases/{databaseId}/tags",
-            r,
-        )
-        .await;
-        let r = c
-            .put_raw(
-                &format!("{base}/rcrs-compliance"),
-                serde_json::json!({"value": "v2"}),
-            )
-            .await;
-        record_write::<CloudTag>(
-            &mut m,
-            "PUT",
-            "/fixed/subscriptions/{subscriptionId}/databases/{databaseId}/tags/{tagKey}",
-            r,
-        )
-        .await;
-        let r = c
-            .put_raw(
-                &base,
-                serde_json::json!({"tags": [{"key": "rcrs-compliance", "value": "v3"}]}),
-            )
-            .await;
-        record_write::<CloudTags>(
-            &mut m,
-            "PUT",
-            "/fixed/subscriptions/{subscriptionId}/databases/{databaseId}/tags",
-            r,
-        )
-        .await;
-        let r = c.delete_raw(&format!("{base}/rcrs-compliance")).await;
-        record_write::<Value>(
-            &mut m,
-            "DELETE",
-            "/fixed/subscriptions/{subscriptionId}/databases/{databaseId}/tags/{tagKey}",
-            r,
-        )
-        .await;
-    }
+    // Database tags (Essentials): same preserving lifecycle.
+    run_tag_lifecycle(
+        &mut m,
+        &c,
+        &format!("/fixed/subscriptions/{es}/databases/{ed}/tags"),
+        "/fixed/subscriptions/{subscriptionId}/databases/{databaseId}/tags",
+        "/fixed/subscriptions/{subscriptionId}/databases/{databaseId}/tags/{tagKey}",
+    )
+    .await;
 
     // ACL redis rule (account-global): create -> update -> delete.
     {
@@ -1169,12 +1253,13 @@ async fn api_compliance() {
     }
 
     // Subscription update (Pro): rename, then restore.
-    if let Some(orig) = c
+    if let Some(observed) = c
         .get_raw(&format!("/subscriptions/{ps}"))
         .await
         .ok()
         .and_then(|v| v["name"].as_str().map(String::from))
     {
+        let orig = canonical_test_subscription_name(&observed);
         let r = c
             .put_raw(
                 &format!("/subscriptions/{ps}"),
@@ -1198,12 +1283,13 @@ async fn api_compliance() {
     }
 
     // Subscription update (Essentials): rename, then restore.
-    if let Some(orig) = c
+    if let Some(observed) = c
         .get_raw(&format!("/fixed/subscriptions/{es}"))
         .await
         .ok()
         .and_then(|v| v["name"].as_str().map(String::from))
     {
+        let orig = canonical_test_subscription_name(&observed);
         let r = c
             .put_raw(
                 &format!("/fixed/subscriptions/{es}"),
