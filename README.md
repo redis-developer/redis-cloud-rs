@@ -28,10 +28,10 @@ A comprehensive Rust client library for the Redis Cloud REST API, with Python bi
 
 ```toml
 [dependencies]
-redis-cloud = "0.10"
+redis-cloud = "0.11"
 
 # Optional: Enable Tower service integration
-redis-cloud = { version = "0.10", features = ["tower-integration"] }
+redis-cloud = { version = "0.11", features = ["tower-integration"] }
 ```
 
 ## Quick Start
