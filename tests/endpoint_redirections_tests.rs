@@ -32,6 +32,24 @@ fn response(status: &str, is_revert: bool) -> serde_json::Value {
     })
 }
 
+#[test]
+fn test_unknown_endpoint_redirection_enums_are_forward_compatible() {
+    let response: redis_cloud::EndpointsRedirectionResponse = serde_json::from_value(json!({
+        "status": "future-state",
+        "endpoints": [{
+            "sourceEndpointType": "future-endpoint",
+            "targetEndpointType": "public"
+        }]
+    }))
+    .unwrap();
+
+    assert_eq!(response.status, Some(EndpointRedirectionStatus::Unknown));
+    assert_eq!(
+        response.endpoints.unwrap()[0].source_endpoint_type,
+        Some(EndpointTargetType::Unknown)
+    );
+}
+
 #[tokio::test]
 async fn test_create_endpoint_redirection() {
     let server = MockServer::start().await;

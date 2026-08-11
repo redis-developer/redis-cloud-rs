@@ -11,11 +11,15 @@ use typed_builder::TypedBuilder;
 /// Endpoint type selected for a dynamic redirection.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
+#[non_exhaustive]
 pub enum EndpointTargetType {
     /// Redirect the public endpoint.
     Public,
     /// Redirect the private endpoint.
     Private,
+    /// An endpoint type added by the API after this client release.
+    #[serde(other)]
+    Unknown,
 }
 
 /// Request to create a dynamic endpoint redirection.
@@ -43,6 +47,7 @@ pub struct CreateEndpointsRedirectionRequest {
 /// Current status of a dynamic endpoint redirection.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
+#[non_exhaustive]
 pub enum EndpointRedirectionStatus {
     /// The request was accepted.
     Initiated,
@@ -56,6 +61,9 @@ pub enum EndpointRedirectionStatus {
     Failed,
     /// A completed redirection was reverted.
     Reverted,
+    /// A status added by the API after this client release.
+    #[serde(other)]
+    Unknown,
 }
 
 /// Details for one endpoint moved by a redirection operation.
