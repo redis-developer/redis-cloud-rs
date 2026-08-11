@@ -199,7 +199,8 @@ async fn test_get_account_payment_methods() {
                     "creditCardEndsWith": "0042",
                     "nameOnCard": "Alex Example",
                     "expirationMonth": 9,
-                    "expirationYear": 2030
+                    "expirationYear": 2030,
+                    "isDefaultForShopper": true
                 }
             ]
         })))
@@ -225,6 +226,8 @@ async fn test_get_account_payment_methods() {
     assert_eq!(methods[0].r#type.as_deref(), Some("Visa"));
     // Regression guard for #77: leading-zero card tails survive the round-trip.
     assert_eq!(methods[0].credit_card_ends_with.as_deref(), Some("0042"));
+    // Regression guard for #153: the live-only default flag is retained.
+    assert_eq!(methods[0].is_default_for_shopper, Some(true));
 }
 
 // Regression for #120: the live API returns `creditCardEndsWith` as a JSON

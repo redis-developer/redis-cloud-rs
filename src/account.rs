@@ -298,6 +298,13 @@ pub struct PaymentMethod {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub expiration_year: Option<i32>,
 
+    /// Whether this is the shopper's default payment method.
+    ///
+    /// This field is returned by the live API but is not currently documented
+    /// in the published OpenAPI schema (see #153).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub is_default_for_shopper: Option<bool>,
+
     /// HATEOAS links
     #[serde(skip_serializing_if = "Option::is_none")]
     pub links: Option<Vec<Link>>,
