@@ -168,8 +168,7 @@
     "note": "API 404s traffic for an active database"
   },
   "GET /fixed/subscriptions/{subscriptionId}/databases/{databaseId}/upgrade": {
-    "status": "known-diff",
-    "note": "404 when no version upgrade is pending"
+    "status": "pass"
   },
   "GET /logs": {
     "status": "pass"
