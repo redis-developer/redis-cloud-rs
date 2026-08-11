@@ -8,6 +8,7 @@
       "nameOnCard": "Example Cardholder",
       "expirationMonth": 2,
       "expirationYear": 2030,
+      "isDefaultForShopper": true,
       "links": []
     }
   ],

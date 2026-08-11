@@ -43,6 +43,7 @@ const CLIENT_VERBS: &[(&str, &str)] = &[
     ("get_bytes", "GET"),
     ("get_raw", "GET"),
     ("get", "GET"),
+    ("post_empty", "POST"),
     ("post_raw", "POST"),
     ("post", "POST"),
     ("put_raw", "PUT"),
@@ -64,11 +65,17 @@ const EXCLUDED_FILES: &[&str] = &[
     "lib_tests.rs",
 ];
 
-/// Normalize a path for comparison: drop any query string, collapse every
-/// `{param}` to `{}`, strip a trailing `{}` that is glued to a segment (an
-/// interpolated query string like `/regions{query}`), and trim a trailing `/`.
+/// Normalize a path for comparison: drop the API's optional `/v1` base prefix
+/// and any query string, collapse every `{param}` to `{}`, strip a trailing
+/// `{}` that is glued to a segment (an interpolated query string like
+/// `/regions{query}`), and trim a trailing `/`.
 fn normalize(path: &str) -> String {
     let path = path.split('?').next().unwrap_or(path);
+    let path = match path.strip_prefix("/v1") {
+        Some(rest) if rest.is_empty() || rest.starts_with('/') => rest,
+        _ => path,
+    };
+    let path = path.replace("{workspace_path}", "**");
 
     // Collapse {anything} to {}.
     let mut out = String::with_capacity(path.len());
@@ -96,6 +103,23 @@ fn normalize(path: &str) -> String {
     }
 
     out.trim_end_matches('/').to_string()
+}
+
+#[test]
+fn test_normalize_treats_v1_as_the_api_base_prefix() {
+    assert_eq!(
+        normalize("/v1/subscriptions/{subscriptionId}"),
+        "/subscriptions/{}"
+    );
+    assert_eq!(normalize("/subscriptions/{id}"), "/subscriptions/{}");
+    assert_eq!(
+        normalize("/subscriptions/{id}/data-integration-workspace/{workspace_path}"),
+        "/subscriptions/{}/data-integration-workspace/**"
+    );
+    assert_eq!(
+        normalize("/v10/subscriptions/{id}"),
+        "/v10/subscriptions/{}"
+    );
 }
 
 /// Extract `(verb, normalized_path)` routes from one source file's contents.

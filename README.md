@@ -10,7 +10,7 @@ A comprehensive Rust client library for the Redis Cloud REST API, with Python bi
 
 ## Features
 
-- Complete coverage of all Redis Cloud REST API endpoints (155/155 routes verified against the bundled OpenAPI spec in CI)
+- Complete coverage of all Redis Cloud REST API endpoints (169/169 routes verified against the bundled OpenAPI spec in CI)
 - Async/await support with tokio
 - Strong typing for API requests and responses
 - Comprehensive error handling
@@ -143,7 +143,7 @@ The PyPI publish workflow has been failing since the `reqwest 0.13` upgrade
 
 ## API Coverage
 
-The crate covers **100% of the documented Redis Cloud REST API surface** (155/155
+The crate covers **100% of the documented Redis Cloud REST API surface** (169/169
 routes). Route coverage is enforced by an executable check
 ([`tests/openapi_route_coverage.rs`](tests/openapi_route_coverage.rs)) that
 diffs the typed handlers against the bundled OpenAPI spec; intentional gaps
@@ -170,6 +170,8 @@ Handler organization:
 | `private_link()` | AWS PrivateLink |
 | `tasks()` | Async operation tracking |
 | `cost_reports()` | Cost reports in FOCUS format |
+| `data_integration()` | Data Integration workspaces and opaque workspace proxy operations |
+| `endpoint_redirections()` | Dynamic database endpoint redirection lifecycle |
 
 For the authoritative per-endpoint mapping see the bundled OpenAPI spec at
 [`tests/fixtures/cloud_openapi.json`](tests/fixtures/cloud_openapi.json).

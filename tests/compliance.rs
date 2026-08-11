@@ -30,7 +30,7 @@
 //!
 //! ## Tiers
 //!
-//! The matrix is fully classified — every one of the 155 operations has a
+//! The matrix is fully classified — every operation in the bundled spec has a
 //! status, no `Uncovered`:
 //!
 //! - **T1 reads** (every GET): `Pass` / `Drift` / `KnownDiff` (an endpoint the
@@ -313,13 +313,24 @@ fn spec_operations() -> Vec<(String, String)> {
             if let Some(obj) = item.as_object() {
                 for m in obj.keys() {
                     if HTTP_METHODS.contains(&m.as_str()) {
-                        ops.push((m.to_uppercase(), path.clone()));
+                        let path = match path.strip_prefix("/v1") {
+                            Some(rest) if rest.is_empty() || rest.starts_with('/') => rest,
+                            _ => path,
+                        };
+                        ops.push((m.to_uppercase(), path.to_string()));
                     }
                 }
             }
         }
     }
     ops
+}
+
+#[test]
+fn bundled_spec_operations_are_base_relative() {
+    let ops = spec_operations();
+    assert!(!ops.is_empty());
+    assert!(ops.iter().all(|(_, path)| !path.starts_with("/v1/")));
 }
 
 /// Add `Uncovered` for every spec op without a registered check, and detect
@@ -481,6 +492,39 @@ async fn api_compliance() {
     check::<AccountUsers>(&mut m, &c, "GET", "/users", "/users").await;
     check::<CloudAccounts>(&mut m, &c, "GET", "/cloud-accounts", "/cloud-accounts").await;
     check::<TasksStateUpdate>(&mut m, &c, "GET", "/tasks", "/tasks").await;
+    check::<Value>(
+        &mut m,
+        &c,
+        "GET",
+        "/data-integration-workspaces",
+        "/data-integration-workspaces",
+    )
+    .await;
+
+    // A workspace is provisioned separately from the Redis subscription. The
+    // dedicated test subscription currently has none, so a clean 404 is the
+    // expected live contract for the root operation.
+    check_known_404::<Value>(
+        &mut m,
+        &c,
+        "GET",
+        "/subscriptions/{subscriptionId}/data-integration-workspace",
+        &format!("/subscriptions/{pro_sub}/data-integration-workspace"),
+        "requires a configured Data Integration workspace",
+    )
+    .await;
+    skip(
+        &mut m,
+        "GET",
+        "/subscriptions/{subscriptionId}/data-integration-workspace/**",
+        "requires a configured Data Integration workspace and proxy path",
+    );
+    skip(
+        &mut m,
+        "GET",
+        "/endpoint-redirections/{redirectionId}",
+        "requires an endpoint redirection lifecycle and redirection id",
+    );
 
     // -- T1: Pro subscription + database reads (pinned) --
     let ps = pro_sub;

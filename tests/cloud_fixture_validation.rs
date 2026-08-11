@@ -117,6 +117,7 @@ fn payment_methods_response_deserializes() {
         .expect("should contain payment methods");
     assert_eq!(methods.len(), 1);
     assert_eq!(methods[0].credit_card_ends_with.as_deref(), Some("1234"));
+    assert_eq!(methods[0].is_default_for_shopper, Some(true));
 }
 
 // #118: the cost-report task nests the id at response.resource.costReportId.

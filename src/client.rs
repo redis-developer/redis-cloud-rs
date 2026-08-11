@@ -464,6 +464,18 @@ impl CloudClient {
         crate::CostReportHandler::new(self.clone())
     }
 
+    /// Get a Data Integration handler for workspace and proxy operations.
+    #[must_use]
+    pub fn data_integration(&self) -> crate::DataIntegrationHandler {
+        crate::DataIntegrationHandler::new(self.clone())
+    }
+
+    /// Get an endpoint redirections handler for database endpoint migrations.
+    #[must_use]
+    pub fn endpoint_redirections(&self) -> crate::EndpointRedirectionsHandler {
+        crate::EndpointRedirectionsHandler::new(self.clone())
+    }
+
     /// Normalize URL path concatenation to avoid double slashes
     fn normalize_url(&self, path: &str) -> String {
         let base = self.base_url.trim_end_matches('/');
@@ -529,6 +541,23 @@ impl CloudClient {
             .header("x-api-key", &self.api_key)
             .header("x-api-secret-key", &self.api_secret)
             .json(body)
+            .send()
+            .await?;
+
+        trace!("Response status: {}", response.status());
+        self.handle_response(response).await
+    }
+
+    /// Make a POST request without a request body.
+    pub(crate) async fn post_empty<T: serde::de::DeserializeOwned>(&self, path: &str) -> Result<T> {
+        let url = self.normalize_url(path);
+        debug!("POST {}", url);
+
+        let response = self
+            .client
+            .post(&url)
+            .header("x-api-key", &self.api_key)
+            .header("x-api-secret-key", &self.api_secret)
             .send()
             .await?;
 

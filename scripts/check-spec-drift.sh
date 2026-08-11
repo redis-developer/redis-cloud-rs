@@ -39,10 +39,15 @@ jq -e '.openapi and .paths' "$TMP" >/dev/null 2>&1 \
 # method + path for every operation (path items also carry non-method keys).
 ops() {
   jq -r '
+    def normalize_path:
+      if . == "/v1" then "/"
+      elif startswith("/v1/") then .[3:]
+      else .
+      end;
     .paths | to_entries[] | .key as $p
     | (.value | to_entries[]
        | select(.key | IN("get","put","post","delete","patch","head","options","trace"))
-       | "\(.key | ascii_upcase) \($p)")
+       | "\(.key | ascii_upcase) \($p | normalize_path)")
   ' "$1" | sort -u
 }
 schemas() { jq -r '.components.schemas | keys[]' "$1" | sort -u; }

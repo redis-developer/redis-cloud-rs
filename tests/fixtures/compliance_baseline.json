@@ -29,6 +29,14 @@
     "status": "skip",
     "reason": "mutating/destructive — deferred to the systematic write pass (T4)"
   },
+  "DELETE /subscriptions/{subscriptionId}/data-integration-workspace": {
+    "status": "skip",
+    "reason": "mutating/destructive — deferred to the systematic write pass (T4)"
+  },
+  "DELETE /subscriptions/{subscriptionId}/data-integration-workspace/**": {
+    "status": "skip",
+    "reason": "mutating/destructive — deferred to the systematic write pass (T4)"
+  },
   "DELETE /subscriptions/{subscriptionId}/databases/{databaseId}": {
     "status": "skip",
     "reason": "mutating/destructive — deferred to the systematic write pass (T4)"
@@ -117,11 +125,18 @@
     "status": "skip",
     "reason": "binary (CSV) download, not JSON — covered by the live cost-report test"
   },
+  "GET /data-integration-workspaces": {
+    "status": "pass"
+  },
   "GET /data-persistence": {
     "status": "pass"
   },
   "GET /database-modules": {
     "status": "pass"
+  },
+  "GET /endpoint-redirections/{redirectionId}": {
+    "status": "skip",
+    "reason": "requires an endpoint redirection lifecycle and redirection id"
   },
   "GET /fixed/plans": {
     "status": "pass"
@@ -168,8 +183,7 @@
     "note": "API 404s traffic for an active database"
   },
   "GET /fixed/subscriptions/{subscriptionId}/databases/{databaseId}/upgrade": {
-    "status": "known-diff",
-    "note": "404 when no version upgrade is pending"
+    "status": "pass"
   },
   "GET /logs": {
     "status": "pass"
@@ -197,6 +211,14 @@
   },
   "GET /subscriptions/{subscriptionId}/cidr": {
     "status": "pass"
+  },
+  "GET /subscriptions/{subscriptionId}/data-integration-workspace": {
+    "status": "known-diff",
+    "note": "requires a configured Data Integration workspace"
+  },
+  "GET /subscriptions/{subscriptionId}/data-integration-workspace/**": {
+    "status": "skip",
+    "reason": "requires a configured Data Integration workspace and proxy path"
   },
   "GET /subscriptions/{subscriptionId}/databases": {
     "status": "pass"
@@ -317,6 +339,14 @@
   "GET /users/{userId}": {
     "status": "pass"
   },
+  "PATCH /subscriptions/{subscriptionId}/data-integration-workspace": {
+    "status": "skip",
+    "reason": "mutating/destructive — deferred to the systematic write pass (T4)"
+  },
+  "PATCH /subscriptions/{subscriptionId}/data-integration-workspace/**": {
+    "status": "skip",
+    "reason": "mutating/destructive — deferred to the systematic write pass (T4)"
+  },
   "POST /acl/redisRules": {
     "status": "pass"
   },
@@ -333,6 +363,14 @@
     "reason": "mutating/destructive — deferred to the systematic write pass (T4)"
   },
   "POST /cost-report": {
+    "status": "skip",
+    "reason": "mutating/destructive — deferred to the systematic write pass (T4)"
+  },
+  "POST /endpoint-redirections": {
+    "status": "skip",
+    "reason": "mutating/destructive — deferred to the systematic write pass (T4)"
+  },
+  "POST /endpoint-redirections/{redirectionId}/revert": {
     "status": "skip",
     "reason": "mutating/destructive — deferred to the systematic write pass (T4)"
   },
@@ -364,6 +402,14 @@
     "reason": "mutating/destructive — deferred to the systematic write pass (T4)"
   },
   "POST /subscriptions": {
+    "status": "skip",
+    "reason": "mutating/destructive — deferred to the systematic write pass (T4)"
+  },
+  "POST /subscriptions/{subscriptionId}/data-integration-workspace": {
+    "status": "skip",
+    "reason": "mutating/destructive — deferred to the systematic write pass (T4)"
+  },
+  "POST /subscriptions/{subscriptionId}/data-integration-workspace/**": {
     "status": "skip",
     "reason": "mutating/destructive — deferred to the systematic write pass (T4)"
   },
@@ -482,6 +528,14 @@
     "status": "pass"
   },
   "PUT /subscriptions/{subscriptionId}/cidr": {
+    "status": "skip",
+    "reason": "mutating/destructive — deferred to the systematic write pass (T4)"
+  },
+  "PUT /subscriptions/{subscriptionId}/data-integration-workspace": {
+    "status": "skip",
+    "reason": "mutating/destructive — deferred to the systematic write pass (T4)"
+  },
+  "PUT /subscriptions/{subscriptionId}/data-integration-workspace/**": {
     "status": "skip",
     "reason": "mutating/destructive — deferred to the systematic write pass (T4)"
   },

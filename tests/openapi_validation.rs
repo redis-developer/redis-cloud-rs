@@ -36,13 +36,11 @@ fn test_all_endpoints_documented() {
         }
     }
 
-    // The bundled fixture currently exposes 155 operations across 93 paths
-    // (matches upstream `https://api.redislabs.com/v1/cloud-api-docs` as of
-    // the last refresh; see #69). Use a floor so future refreshes that add
-    // endpoints don't break this gate.
+    // Use a floor so future refreshes that add endpoints don't break this gate,
+    // while a stale or accidentally truncated fixture still fails loudly.
     assert!(
-        endpoint_count >= 150,
-        "Expected at least 150 endpoints in OpenAPI spec, found {}",
+        endpoint_count >= 169,
+        "Expected at least 169 endpoints in OpenAPI spec, found {}",
         endpoint_count
     );
 }
