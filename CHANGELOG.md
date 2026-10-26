@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.12.1](https://github.com/redis-developer/redis-cloud-rs/compare/v0.12.0...v0.12.1) - 2026-10-26
+
+### Fixed
+
+- *(spec)* refresh bundled OpenAPI spec for Agent Memory Stores ([#164](https://github.com/redis-developer/redis-cloud-rs/pull/164))
+
 ## [0.12.0](https://github.com/redis-developer/redis-cloud-rs/compare/v0.11.0...v0.12.0) - 2026-08-11
 
 ### Added
