@@ -8,6 +8,21 @@
 # To remove an entry: implement the handler, then delete the line — the test
 # will fail if a listed route is actually covered (no stale entries allowed).
 #
-# As of #72 every advertised spec route is covered by a typed handler, so this
-# allowlist is intentionally empty. Add a `METHOD /path` line here only when a
-# new spec route is deliberately left unimplemented.
+# As of #72 every advertised spec route was covered by a typed handler. Add a
+# `METHOD /path` line here only when a new spec route is deliberately left
+# unimplemented, with a comment saying why.
+
+# Agent Memory - Stores (added upstream October 2026). Deferred: a brand-new
+# product surface (10 operations, 32 schemas, its own RFC 7807 error shape
+# `MemoryProblemDetails`) that deserves a dedicated, reviewed handler rather
+# than being folded into a spec refresh. Reachable today via the raw client.
+GET /memory-stores
+POST /memory-stores
+GET /memory-stores/{storeId}
+PATCH /memory-stores/{storeId}
+DELETE /memory-stores/{storeId}
+GET /memory-stores/{storeId}/api-keys
+POST /memory-stores/{storeId}/api-keys
+DELETE /memory-stores/{storeId}/api-keys/{apiKeyId}
+DELETE /memory-stores/{storeId}/entries
+DELETE /memory-stores/{storeId}/session-memory
