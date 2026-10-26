@@ -274,6 +274,7 @@
 //! | [`PrivateLinkHandler`] | AWS PrivateLink | services, connections, endpoints |
 //! | [`CostReportHandler`] | Cost reports | FOCUS-format billing exports |
 //! | [`CloudAccountHandler`] | Cloud providers | AWS, GCP, Azure account integration |
+//! | [`MemoryStoreHandler`] | Agent Memory | stores, API keys, flush session and long-term memory |
 //! | [`TaskHandler`] | Async operations | track long-running operations |
 //!
 //! ## Authentication
@@ -322,6 +323,7 @@ pub mod data_integration;
 pub mod endpoint_redirections;
 pub mod fixed;
 pub mod flexible;
+pub mod memory_stores;
 pub mod tasks;
 pub mod users;
 
@@ -366,6 +368,10 @@ pub use data_integration::DataIntegrationHandler;
 pub use endpoint_redirections::{
     CreateEndpointsRedirectionRequest, EndpointRedirection, EndpointRedirectionStatus,
     EndpointRedirectionsHandler, EndpointTargetType, EndpointsRedirectionResponse,
+};
+pub use memory_stores::{
+    MemoryProblemDetails, MemoryStore, MemoryStoreApiKeyCreateRequest, MemoryStoreCreateRequest,
+    MemoryStoreHandler, MemoryStoreUpdateRequest,
 };
 pub use tasks::TasksHandler as TaskHandler;
 pub use users::UsersHandler as UserHandler;

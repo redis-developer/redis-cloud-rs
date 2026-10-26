@@ -476,6 +476,12 @@ impl CloudClient {
         crate::EndpointRedirectionsHandler::new(self.clone())
     }
 
+    /// Get a memory store handler for Agent Memory operations.
+    #[must_use]
+    pub fn memory_stores(&self) -> crate::MemoryStoreHandler {
+        crate::MemoryStoreHandler::new(self.clone())
+    }
+
     /// Normalize URL path concatenation to avoid double slashes
     fn normalize_url(&self, path: &str) -> String {
         let base = self.base_url.trim_end_matches('/');
@@ -580,6 +586,30 @@ impl CloudClient {
         let response = self
             .client
             .put(&url)
+            .header("x-api-key", &self.api_key)
+            .header("x-api-secret-key", &self.api_secret)
+            .json(body)
+            .send()
+            .await?;
+
+        trace!("Response status: {}", response.status());
+        self.handle_response(response).await
+    }
+
+    /// Make a PATCH request
+    #[instrument(skip(self, body), fields(method = "PATCH"))]
+    pub async fn patch<B: Serialize, T: serde::de::DeserializeOwned>(
+        &self,
+        path: &str,
+        body: &B,
+    ) -> Result<T> {
+        let url = self.normalize_url(path);
+        debug!("PATCH {}", url);
+        trace!("Request body: {:?}", serde_json::to_value(body).ok());
+
+        let response = self
+            .client
+            .patch(&url)
             .header("x-api-key", &self.api_key)
             .header("x-api-secret-key", &self.api_secret)
             .json(body)
@@ -700,22 +730,7 @@ impl CloudClient {
         path: &str,
         body: serde_json::Value,
     ) -> Result<serde_json::Value> {
-        let url = self.normalize_url(path);
-        debug!("PATCH {}", url);
-        trace!("Request body: {:?}", body);
-
-        // Use backwards header names for compatibility
-        let response = self
-            .client
-            .patch(&url)
-            .header("x-api-key", &self.api_key)
-            .header("x-api-secret-key", &self.api_secret)
-            .json(&body)
-            .send()
-            .await?;
-
-        trace!("Response status: {}", response.status());
-        self.handle_response(response).await
+        self.patch(path, &body).await
     }
 
     /// Execute raw DELETE request returning any response body

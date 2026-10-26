@@ -49,6 +49,7 @@ const CLIENT_VERBS: &[(&str, &str)] = &[
     ("put_raw", "PUT"),
     ("put", "PUT"),
     ("patch_raw", "PATCH"),
+    ("patch", "PATCH"),
     ("delete_with_body", "DELETE"),
     ("delete_typed", "DELETE"),
     ("delete_raw", "DELETE"),
